@@ -89,8 +89,8 @@ export function ConversationWorkspace() {
         )}
       </div>
 
-      <div className="flex h-[calc(100vh-200px)] min-h-[680px] overflow-hidden rounded-xl border border-white/5 bg-[#0a0c10]">
-        <div className="hidden w-[20%] min-w-[220px] max-w-[280px] shrink-0 lg:flex">
+      <div className="flex h-[calc(100vh-200px)] min-h-170 overflow-hidden rounded-xl border border-white/5 bg-[#0a0c10]">
+        <div className="hidden w-[20%] min-w-55 max-w-70 shrink-0 lg:flex">
           <ConversationSidebar
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
@@ -109,7 +109,7 @@ export function ConversationWorkspace() {
         </div>
 
         <div
-          className={`w-full shrink-0 lg:flex lg:w-[30%] lg:min-w-[300px] lg:max-w-[380px] ${
+          className={`w-full shrink-0 lg:flex lg:w-[30%] lg:min-w-75 lg:max-w-95 ${
             mobilePane === 'list' ? 'flex' : 'hidden lg:flex'
           }`}
         >

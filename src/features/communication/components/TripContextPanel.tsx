@@ -17,11 +17,11 @@ function tripDuration(startedAt: string) {
 
 export function TripContextPanel({ trip, vehicle }: TripContextPanelProps) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <div className="mb-3 flex items-center gap-2">
         <Car className="h-4 w-4 text-indigo-400" />
         <h4 className="text-sm font-semibold text-white">Trip Context</h4>
-        <Tag color="processing" className="ml-auto !m-0">
+        <Tag color="processing" className="ml-auto m-0!">
           Live
         </Tag>
       </div>

@@ -115,7 +115,7 @@ export function TripCommunicationDrawer() {
                 onSend={(content) => sendMessage({ conversationId: activeConv.id, content }).unwrap()}
               />
             ) : (
-              <div className="flex h-[400px] flex-col items-center justify-center gap-3 text-alygo-text-muted">
+              <div className="flex h-100 flex-col items-center justify-center gap-3 text-alygo-text-muted">
                 <p>No active conversation for this trip.</p>
                 <button type="button" onClick={() => navigate(buildCommunicationInboxPath('safety'))} className="text-indigo-400 hover:underline">
                   Open Communication Center

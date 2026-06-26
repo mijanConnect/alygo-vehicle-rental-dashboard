@@ -37,7 +37,7 @@ export function CaseManagementPanel({
   assigning,
 }: CaseManagementPanelProps) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <h4 className="mb-3 text-sm font-semibold text-white">Case Management</h4>
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -75,17 +75,17 @@ export function CaseManagementPanel({
           <p className="mb-1 text-[11px] uppercase text-alygo-text-muted">Last Activity</p>
           <p className="text-sm text-white">{formatRelativeActivity(conversation.lastActivity)}</p>
           <div className="mt-1 flex gap-1">
-            <Tag color={priorityColor(conversation.priority)} className="!m-0 !text-[10px]">
+            <Tag color={priorityColor(conversation.priority)} className="m-0! text-[10px]!">
               {priorityLabel(conversation.priority)}
             </Tag>
-            <Tag color={statusColor(conversation.status)} className="!m-0 !text-[10px]">
+            <Tag color={statusColor(conversation.status)} className="m-0! text-[10px]!">
               {statusLabel(conversation.status)}
             </Tag>
           </div>
         </div>
       </div>
       <Form layout="vertical">
-        <Form.Item label="Resolution Notes" className="!mb-0">
+        <Form.Item label="Resolution Notes" className="mb-0!">
           <Input.TextArea
             rows={2}
             value={resolutionNotes}

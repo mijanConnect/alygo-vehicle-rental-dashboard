@@ -60,7 +60,7 @@ export default function LoginPage() {
           type="error"
           message={loginError}
           showIcon
-          className="!mb-5 !rounded-lg !border-[#1F2937] !bg-[#030712]/80"
+          className="mb-5! rounded-lg! border-[#1F2937]! bg-[#030712]/80!"
           closable
           onClose={() => dispatch(clearLoginError())}
         />
@@ -90,7 +90,7 @@ export default function LoginPage() {
             prefix={<Mail className="h-4 w-4 text-[#64748B]" />}
             placeholder="you@company.com"
             autoComplete="email"
-            className="login-input !rounded-lg !border-[#1F2937] !bg-[#030712]/80"
+            className="login-input rounded-lg! border-[#1F2937]! bg-[#030712]/80!"
           />
         </Form.Item>
 
@@ -117,13 +117,13 @@ export default function LoginPage() {
             }
             placeholder="Enter your password"
             autoComplete="current-password"
-            className="login-input !rounded-lg !border-[#1F2937] !bg-[#030712]/80"
+            className="login-input rounded-lg! border-[#1F2937]! bg-[#030712]/80!"
           />
         </Form.Item>
 
         <div className="mb-5 flex items-center justify-between">
           <Form.Item name="remember" valuePropName="checked" noStyle>
-            <Checkbox className="!text-sm !text-[#94A3B8]">Remember Me</Checkbox>
+            <Checkbox className="text-sm! text-[#94A3B8]!">Remember Me</Checkbox>
           </Form.Item>
           <Link
             to="/auth/forgot-password"
@@ -133,7 +133,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Form.Item shouldUpdate className="!mb-0">
+        <Form.Item shouldUpdate className="mb-0!">
           {() => {
             const email = form.getFieldValue('email')
             const password = form.getFieldValue('password')

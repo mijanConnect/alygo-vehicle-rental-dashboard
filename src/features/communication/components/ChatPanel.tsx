@@ -71,7 +71,7 @@ export function ChatPanel({
   }
 
   return (
-    <div className={`flex min-h-0 flex-1 flex-col rounded-xl border border-white/5 bg-white/[0.02] ${className}`}>
+    <div className={`flex min-h-0 flex-1 flex-col rounded-xl border border-white/5 bg-white/2 ${className}`}>
       {!embedded && (
         <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
           <div>
@@ -86,7 +86,7 @@ export function ChatPanel({
             placeholder="Search messages"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-[180px]"
+            className="max-w-45"
             size="small"
             allowClear
           />

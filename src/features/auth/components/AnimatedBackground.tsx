@@ -11,7 +11,7 @@ export function AnimatedBackground() {
           backgroundSize: '32px 32px',
         }}
       />
-      <div className="absolute left-1/2 top-1/2 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F97316]/[0.07] blur-[100px]" />
+      <div className="absolute left-1/2 top-1/2 h-120 w-120 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F97316]/[0.07] blur-[100px]" />
     </div>
   )
 }

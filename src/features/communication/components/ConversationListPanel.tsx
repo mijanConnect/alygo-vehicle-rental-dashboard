@@ -18,7 +18,7 @@ export function ConversationListPanel({
   title = 'Conversation List',
 }: ConversationListPanelProps) {
   return (
-    <section className="flex h-full flex-col border-r border-white/5 bg-white/[0.01]">
+    <section className="flex h-full flex-col border-r border-white/5 bg-white/1">
       <div className="sticky top-0 z-10 border-b border-white/5 bg-[#0d0f14]/95 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white">{title}</h3>

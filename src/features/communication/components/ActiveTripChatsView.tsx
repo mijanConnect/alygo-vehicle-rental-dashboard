@@ -29,7 +29,7 @@ export function ActiveTripChatsView() {
             type="button"
             onClick={() => setSelectedIdx(idx)}
             className={`w-full rounded-xl border p-4 text-left transition-colors ${
-              selectedIdx === idx ? 'border-indigo-500/40 bg-indigo-500/10' : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
+              selectedIdx === idx ? 'border-indigo-500/40 bg-indigo-500/10' : 'border-white/5 bg-white/2 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -39,7 +39,7 @@ export function ActiveTripChatsView() {
             <p className="mt-1 text-xs text-alygo-text-muted">{item.trip.driverName} → {item.trip.passengerName}</p>
             <p className="mt-1 text-xs text-slate-500">{item.trip.pickup}</p>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-alygo-text-muted truncate max-w-[180px]">{item.lastMessage}</span>
+              <span className="text-xs text-alygo-text-muted truncate max-w-45">{item.lastMessage}</span>
               <div className="flex items-center gap-2">
                 {item.unreadCount > 0 && <Tag color="blue">{item.unreadCount}</Tag>}
                 <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
@@ -83,7 +83,7 @@ export function ActiveTripChatsView() {
             />
           </div>
         ) : (
-          <div className="flex h-[560px] items-center justify-center rounded-xl border border-white/5 text-alygo-text-muted">
+          <div className="flex h-140 items-center justify-center rounded-xl border border-white/5 text-alygo-text-muted">
             No active trips with open chats
           </div>
         )}

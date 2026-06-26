@@ -138,7 +138,7 @@ export function CommunicationConversationDrawer({
                 key: 'history',
                 label: 'Conversation History',
                 children: conversationId ? (
-                  <div className="h-[360px]">
+                  <div className="h-90">
                     <ChatPanel
                       embedded
                       conversationId={conversationId}

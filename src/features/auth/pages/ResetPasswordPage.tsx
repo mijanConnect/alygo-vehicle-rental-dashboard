@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
       <p className="mt-2 text-sm text-[#94A3B8]">Choose a strong password that meets all security requirements.</p>
 
       {error && status === 'error' && (
-        <Alert type="error" message={error} showIcon className="!mt-4 !rounded-xl" />
+        <Alert type="error" message={error} showIcon className="mt-4! rounded-xl!" />
       )}
 
       <Form
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }
-            className="!rounded-xl !border-[#1F2937] !bg-[#030712]/80"
+            className="rounded-xl! border-[#1F2937]! bg-[#030712]/80"
           />
         </Form.Item>
 
@@ -120,7 +120,7 @@ export default function ResetPasswordPage() {
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }
-            className="!rounded-xl !border-[#1F2937] !bg-[#030712]/80"
+            className="rounded-xl! border-[#1F2937]! bg-[#030712]/80!"
           />
         </Form.Item>
 

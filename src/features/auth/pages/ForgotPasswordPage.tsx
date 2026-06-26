@@ -43,9 +43,9 @@ export default function ForgotPasswordPage() {
         Enter your administrator email address and we will send a 6-digit verification code.
       </p>
 
-      {error && <Alert type="error" message={error} showIcon className="!mt-4 !rounded-xl" />}
+      {error && <Alert type="error" message={error} showIcon className="mt-4! rounded-xl!" />}
       {successMessage && status === 'success' && (
-        <Alert type="success" message={successMessage} showIcon className="!mt-4 !rounded-xl" />
+        <Alert type="success" message={successMessage} showIcon className="mt-4! rounded-xl!" />
       )}
 
       <Form
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
             { type: 'email', message: 'Enter a valid email address' },
           ]}
         >
-          <Input prefix={<Mail className="h-4 w-4 text-[#64748B]" />} placeholder="admin@alygo.com" className="!rounded-xl !border-[#1F2937] !bg-[#030712]/80" />
+          <Input prefix={<Mail className="h-4 w-4 text-[#64748B]" />} placeholder="admin@alygo.com" className="rounded-xl! border-[#1F2937]! bg-[#030712]/80!" />
         </Form.Item>
 
         <LoadingButton htmlType="submit" label="Send Verification Code" loading={isLoading} />

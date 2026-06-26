@@ -77,7 +77,7 @@ export function CommunicationInboxTab({ initialType = '' }: CommunicationInboxTa
             value={typeFilter || undefined}
             placeholder="Type: All"
             allowClear
-            className="!min-w-[160px]"
+            className="min-w-40!"
             options={[...INBOX_TYPE_FILTER_OPTIONS]}
             onChange={(value) => {
               setTypeFilter(value ?? '')
@@ -88,7 +88,7 @@ export function CommunicationInboxTab({ initialType = '' }: CommunicationInboxTa
             value={statusFilter || undefined}
             placeholder="Status: All"
             allowClear
-            className="!min-w-[160px]"
+            className="min-w-40!"
             options={[...INBOX_STATUS_FILTER_OPTIONS]}
             onChange={(value) => {
               setStatusFilter(value ?? '')
@@ -99,7 +99,7 @@ export function CommunicationInboxTab({ initialType = '' }: CommunicationInboxTa
             value={priorityFilter || undefined}
             placeholder="Priority: All"
             allowClear
-            className="!min-w-[160px]"
+            className="min-w-40!"
             options={[...INBOX_PRIORITY_FILTER_OPTIONS]}
             onChange={(value) => {
               setPriorityFilter(value ?? '')

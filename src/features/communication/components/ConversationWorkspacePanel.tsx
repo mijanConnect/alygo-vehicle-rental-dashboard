@@ -92,7 +92,7 @@ export function ConversationWorkspacePanel({
 
   if (!conversation) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-white/[0.01] p-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center bg-white/1 p-8 text-center">
         <MessageSquarePlus className="mb-3 h-10 w-10 text-indigo-400/50" />
         <p className="text-base font-medium text-white">Select a conversation</p>
         <p className="mt-1 max-w-sm text-sm text-alygo-text-muted">
@@ -116,7 +116,7 @@ export function ConversationWorkspacePanel({
 
   return (
     <>
-      <div className="flex h-full flex-col overflow-hidden bg-white/[0.01]">
+      <div className="flex h-full flex-col overflow-hidden bg-white/1">
         <header className="shrink-0 border-b border-white/5 bg-[#0d0f14]/95 px-4 py-3 backdrop-blur">
           <div className="flex flex-wrap items-start gap-3">
             {showBackButton && (
@@ -137,7 +137,7 @@ export function ConversationWorkspacePanel({
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-semibold text-white">{conversation.userName}</h2>
                 <Badge status={conversation.isOnline ? 'success' : 'default'} text={conversation.isOnline ? 'Online' : 'Offline'} />
-                <Tag className="!m-0">{userTypeLabel(conversation.userType)}</Tag>
+                <Tag className="m-0!">{userTypeLabel(conversation.userType)}</Tag>
                 {trip && <StatusBadge status={trip.status} />}
               </div>
               <p className="mt-0.5 text-xs text-alygo-text-muted">
@@ -156,7 +156,7 @@ export function ConversationWorkspacePanel({
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row">
-          <div className="flex min-h-[420px] flex-1 flex-col border-b border-white/5 lg:min-h-0 lg:border-b-0 lg:border-r">
+          <div className="flex min-h-105 flex-1 flex-col border-b border-white/5 lg:min-h-0 lg:border-b-0 lg:border-r">
             <div className="flex min-h-0 flex-1 flex-col p-4">
               <ChatPanel
                 embedded
@@ -166,13 +166,13 @@ export function ConversationWorkspacePanel({
                 isTyping={conversation.isTyping}
                 sending={sending}
                 quickReplies={quickReplies}
-                className="!h-full !min-h-[360px] !border-0 !bg-transparent"
+                className="h-full! min-h-90! border-0! bg-transparent!"
                 onSend={(content) => sendMessage({ conversationId: conversation.id, content }).unwrap()}
               />
             </div>
           </div>
 
-          <aside className="w-full shrink-0 overflow-y-auto p-4 lg:w-[340px] xl:w-[380px]">
+          <aside className="w-full shrink-0 overflow-y-auto p-4 lg:w-85 xl:w-95">
             <div className="space-y-4">
               {trip && <TripContextPanel trip={trip} vehicle={vehicle} />}
               {safetyRecord && (
@@ -237,7 +237,7 @@ export function ConversationWorkspacePanel({
 
 function RelatedInternalNotes({ notes }: { notes: InternalNote[] }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <div className="mb-3 flex items-center gap-2">
         <StickyNote className="h-4 w-4 text-amber-400" />
         <h4 className="text-sm font-semibold text-white">Related Internal Notes</h4>
@@ -249,7 +249,7 @@ function RelatedInternalNotes({ notes }: { notes: InternalNote[] }) {
           {notes.map((note) => (
             <div key={note.id} className="rounded-lg border border-white/5 bg-black/20 p-3">
               <div className="mb-1 flex flex-wrap items-center gap-2">
-                <Tag className="!m-0">{NOTE_TYPE_LABELS[note.noteType]}</Tag>
+                <Tag className="m-0!">{NOTE_TYPE_LABELS[note.noteType]}</Tag>
                 <span className="text-xs text-alygo-text-muted">{note.author}</span>
                 <span className="text-xs text-alygo-text-muted">{new Date(note.createdAt).toLocaleString()}</span>
               </div>
@@ -279,7 +279,7 @@ function ActionButton({
       type={primary ? 'primary' : 'default'}
       icon={<Icon className="h-3.5 w-3.5" />}
       onClick={onClick}
-      className="!text-xs"
+      className="text-xs!"
     >
       <span className="hidden xl:inline">{label}</span>
     </Button>

@@ -31,7 +31,7 @@ export function ConversationCard({ conversation, selected, onSelect }: Conversat
       className={`w-full rounded-xl border p-3 text-left transition-all ${
         selected
           ? 'border-indigo-500/50 bg-indigo-500/10 ring-1 ring-indigo-500/30'
-          : `${priorityClass} hover:border-white/15 hover:bg-white/[0.04]`
+          : `${priorityClass} hover:border-white/15 hover:bg-white/4`
       }`}
     >
       <div className="flex gap-3">
@@ -56,10 +56,10 @@ export function ConversationCard({ conversation, selected, onSelect }: Conversat
           <p className="mt-1.5 line-clamp-2 text-sm text-alygo-text-muted">{conversation.lastMessage}</p>
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Tag color={priorityColor(conversation.priority)} className="!m-0 !text-[10px]">
+            <Tag color={priorityColor(conversation.priority)} className="m-0! text-[10px]!">
               {priorityLabel(conversation.priority)}
             </Tag>
-            <Tag color={statusColor(conversation.status)} className="!m-0 !text-[10px]">
+            <Tag color={statusColor(conversation.status)} className="m-0! text-[10px]!">
               {statusLabel(conversation.status)}
             </Tag>
             {conversation.unreadCount > 0 && (

@@ -78,7 +78,7 @@ export default function OtpVerificationPage() {
           type={errorType === 'expired' ? 'warning' : 'error'}
           message={error}
           showIcon
-          className="!mt-4 !rounded-xl"
+          className="mt-4! rounded-xl!"
         />
       )}
 

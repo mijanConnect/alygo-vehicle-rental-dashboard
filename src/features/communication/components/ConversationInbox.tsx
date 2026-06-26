@@ -154,7 +154,7 @@ export function ConversationInbox({
               onSend={(content) => sendMessage({ conversationId: selected.id, content }).unwrap()}
             />
           ) : (
-            <div className="flex h-[560px] items-center justify-center rounded-xl border border-white/5 text-alygo-text-muted">
+            <div className="flex h-140 items-center justify-center rounded-xl border border-white/5 text-alygo-text-muted">
               Select a conversation to start chatting
             </div>
           )}

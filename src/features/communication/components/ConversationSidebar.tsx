@@ -53,14 +53,14 @@ export function ConversationSidebar({
           onChange={(e) => onSearchChange(e.target.value)}
           size="small"
           allowClear
-          className="!rounded-lg !border-white/10 !bg-white/5"
+          className="rounded-lg! border-white/10! bg-white/5!"
         />
         <div className="mt-2 flex gap-2">
-          <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.03] px-2 py-1.5 text-center">
+          <div className="flex-1 rounded-lg border border-white/5 bg-white/3 px-2 py-1.5 text-center">
             <p className="text-[10px] uppercase text-alygo-text-muted">Unread</p>
             <p className="text-sm font-semibold text-white">{unreadCount}</p>
           </div>
-          <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.03] px-2 py-1.5 text-center">
+          <div className="flex-1 rounded-lg border border-white/5 bg-white/3 px-2 py-1.5 text-center">
             <p className="text-[10px] uppercase text-alygo-text-muted">Open</p>
             <p className="text-sm font-semibold text-white">{openCount}</p>
           </div>
