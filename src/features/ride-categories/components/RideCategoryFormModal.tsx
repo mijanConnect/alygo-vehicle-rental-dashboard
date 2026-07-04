@@ -24,6 +24,7 @@ const defaultValues: RideCategoryFormValues = {
   vehicleRequirements: '',
   status: 'enabled',
   cancellationRules: createDefaultCancellationRules(1),
+  commissionRate: 20,
 }
 
 export function RideCategoryFormModal({
@@ -47,6 +48,7 @@ export function RideCategoryFormModal({
         vehicleRequirements: initialValues.vehicleRequirements,
         status: initialValues.status,
         cancellationRules: initialValues.cancellationRules,
+        commissionRate: initialValues.commissionRate,
       })
     } else {
       form.setFieldsValue(defaultValues)
@@ -107,9 +109,18 @@ export function RideCategoryFormModal({
         >
           <Input.TextArea rows={2} placeholder="Vehicle year, type, insurance, etc." />
         </Form.Item>
-        <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-          <Select options={RIDE_CATEGORY_STATUS_OPTIONS} />
-        </Form.Item>
+        <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 sm:gap-4">
+          <Form.Item name="status" label="Status" rules={[{ required: true }]}>
+            <Select options={RIDE_CATEGORY_STATUS_OPTIONS} />
+          </Form.Item>
+          <Form.Item
+            name="commissionRate"
+            label="Commission Rate (%)"
+            rules={[{ required: true, message: 'Commission rate is required' }]}
+          >
+            <InputNumber min={0} max={100} step={0.1} className="!w-full" addonAfter="%" />
+          </Form.Item>
+        </div>
 
         <div className="mb-2 mt-4 border-t border-alygo-border pt-4">
           <h4 className="text-sm font-semibold text-alygo-text">Cancellation &amp; No-Show Rules</h4>

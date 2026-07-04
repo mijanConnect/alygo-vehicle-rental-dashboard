@@ -44,6 +44,7 @@ const VehicleEligibilityPage = lazy(() => import('@/features/vehicle-eligibility
 const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCategoriesPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
+const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBonusesPage'))
 const ReservationCenterPage = lazy(() => import('@/features/reservations/ReservationCenterPage'))
 const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashboardPage'))
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
@@ -146,6 +147,7 @@ export const router = createBrowserRouter([
           { path: 'surge-history', element: <Navigate to="/pricing?tab=analytics" replace /> },
         ],
       },
+      { path: 'driver-bonuses', element: withSuspense(<DriverBonusesPage />) },
       {
         path: 'reservations',
         children: [

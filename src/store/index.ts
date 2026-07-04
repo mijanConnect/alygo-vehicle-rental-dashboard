@@ -18,6 +18,7 @@ import { rideCategoryApi } from '@/services/rideCategoryApi'
 import { vehicleEligibilityApi } from '@/services/vehicleEligibilityApi'
 import { complianceCenterApi } from '@/services/complianceCenterApi'
 import { capacityLimitsApi } from '@/services/capacityLimitsApi'
+import { driverBonusApi } from '@/services/driverBonusApi'
 import authReducer from '@/store/slices/authSlice'
 import communicationReducer from '@/store/slices/communicationSlice'
 import uiReducer from '@/store/slices/uiSlice'
@@ -45,6 +46,7 @@ export const store = configureStore({
     [vehicleEligibilityApi.reducerPath]: vehicleEligibilityApi.reducer,
     [complianceCenterApi.reducerPath]: complianceCenterApi.reducer,
     [capacityLimitsApi.reducerPath]: capacityLimitsApi.reducer,
+    [driverBonusApi.reducerPath]: driverBonusApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -66,6 +68,7 @@ export const store = configureStore({
       vehicleEligibilityApi.middleware,
       complianceCenterApi.middleware,
       capacityLimitsApi.middleware,
+      driverBonusApi.middleware,
     ),
 })
 

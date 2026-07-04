@@ -84,6 +84,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2015+ sedan, 4 seats, valid inspection',
     status: 'enabled',
     cancellationRules: rulesForSlug('standard', 1.0),
+    commissionRate: 10,
     createdAt: '2024-01-15T10:00:00Z',
   },
   {
@@ -96,6 +97,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2018+ sedan, 4 seats, premium interior',
     status: 'enabled',
     cancellationRules: rulesForSlug('comfort', 1.25),
+    commissionRate: 12,
     createdAt: '2024-01-15T10:00:00Z',
   },
   {
@@ -108,6 +110,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2017+ SUV or van, 6+ seats',
     status: 'enabled',
     cancellationRules: rulesForSlug('xl', 1.5),
+    commissionRate: 13,
     createdAt: '2024-02-01T10:00:00Z',
   },
   {
@@ -120,6 +123,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: 'Pet-friendly vehicle, seat covers, air filtration',
     status: 'enabled',
     cancellationRules: rulesForSlug('pet', 1.15),
+    commissionRate: 10,
     createdAt: '2024-03-10T10:00:00Z',
   },
   {
@@ -132,6 +136,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2018+ vehicle, high acceptance rate drivers',
     status: 'enabled',
     cancellationRules: rulesForSlug('priority', 1.35),
+    commissionRate: 15,
     createdAt: '2024-04-05T10:00:00Z',
   },
   {
@@ -144,6 +149,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2019+ luxury sedan, commercial insurance required',
     status: 'enabled',
     cancellationRules: rulesForSlug('black', 2.5),
+    commissionRate: 18,
     createdAt: '2024-05-20T10:00:00Z',
   },
   {
@@ -156,6 +162,7 @@ export const mockRideCategories: RideCategoryDefinition[] = [
     vehicleRequirements: '2019+ luxury SUV, 6 seats, commercial insurance required',
     status: 'enabled',
     cancellationRules: rulesForSlug('black_suv', 2.8),
+    commissionRate: 20,
     createdAt: '2024-05-20T10:00:00Z',
   },
 ]

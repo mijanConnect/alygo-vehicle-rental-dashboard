@@ -25,7 +25,6 @@ export function PlatformSettingsPage() {
         <Form layout="vertical">
           <Form.Item label="Platform Name"><Input defaultValue="Alygo" /></Form.Item>
           <Form.Item label="Default Currency"><Select defaultValue="USD" options={[{ value: 'USD', label: 'USD' }, { value: 'CAD', label: 'CAD' }]} /></Form.Item>
-          <Form.Item label="Commission Rate (%)"><Input defaultValue="20" /></Form.Item>
           <Form.Item label="Maintenance Mode"><Switch /></Form.Item>
           <div className="flex items-center gap-2">
             <Button type="primary" onClick={() => adminActions.notify('Settings saved')}>Save Changes</Button>

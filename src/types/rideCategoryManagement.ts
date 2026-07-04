@@ -20,6 +20,7 @@ export interface RideCategoryDefinition {
   vehicleRequirements: string
   status: RideCategoryStatus
   cancellationRules: RideCategoryCancellationRules
+  commissionRate: number
   createdAt: string
 }
 
@@ -31,6 +32,7 @@ export interface RideCategoryFormValues {
   vehicleRequirements: string
   status: RideCategoryStatus
   cancellationRules: RideCategoryCancellationRules
+  commissionRate: number
 }
 
 export interface RideCategoryListParams {

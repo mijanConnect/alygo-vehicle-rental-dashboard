@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  Gift,
 } from 'lucide-react'
 import type { Permission } from '@/types'
 
@@ -106,6 +107,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'Dynamic Pricing',
     path: '/pricing',
     icon: Gauge,
+    permission: 'pricing.view',
+  },
+  {
+    key: 'driver-bonuses',
+    label: 'Driver Bonuses',
+    path: '/driver-bonuses',
+    icon: Gift,
     permission: 'pricing.view',
   },
   {

@@ -155,6 +155,11 @@ export default function RideCategoriesPage() {
               render: (v: number) => `${v.toFixed(2)}x`,
             },
             {
+              title: 'Commission',
+              dataIndex: 'commissionRate',
+              render: (v: number) => `${v}%`,
+            },
+            {
               title: 'Status',
               dataIndex: 'status',
               render: (s: RideCategoryDefinition['status']) => (
