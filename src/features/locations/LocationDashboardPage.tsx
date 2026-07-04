@@ -7,6 +7,7 @@ import {
   StatesPanel,
   ZonesPanel,
 } from '@/features/locations/components/LocationTabPanels'
+import { CapacityLimitsPanel } from '@/features/locations/components/CapacityLimitsPanel'
 import {
   DEFAULT_LOCATION_TAB,
   LOCATION_TAB_KEYS,
@@ -20,6 +21,7 @@ const LOCATION_TABS = [
   { key: 'cities', label: LOCATION_TAB_LABELS.cities, children: <CitiesPanel /> },
   { key: 'zones', label: LOCATION_TAB_LABELS.zones, children: <ZonesPanel /> },
   { key: 'airports', label: LOCATION_TAB_LABELS.airports, children: <AirportsPanel /> },
+  { key: 'limits', label: LOCATION_TAB_LABELS.limits, children: <CapacityLimitsPanel /> },
 ] as const
 
 export default function LocationDashboardPage() {
