@@ -54,7 +54,7 @@ export function CapacityLimitDrawer({ limit, open, onClose }: CapacityLimitDrawe
       }
     >
       <Form form={form} layout="vertical" onFinish={onFinish}>
-        <Divider orientation="left">General Limits</Divider>
+        <Divider titlePlacement="left">General Limits</Divider>
         <Form.Item label="Maximum Active Drivers" name="maxActiveDrivers" rules={[{ required: true }]}>
           <InputNumber className="w-full" min={0} />
         </Form.Item>
@@ -72,7 +72,7 @@ export function CapacityLimitDrawer({ limit, open, onClose }: CapacityLimitDrawe
 
         {['zone', 'airport'].includes(limit.locationType) && (
           <>
-            <Divider orientation="left">Supply & Queue Settings</Divider>
+            <Divider titlePlacement="left">Supply & Queue Settings</Divider>
             <Form.Item label="Minimum Driver Supply" name="minDriverSupply">
               <InputNumber className="w-full" min={0} />
             </Form.Item>
@@ -103,7 +103,7 @@ export function CapacityLimitDrawer({ limit, open, onClose }: CapacityLimitDrawe
           </>
         )}
 
-        <Divider orientation="left">Admin Notifications</Divider>
+        <Divider titlePlacement="left">Admin Notifications</Divider>
         <Text type="secondary" className="block mb-4 text-sm">
           Notify admin when active drivers reach the following capacity thresholds:
         </Text>
