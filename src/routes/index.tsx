@@ -53,6 +53,7 @@ const NotificationsSettingsPage = lazy(() => import('@/features/settings/Notific
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
 const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
 const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
+const LegalSettingsPage = lazy(() => import('@/features/settings/LegalSettingsPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
 
 function withSuspense(element: React.ReactNode) {
@@ -194,6 +195,7 @@ export const router = createBrowserRouter([
       { path: 'settings/safety', element: withSuspense(<SafetyConfigurationPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
       { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
+      { path: 'settings/legal', element: withSuspense(<LegalSettingsPage />) },
       { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },
       { path: 'settings/admin-roles', element: withSuspense(<AdminRolesPage />) },
       { path: '*', element: withSuspense(<LegacyRouteFallback />) },

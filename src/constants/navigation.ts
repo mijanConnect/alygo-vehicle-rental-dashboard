@@ -153,6 +153,7 @@ export const NAVIGATION: NavItem[] = [
       { key: 'platform-settings', label: 'Platform Settings', path: '/settings/platform' },
       { key: 'safety-settings', label: 'Safety Configuration', path: '/settings/safety' },
       { key: 'notifications', label: 'Notifications', path: '/settings/notifications' },
+      { key: 'legal', label: 'Legal & Policies', path: '/settings/legal' },
       { key: 'integrations', label: 'Integrations', path: '/settings/integrations' },
       {
         key: 'reservation-config',
