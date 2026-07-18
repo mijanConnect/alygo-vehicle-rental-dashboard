@@ -62,7 +62,7 @@ export function ActionMenu({ items, onAction, className }: ActionMenuProps) {
         <Button
           type="text"
           size="small"
-          className="!flex !h-8 !w-8 !items-center !justify-center !bg-transparent hover:!bg-white/5"
+          className="flex! h-8! w-8! items-center! justify-center! bg-transparent! hover:bg-white/5!"
           icon={<MoreVertical size={16} />}
           aria-label="More actions"
         />
