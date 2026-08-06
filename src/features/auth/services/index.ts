@@ -5,4 +5,7 @@ export {
   useVerifyOtpMutation,
   useResendOtpMutation,
   useResetPasswordMutation,
-} from './authApi'
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
+} from '@/redux/api/authApi'

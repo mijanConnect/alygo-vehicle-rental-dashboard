@@ -69,7 +69,6 @@ export default function ForgotPasswordPage() {
         <LoadingButton htmlType="submit" label="Send Verification Code" loading={isLoading} />
       </Form>
 
-      <p className="mt-4 text-center text-xs text-[#64748B]">Demo OTP code: 123456</p>
     </AuthCard>
   )
 }

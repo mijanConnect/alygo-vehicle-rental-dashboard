@@ -18,19 +18,20 @@ import {
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { SafetyDashboardSummary } from '@/features/dashboard/components/SafetyDashboardSummary'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
-  useGetCategoryUsageQuery,
-  useGetDashboardKpisQuery,
-  useGetDemandTrendQuery,
-  useGetGrowthTrendQuery,
-  useGetRevenueTrendQuery,
-  useGetTopAirportsQuery,
-  useGetTopCitiesQuery,
-  useGetTripsQuery,
-} from '@/services/api'
-import { SafetyDashboardSummary } from '@/features/dashboard/components/SafetyDashboardSummary'
+  useGetDashboardCategoryUsageQuery,
+  useGetDashboardDemandChartQuery,
+  useGetDashboardDriverGrowthQuery,
+  useGetDashboardPassengerGrowthQuery,
+  useGetDashboardRevenueChartQuery,
+  useGetDashboardSummaryQuery,
+  useGetDashboardTopAirportsQuery,
+  useGetDashboardTopCitiesQuery,
+} from '@/redux/api/dashboardOverviewApi'
+import { useGetTripsQuery } from '@/services/api'
 import { useAppSelector } from '@/store/hooks'
 import { formatCurrency } from '@/utils/format'
 import type { Trip } from '@/types'
@@ -40,14 +41,46 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const adminActions = useAdminActions()
   const liveKpis = useAppSelector((state) => state.auth.liveKpis)
-  const { data: kpis = [], isFetching, refetch } = useGetDashboardKpisQuery()
-  const { data: revenueTrend = [] } = useGetRevenueTrendQuery()
-  const { data: demandTrend = [] } = useGetDemandTrendQuery()
-  const { data: growthTrend = [] } = useGetGrowthTrendQuery()
-  const { data: categoryUsage = [] } = useGetCategoryUsageQuery()
-  const { data: topCities = [] } = useGetTopCitiesQuery()
-  const { data: topAirports = [] } = useGetTopAirportsQuery()
+
+  const summaryQuery = useGetDashboardSummaryQuery()
+  const revenueQuery = useGetDashboardRevenueChartQuery()
+  const demandQuery = useGetDashboardDemandChartQuery()
+  const driverGrowthQuery = useGetDashboardDriverGrowthQuery()
+  const passengerGrowthQuery = useGetDashboardPassengerGrowthQuery()
+  const categoryQuery = useGetDashboardCategoryUsageQuery()
+  const citiesQuery = useGetDashboardTopCitiesQuery()
+  const airportsQuery = useGetDashboardTopAirportsQuery()
   const { data: liveTrips = [] } = useGetTripsQuery({ status: 'in_progress' })
+
+  const kpis = summaryQuery.data ?? []
+  const revenueTrend = revenueQuery.data ?? []
+  const demandTrend = demandQuery.data ?? []
+  const driverGrowth = driverGrowthQuery.data ?? []
+  const passengerGrowth = passengerGrowthQuery.data ?? []
+  const categoryUsage = categoryQuery.data ?? []
+  const topCities = citiesQuery.data ?? []
+  const topAirports = airportsQuery.data ?? []
+
+  const isFetching =
+    summaryQuery.isFetching ||
+    revenueQuery.isFetching ||
+    demandQuery.isFetching ||
+    driverGrowthQuery.isFetching ||
+    passengerGrowthQuery.isFetching ||
+    categoryQuery.isFetching ||
+    citiesQuery.isFetching ||
+    airportsQuery.isFetching
+
+  const refetchAll = () => {
+    void summaryQuery.refetch()
+    void revenueQuery.refetch()
+    void demandQuery.refetch()
+    void driverGrowthQuery.refetch()
+    void passengerGrowthQuery.refetch()
+    void categoryQuery.refetch()
+    void citiesQuery.refetch()
+    void airportsQuery.refetch()
+  }
 
   return (
     <PageShell
@@ -55,10 +88,18 @@ export default function DashboardPage() {
       description="Real-time overview of platform performance, operations, and compliance health."
       actions={
         <>
-          <Button icon={<RefreshCw className="h-4 w-4" />} onClick={() => refetch()} loading={isFetching}>
+          <Button
+            icon={<RefreshCw className="h-4 w-4" />}
+            onClick={refetchAll}
+            loading={isFetching}
+          >
             Refresh
           </Button>
-          <Button type="primary" icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Report exported')}>
+          <Button
+            type="primary"
+            icon={<Download className="h-4 w-4" />}
+            onClick={() => adminActions.notify('Report exported')}
+          >
             Export Report
           </Button>
         </>
@@ -71,7 +112,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <ChartCard title="Revenue Trend" subtitle="Daily revenue vs forecast" className="xl:col-span-2">
+        <ChartCard title="Revenue Trend" subtitle="Daily revenue" className="xl:col-span-2">
           <RevenueTrendChart data={revenueTrend} />
         </ChartCard>
         <ChartCard title="Demand Trend" subtitle="Hourly ride requests">
@@ -81,10 +122,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <ChartCard title="Driver Growth">
-          <LineTrendChart data={growthTrend} />
+          <LineTrendChart data={driverGrowth} />
         </ChartCard>
         <ChartCard title="Passenger Growth">
-          <LineTrendChart data={growthTrend.map((d) => ({ ...d, value: d.value * 6 }))} color="#10b981" />
+          <LineTrendChart data={passengerGrowth} color="#10b981" />
         </ChartCard>
         <ChartCard title="Category Usage">
           <CategoryPieChart data={categoryUsage} />

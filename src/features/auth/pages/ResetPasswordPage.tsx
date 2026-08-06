@@ -7,6 +7,7 @@ import { AuthCard } from '@/features/auth/components/AuthCard'
 import { LoadingButton } from '@/features/auth/components/LoadingButton'
 import { PasswordStrengthMeter } from '@/features/auth/components/PasswordStrengthMeter'
 import { isPasswordStrong } from '@/features/auth/utils/passwordRules'
+import { RESET_PASSWORD_TOKEN_KEY } from '@/constants/auth-storage'
 import { useResetPasswordMutation } from '@/features/auth/services/authApi'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAppSelector } from '@/store/hooks'
@@ -29,18 +30,16 @@ export default function ResetPasswordPage() {
   const [resetPassword, { isLoading }] = useResetPasswordMutation()
 
   useEffect(() => {
-    if (!email || !resetToken) {
+    const storedResetToken = localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
+    if (!email || (!resetToken && !storedResetToken)) {
       navigate('/auth/forgot-password')
     }
   }, [email, resetToken, navigate])
 
   const onFinish = async (values: ResetPasswordForm) => {
-    if (!email || !resetToken) return
     try {
       await resetPassword({
-        email,
-        resetToken,
-        password: values.password,
+        newPassword: values.password,
         confirmPassword: values.confirmPassword,
       }).unwrap()
       navigate('/auth/password-updated')

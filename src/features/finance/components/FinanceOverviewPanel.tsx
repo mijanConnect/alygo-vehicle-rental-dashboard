@@ -32,8 +32,3 @@ export function FinanceOverviewCards() {
     </div>
   )
 }
-
-/** @deprecated Use FinanceOverviewCards on the dashboard shell instead. */
-export function FinanceOverviewPanel() {
-  return <FinanceOverviewCards />
-}
