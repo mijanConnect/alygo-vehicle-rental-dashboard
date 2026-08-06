@@ -29,6 +29,7 @@ export const baseApi = createApi({
     'Profile',
     'User',
     'Overview',
+    'LiveTrip',
     'Drivers',
     'Passengers',
     'Trips',

@@ -1,38 +1,78 @@
-import { baseApi } from "../baseApi"
+import { baseApi } from '@/redux/baseApi'
 
-
-// Signup Bonus data type from API
-export interface SignupBonus {
-    _id: string
-    key: string
-    __v: number
-    createdAt: string
-    updatedAt: string
-    value: number
+interface ApiResponse<T> {
+  success: boolean
+  message: string
+  data: T
+  meta?: LiveTripMeta
 }
 
-// API Response type
-interface SignupBonusResponse {
-    success: boolean
-    message: string
-    data: SignupBonus
+export interface LiveTripMeta {
+  page: number
+  limit: number
+  totalItems: number
+  totalPages: number
 }
 
-// Update payload type
-interface UpdateSignupBonusPayload {
-    value: number
+export interface LiveTripPerson {
+  _id?: string
+  name: string
 }
 
-const liveTripApi = baseApi.injectEndpoints({
-    endpoints: (builder) => ({
-        getLiveTrip: builder.query<LiveTripResponse, void>({
-            query: () => ({
-                url: '/admin/live-trip',
-                method: 'GET',
-            }),
-            providesTags: ['LiveTrip'],
-        }),
+export interface LiveTrip {
+  _id: string
+  status: string
+  createdAt: string
+  passenger: LiveTripPerson
+  driver: LiveTripPerson
+  category: string
+  pickup: string
+  dropoff: string
+  city: string
+  fare: number
+}
+
+export interface LiveTripListResult {
+  data: LiveTrip[]
+  meta: LiveTripMeta
+}
+
+export interface GetLiveTripsParams {
+  page?: number
+  limit?: number
+  searchTerm?: string
+}
+
+export const liveTripApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    getLiveTrips: builder.query<LiveTripListResult, GetLiveTripsParams | void>({
+      query: (params) => {
+        const page = params?.page ?? 1
+        const limit = params?.limit ?? 10
+        const searchTerm = params?.searchTerm?.trim()
+
+        return {
+          url: '/live-trips',
+          method: 'GET',
+          params: {
+            page,
+            limit,
+            ...(searchTerm ? { searchTerm } : {}),
+          },
+        }
+      },
+      transformResponse: (response: ApiResponse<LiveTrip[]>) => ({
+        data: response.data ?? [],
+        meta: response.meta ?? {
+          page: 1,
+          limit: 10,
+          totalItems: response.data?.length ?? 0,
+          totalPages: 1,
+        },
+      }),
+      providesTags: ['LiveTrip'],
     }),
+  }),
 })
 
-export const { useGetSignupBonusQuery, useUpdateSignupBonusMutation } = signupBonusApi
+export const { useGetLiveTripsQuery } = liveTripApi

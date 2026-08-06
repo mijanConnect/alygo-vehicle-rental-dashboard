@@ -1,15 +1,8 @@
-
+import { Button, Select } from 'antd'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { cn } from '@/utils/cn'
-import { ITEMS_PER_PAGE_OPTIONS } from '@/utils/constants'
+
+export const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100] as const
 
 interface PaginationProps {
   currentPage: number
@@ -32,7 +25,7 @@ export function Pagination({
   className,
   showItemsPerPage = true,
 }: PaginationProps) {
-  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
   const canGoPrevious = currentPage > 1
@@ -43,134 +36,107 @@ export function Pagination({
     const delta = 1
 
     if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
-    } else {
-      pages.push(1)
-
-      if (currentPage > delta + 2) {
-        pages.push('...')
-      }
-
-      for (
-        let i = Math.max(2, currentPage - delta);
-        i <= Math.min(totalPages - 1, currentPage + delta);
-        i++
-      ) {
-        if (!pages.includes(i)) {
-          pages.push(i)
-        }
-      }
-
-      if (currentPage < totalPages - delta - 1) {
-        pages.push('...')
-      }
-
-      if (!pages.includes(totalPages)) {
-        pages.push(totalPages)
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      return pages
     }
+
+    pages.push(1)
+    if (currentPage > delta + 2) pages.push('...')
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      if (!pages.includes(i)) pages.push(i)
+    }
+
+    if (currentPage < totalPages - delta - 1) pages.push('...')
+    if (!pages.includes(totalPages)) pages.push(totalPages)
 
     return pages
   }
 
-  if (totalPages <= 1 && !showItemsPerPage) {
-    return null
-  }
+  if (totalPages <= 1 && !showItemsPerPage) return null
 
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4',
-        className
+        'flex flex-col items-center justify-between gap-4 px-2 py-4 sm:flex-row',
+        className,
       )}
     >
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-alygo-text-muted">
         <span>
           Showing {startItem} to {endItem} of {totalItems} entries
         </span>
         {showItemsPerPage && onItemsPerPageChange && (
           <Select
-            value={String(itemsPerPage)}
-            onValueChange={(val) => onItemsPerPageChange(Number(val))}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ITEMS_PER_PAGE_OPTIONS.map((option) => (
-                <SelectItem key={option} value={String(option)}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            value={itemsPerPage}
+            onChange={onItemsPerPageChange}
+            options={ITEMS_PER_PAGE_OPTIONS.map((option) => ({
+              value: option,
+              label: String(option),
+            }))}
+            className="!w-[80px]"
+            size="small"
+          />
         )}
       </div>
 
       <div className="flex items-center gap-1">
         <Button
-          variant="outline"
-          size="icon-sm"
+          type="default"
+          size="small"
+          icon={<ChevronsLeft className="h-4 w-4" />}
           onClick={() => onPageChange(1)}
           disabled={!canGoPrevious}
-          className="hidden sm:flex"
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
+          className="hidden! sm:inline-flex!"
+        />
         <Button
-          variant="outline"
-          size="icon-sm"
+          type="default"
+          size="small"
+          icon={<ChevronLeft className="h-4 w-4" />}
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canGoPrevious}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+        />
 
         <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) =>
             typeof page === 'number' ? (
               <Button
-                key={index}
-                variant={currentPage === page ? 'default' : 'outline'}
-                size="icon-sm"
+                key={`${page}-${index}`}
+                type={currentPage === page ? 'primary' : 'default'}
+                size="small"
                 onClick={() => onPageChange(page)}
-                className="w-8 h-8"
+                className="!min-w-8"
               >
                 {page}
               </Button>
             ) : (
-              <span key={index} className="px-2 text-muted-foreground">
+              <span key={`ellipsis-${index}`} className="px-2 text-alygo-text-muted">
                 {page}
               </span>
-            )
+            ),
           )}
         </div>
 
         <Button
-          variant="outline"
-          size="icon-sm"
+          type="default"
+          size="small"
+          icon={<ChevronRight className="h-4 w-4" />}
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canGoNext}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        />
         <Button
-          variant="outline"
-          size="icon-sm"
+          type="default"
+          size="small"
+          icon={<ChevronsRight className="h-4 w-4" />}
           onClick={() => onPageChange(totalPages)}
           disabled={!canGoNext}
-          className="hidden sm:flex"
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
+          className="hidden! sm:inline-flex!"
+        />
       </div>
     </div>
   )
 }
-
-
-
-
-
