@@ -18,7 +18,6 @@ import {
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { SafetyDashboardSummary } from '@/features/dashboard/components/SafetyDashboardSummary'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
@@ -120,28 +119,25 @@ export default function DashboardPage() {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ChartCard title="Driver Growth">
           <LineTrendChart data={driverGrowth} />
         </ChartCard>
         <ChartCard title="Passenger Growth">
           <LineTrendChart data={passengerGrowth} color="#10b981" />
         </ChartCard>
-        <ChartCard title="Category Usage">
-          <CategoryPieChart data={categoryUsage} />
-        </ChartCard>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <ChartCard title="Top Cities" subtitle="Revenue by market">
           <BarTrendChart data={topCities.slice(0, 5)} />
         </ChartCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <ChartCard title="Top Airports" subtitle="Trip volume" className="xl:col-span-1">
+        <ChartCard title="Category Usage">
+          <CategoryPieChart data={categoryUsage} />
+        </ChartCard>
+        <ChartCard title="Top Airports" subtitle="Trip volume">
           <BarTrendChart data={topAirports} />
         </ChartCard>
-        <div className="xl:col-span-2">
-          <SafetyDashboardSummary />
-        </div>
       </div>
 
       <div className="glass-card p-5">
