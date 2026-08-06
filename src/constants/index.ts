@@ -11,7 +11,6 @@ export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '
 export const STORAGE_KEYS = {
   token: 'alygo_admin_token',
   user: 'alygo_admin_user',
-  rememberEmail: 'alygo_remember_email',
 } as const
 
 export const ROLE_LABELS: Record<AdminRole, string> = {

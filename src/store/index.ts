@@ -1,27 +1,27 @@
-import { configureStore } from '@reduxjs/toolkit'
-import { setupListeners } from '@reduxjs/toolkit/query'
-import { authApi } from '@/features/auth/services/authApi'
-import { api } from '@/services/api'
-import { cancellationApi } from '@/services/cancellationApi'
-import { lostFoundApi } from '@/services/lostFoundApi'
-import { driverRewardsApi } from '@/services/driverRewardsApi'
-import { tripCompletionReviewApi } from '@/services/tripCompletionReviewApi'
-import { drivingHoursApi } from '@/services/drivingHoursApi'
-import { operationsPolicyApi } from '@/services/operationsPolicyApi'
-import { stateActivationApi } from '@/services/stateActivationApi'
-import { airportQueueApi } from '@/services/airportQueueApi'
-import { safetyIncidentApi } from '@/services/safetyIncidentApi'
-import { backgroundCheckFeeApi } from '@/services/backgroundCheckFeeApi'
-import { communicationApi } from '@/services/communicationApi'
-import { driverVerificationApi } from '@/services/driverVerificationApi'
-import { rideCategoryApi } from '@/services/rideCategoryApi'
-import { vehicleEligibilityApi } from '@/services/vehicleEligibilityApi'
-import { complianceCenterApi } from '@/services/complianceCenterApi'
-import { capacityLimitsApi } from '@/services/capacityLimitsApi'
-import { driverBonusApi } from '@/services/driverBonusApi'
-import authReducer from '@/store/slices/authSlice'
-import communicationReducer from '@/store/slices/communicationSlice'
-import uiReducer from '@/store/slices/uiSlice'
+import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
+import { authApi } from "@/features/auth/services/authApi";
+import { api } from "@/services/api";
+import { cancellationApi } from "@/services/cancellationApi";
+import { lostFoundApi } from "@/services/lostFoundApi";
+import { driverRewardsApi } from "@/services/driverRewardsApi";
+import { tripCompletionReviewApi } from "@/services/tripCompletionReviewApi";
+import { drivingHoursApi } from "@/services/drivingHoursApi";
+import { operationsPolicyApi } from "@/services/operationsPolicyApi";
+import { stateActivationApi } from "@/services/stateActivationApi";
+import { airportQueueApi } from "@/services/airportQueueApi";
+import { safetyIncidentApi } from "@/services/safetyIncidentApi";
+import { backgroundCheckFeeApi } from "@/services/backgroundCheckFeeApi";
+import { communicationApi } from "@/services/communicationApi";
+import { driverVerificationApi } from "@/services/driverVerificationApi";
+import { rideCategoryApi } from "@/services/rideCategoryApi";
+import { vehicleEligibilityApi } from "@/services/vehicleEligibilityApi";
+import { complianceCenterApi } from "@/services/complianceCenterApi";
+import { capacityLimitsApi } from "@/services/capacityLimitsApi";
+import { driverBonusApi } from "@/services/driverBonusApi";
+import authReducer from "@/store/slices/authSlice";
+import communicationReducer from "@/store/slices/communicationSlice";
+import uiReducer from "@/store/slices/uiSlice";
 
 export const store = configureStore({
   reducer: {
@@ -70,9 +70,9 @@ export const store = configureStore({
       capacityLimitsApi.middleware,
       driverBonusApi.middleware,
     ),
-})
+});
 
-setupListeners(store.dispatch)
+setupListeners(store.dispatch);
 
-export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

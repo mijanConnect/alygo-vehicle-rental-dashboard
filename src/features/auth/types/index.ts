@@ -3,7 +3,6 @@ import type { AuthUser } from '@/types'
 export interface LoginRequest {
   email: string
   password: string
-  remember?: boolean
 }
 
 export interface LoginResponse {
