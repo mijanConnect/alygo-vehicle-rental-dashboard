@@ -42,6 +42,7 @@ export const RETURN_METHOD_LABELS: Record<string, string> = {
 export const RETURN_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
   in_progress: 'In Progress',
+  waiting_payment: 'Waiting Payment',
   returned: 'Returned',
   cancelled: 'Cancelled',
 }
@@ -67,7 +68,9 @@ export function getLostItemReportActionItems(record: LostItemReport): ActionMenu
   return items
 }
 
-export function getReturnActionItems(record: ReturnRecord): ActionMenuItem[] {
+export function getReturnActionItems(
+  record: Pick<ReturnRecord, 'returnStatus'>,
+): ActionMenuItem[] {
   const items: ActionMenuItem[] = [
     { key: 'view', label: 'View', icon: Eye },
     { key: 'update-status', label: 'Update Status', icon: Pencil, group: 1 },

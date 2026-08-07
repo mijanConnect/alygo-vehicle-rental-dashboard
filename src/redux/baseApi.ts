@@ -35,6 +35,7 @@ export const baseApi = createApi({
     'CancellationAnalytics',
     'LostAndFoundOverview',
     'LostAndFoundReports',
+    'LostAndFoundReturns',
     'Drivers',
     'Passengers',
     'Trips',

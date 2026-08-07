@@ -89,6 +89,48 @@ interface LostFoundReportsData {
   }
 }
 
+export interface LostFoundReturnApiItem {
+  reportId: string
+  returnMethod: string
+  passenger: LostFoundPerson
+  driver: LostFoundPerson
+  scheduledDate: string
+  returnStatus: string
+  fee: number
+}
+
+export interface LostFoundReturnRow {
+  id: string
+  reportId: string
+  returnMethod: string
+  passengerName: string
+  passengerEmail: string
+  passengerPhone: string
+  driverName: string
+  driverEmail: string
+  driverPhone: string
+  scheduledDate: string
+  returnStatus: string
+  fee: number
+}
+
+export interface LostFoundReturnsResult {
+  data: LostFoundReturnRow[]
+  meta: LostFoundReportsMeta
+}
+
+export type GetLostFoundReturnsParams = GetLostFoundReportsParams
+
+interface LostFoundReturnsData {
+  items: LostFoundReturnApiItem[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPage: number
+  }
+}
+
 function mapReport(item: LostFoundReportApiItem): LostFoundReportRow {
   return {
     id: item.reportId,
@@ -112,6 +154,35 @@ function mapReport(item: LostFoundReportApiItem): LostFoundReportRow {
     status: item.status,
     createdAt: item.createdDate,
     timeline: [],
+  }
+}
+
+function mapReturn(item: LostFoundReturnApiItem): LostFoundReturnRow {
+  return {
+    id: item.reportId,
+    reportId: item.reportId,
+    returnMethod: item.returnMethod,
+    passengerName: item.passenger?.name ?? '—',
+    passengerEmail: item.passenger?.email ?? '—',
+    passengerPhone: item.passenger?.phone ?? '—',
+    driverName: item.driver?.name?.trim() || 'Unassigned',
+    driverEmail: item.driver?.email ?? '—',
+    driverPhone: item.driver?.phone ?? '—',
+    scheduledDate: item.scheduledDate,
+    returnStatus: item.returnStatus,
+    fee: item.fee ?? 0,
+  }
+}
+
+function mapPaginatedMeta(
+  pagination: LostFoundReportsData['pagination'] | undefined,
+  itemCount: number,
+): LostFoundReportsMeta {
+  return {
+    page: pagination?.page ?? 1,
+    limit: pagination?.limit ?? 10,
+    totalItems: pagination?.total ?? itemCount,
+    totalPages: pagination?.totalPage ?? 1,
   }
 }
 
@@ -144,19 +215,39 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<LostFoundReportsData>) => {
         const payload = response.data
         const items = payload?.items ?? []
-        const pagination = payload?.pagination
 
         return {
           data: items.map(mapReport),
-          meta: {
-            page: pagination?.page ?? 1,
-            limit: pagination?.limit ?? 10,
-            totalItems: pagination?.total ?? items.length,
-            totalPages: pagination?.totalPage ?? 1,
-          },
+          meta: mapPaginatedMeta(payload?.pagination, items.length),
         }
       },
       providesTags: ['LostAndFoundReports'],
+    }),
+
+    getLostAndFoundReturns: builder.query<
+      LostFoundReturnsResult,
+      GetLostFoundReturnsParams | void
+    >({
+      query: ({ page = 1, limit = 10, searchTerm, status } = {}) => ({
+        url: '/admin/lost-found/returns',
+        method: 'GET',
+        params: cleanObject({
+          page,
+          limit,
+          searchTerm: searchTerm?.trim(),
+          status,
+        }),
+      }),
+      transformResponse: (response: ApiResponse<LostFoundReturnsData>) => {
+        const payload = response.data
+        const items = payload?.items ?? []
+
+        return {
+          data: items.map(mapReturn),
+          meta: mapPaginatedMeta(payload?.pagination, items.length),
+        }
+      },
+      providesTags: ['LostAndFoundReturns'],
     }),
   }),
 })
@@ -164,4 +255,5 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
 export const {
   useGetLostAndFoundOverviewQuery,
   useGetLostAndFoundReportsQuery,
+  useGetLostAndFoundReturnsQuery,
 } = lostAndFoundApi
