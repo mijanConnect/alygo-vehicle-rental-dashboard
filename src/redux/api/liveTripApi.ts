@@ -1,4 +1,5 @@
 import { baseApi } from '@/redux/baseApi'
+import { cleanObject } from '@/utils/cleanObject'
 
 interface ApiResponse<T> {
   success: boolean
@@ -46,21 +47,15 @@ export interface GetLiveTripsParams {
 export const liveTripApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLiveTrips: builder.query<LiveTripListResult, GetLiveTripsParams | void>({
-      query: (params) => {
-        const page = params?.page ?? 1
-        const limit = params?.limit ?? 10
-        const searchTerm = params?.searchTerm?.trim()
-
-        return {
-          url: '/live-trips',
-          method: 'GET',
-          params: {
-            page,
-            limit,
-            ...(searchTerm ? { searchTerm } : {}),
-          },
-        }
-      },
+      query: ({ page = 1, limit = 10, searchTerm } = {}) => ({
+        url: '/live-trips',
+        method: 'GET',
+        params: cleanObject({
+          page,
+          limit,
+          searchTerm: searchTerm?.trim(),
+        }),
+      }),
       transformResponse: (response: ApiResponse<LiveTrip[]>) => ({
         data: response.data ?? [],
         meta: response.meta ?? {
