@@ -54,7 +54,7 @@ export function SearchingInput({
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
-        className="!rounded-xl !border-white/10 !bg-white/5"
+        className="!h-[45px] !rounded-xl !border-white/10 !bg-white/5"
       />
     </div>
   )

@@ -61,7 +61,10 @@ function ReasonFormModal({
           label="Reason Name"
           rules={[{ required: true, message: 'Please enter a reason name' }]}
         >
-          <Input placeholder="e.g. Driver is taking too long" />
+          <Input
+            placeholder="e.g. Driver is taking too long"
+            className="!h-[45px]"
+          />
         </Form.Item>
         <Form.Item
           name="description"
@@ -78,7 +81,11 @@ function ReasonFormModal({
           label="User Type"
           rules={[{ required: true, message: 'Please select a user type' }]}
         >
-          <Select options={USER_TYPE_OPTIONS} disabled={userTypeDisabled} />
+          <Select
+            options={USER_TYPE_OPTIONS}
+            disabled={userTypeDisabled}
+            className="!h-[45px] [&_.ant-select-selector]:!h-[45px] [&_.ant-select-selector]:!items-center"
+          />
         </Form.Item>
       </Form>
     </Modal>
