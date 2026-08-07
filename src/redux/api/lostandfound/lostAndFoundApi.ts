@@ -174,6 +174,16 @@ function mapReturn(item: LostFoundReturnApiItem): LostFoundReturnRow {
   }
 }
 
+export interface LostFoundDeliveryFeeSettings {
+  enabled: boolean
+  reportWindowDays: number
+  maxFiles: number
+  maxFileSizeMb: number
+  defaultDeliveryFee: number
+  returnConfirmationHours: number
+  autoCloseDays: number
+}
+
 function mapPaginatedMeta(
   pagination: LostFoundReportsData['pagination'] | undefined,
   itemCount: number,
@@ -249,6 +259,29 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
       },
       providesTags: ['LostAndFoundReturns'],
     }),
+    getLostAndFoundDeliveryFee: builder.query<LostFoundDeliveryFeeSettings, void>({
+      query: () => ({
+        url: '/admin/lost-found/delivery-fee',
+        method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<LostFoundDeliveryFeeSettings>) =>
+        response.data,
+      providesTags: ['LostAndFoundDeliveryFees'],
+    }),
+
+    updateLostAndFoundDeliveryFee: builder.mutation<
+      LostFoundDeliveryFeeSettings,
+      LostFoundDeliveryFeeSettings
+    >({
+      query: (body) => ({
+        url: '/admin/lost-found/delivery-fee',
+        method: 'PATCH',
+        body,
+      }),
+      transformResponse: (response: ApiResponse<LostFoundDeliveryFeeSettings>) =>
+        response.data,
+      invalidatesTags: ['LostAndFoundDeliveryFees'],
+    }),
   }),
 })
 
@@ -256,4 +289,6 @@ export const {
   useGetLostAndFoundOverviewQuery,
   useGetLostAndFoundReportsQuery,
   useGetLostAndFoundReturnsQuery,
+  useGetLostAndFoundDeliveryFeeQuery,
+  useUpdateLostAndFoundDeliveryFeeMutation,
 } = lostAndFoundApi
