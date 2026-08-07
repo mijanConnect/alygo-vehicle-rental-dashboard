@@ -3,6 +3,7 @@ import '@/redux/api/authApi' // injectEndpoints — must load before store boots
 import '@/redux/api/dashboardOverviewApi'
 import '@/redux/api/liveTripApi'
 import '@/redux/api/cancellationApiReason'
+import '@/redux/api/cancellationAnalyticsApi'
 import { api } from '@/services/api'
 import { cancellationApi } from '@/services/cancellationApi'
 import { lostFoundApi } from '@/services/lostFoundApi'
