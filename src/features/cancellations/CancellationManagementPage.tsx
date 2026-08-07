@@ -1,14 +1,34 @@
-import { Tabs } from "antd";
-import { PageShell } from "@/components/common/PageShell";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { CancellationAnalytics } from "@/features/cancellations/components/CancellationAnalytics";
-import { CancellationFeeTable } from "@/features/cancellations/components/CancellationFeeTable";
-import { CancellationReasonTable } from "@/features/cancellations/components/CancellationReasonTable";
-import { CityPolicyTable } from "@/features/cancellations/components/CityPolicyTable";
-import { NoShowPolicyTable } from "@/features/cancellations/components/NoShowPolicyTable";
+import { Tabs } from 'antd'
+import { useSearchParams } from 'react-router-dom'
+import { PageShell } from '@/components/common/PageShell'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { CancellationAnalytics } from '@/features/cancellations/components/CancellationAnalytics'
+import { CancellationFeeTable } from '@/features/cancellations/components/CancellationFeeTable'
+import { CancellationReasonTable } from '@/features/cancellations/components/CancellationReasonTable'
+import { CityPolicyTable } from '@/features/cancellations/components/CityPolicyTable'
+import { NoShowPolicyTable } from '@/features/cancellations/components/NoShowPolicyTable'
+
+const CANCELLATION_TABS = [
+  'reasons',
+  'fees',
+  'no-show',
+  'city-policies',
+  'analytics',
+] as const
+
+type CancellationTabKey = (typeof CANCELLATION_TABS)[number]
+
+function resolveCancellationTab(tab: string | null): CancellationTabKey {
+  if (tab && (CANCELLATION_TABS as readonly string[]).includes(tab)) {
+    return tab as CancellationTabKey
+  }
+  return 'reasons'
+}
 
 export default function CancellationManagementPage() {
-  useDocumentTitle("Cancellation Management");
+  useDocumentTitle('Cancellation Management')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = resolveCancellationTab(searchParams.get('tab'))
 
   return (
     <PageShell
@@ -17,36 +37,37 @@ export default function CancellationManagementPage() {
     >
       <div className="glass-card p-4">
         <Tabs
-          defaultActiveKey="reasons"
+          activeKey={activeTab}
+          onChange={(key) => setSearchParams({ tab: key })}
           items={[
             {
-              key: "reasons",
-              label: "Cancellation Reasons",
+              key: 'reasons',
+              label: 'Cancellation Reasons',
               children: <CancellationReasonTable />,
             },
             {
-              key: "fees",
-              label: "Cancellation Fees",
+              key: 'fees',
+              label: 'Cancellation Fees',
               children: <CancellationFeeTable />,
             },
             {
-              key: "no-show",
-              label: "No Show Policies",
+              key: 'no-show',
+              label: 'No Show Policies',
               children: <NoShowPolicyTable />,
             },
             {
-              key: "city-policies",
-              label: "City / State Policies",
+              key: 'city-policies',
+              label: 'City / State Policies',
               children: <CityPolicyTable />,
             },
             {
-              key: "analytics",
-              label: "Analytics",
+              key: 'analytics',
+              label: 'Analytics',
               children: <CancellationAnalytics />,
             },
           ]}
         />
       </div>
     </PageShell>
-  );
+  )
 }
