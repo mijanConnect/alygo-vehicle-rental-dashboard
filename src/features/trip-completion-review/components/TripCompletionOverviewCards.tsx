@@ -1,17 +1,24 @@
 import { AlertTriangle, CheckCircle, Clock, Search, XCircle } from 'lucide-react'
-import { useGetTripCompletionOverviewQuery } from '@/services/tripCompletionReviewApi'
+import {
+  useGetTripReportsAnalyticsStatsQuery,
+  type TripCompletionComplaintStats,
+} from '@/redux/api/tripReportApi'
 import { formatNumber } from '@/utils/format'
 
-const overviewConfig = [
+const overviewConfig: {
+  key: keyof TripCompletionComplaintStats
+  label: string
+  icon: typeof AlertTriangle
+}[] = [
   { key: 'totalComplaints', label: 'Total Complaints', icon: AlertTriangle },
   { key: 'pendingReview', label: 'Pending Review', icon: Clock },
   { key: 'underInvestigation', label: 'Under Investigation', icon: Search },
   { key: 'approvedRefunds', label: 'Approved Refunds', icon: CheckCircle },
-  { key: 'rejectedComplaints', label: 'Rejected', icon: XCircle },
-] as const
+  { key: 'rejected', label: 'Rejected', icon: XCircle },
+]
 
 export function TripCompletionOverviewCards() {
-  const { data, isLoading } = useGetTripCompletionOverviewQuery()
+  const { data, isLoading } = useGetTripReportsAnalyticsStatsQuery()
 
   if (isLoading || !data) {
     return (
