@@ -6,6 +6,12 @@ interface ApiResponse<T> {
   success: boolean
   message: string
   data: T
+  meta?: {
+    page: number
+    limit: number
+    total: number
+    totalPage: number
+  }
 }
 
 export interface LostFoundOverviewSummary {
@@ -259,6 +265,50 @@ interface AnalyticsCityPoint {
   reports: number
 }
 
+export interface LostFoundCategoryApiItem {
+  _id: string
+  name: string
+  status: string
+  isDeleted?: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string
+}
+
+export interface LostFoundCategoryRow {
+  id: string
+  name: string
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LostFoundCategoryListResult {
+  data: LostFoundCategoryRow[]
+  meta: LostFoundReportsMeta
+}
+
+export type GetLostFoundCategoriesParams = GetLostFoundReportsParams
+
+export interface CreateLostFoundCategoryBody {
+  name: string
+}
+
+export interface UpdateLostFoundCategoryBody {
+  id: string
+  name: string
+}
+
+function mapCategory(item: LostFoundCategoryApiItem): LostFoundCategoryRow {
+  return {
+    id: item._id,
+    name: item.name,
+    status: item.status,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 function mapPaginatedMeta(
   pagination: LostFoundReportsData['pagination'] | undefined,
   itemCount: number,
@@ -447,6 +497,75 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
         })),
       providesTags: ['LostAndFoundAnalytics'],
     }),
+
+    // category management
+    getLostAndFoundCategories: builder.query<
+      LostFoundCategoryListResult,
+      GetLostFoundCategoriesParams | void
+    >({
+      query: ({ page = 1, limit = 10, searchTerm, status } = {}) => ({
+        url: '/lost-and-found-item-categories/active',
+        method: 'GET',
+        params: cleanObject({
+          page,
+          limit,
+          searchTerm: searchTerm?.trim(),
+          status,
+        }),
+      }),
+      transformResponse: (response: ApiResponse<LostFoundCategoryApiItem[]>) => {
+        const rows = (response.data ?? [])
+          .filter((item) => !item.isDeleted)
+          .map(mapCategory)
+
+        return {
+          data: rows,
+          meta: {
+            page: response.meta?.page ?? 1,
+            limit: response.meta?.limit ?? 10,
+            totalItems: response.meta?.total ?? rows.length,
+            totalPages: response.meta?.totalPage ?? 1,
+          },
+        }
+      },
+      providesTags: ['LostAndFoundCategories'],
+    }),
+
+    createLostAndFoundCategory: builder.mutation<
+      LostFoundCategoryRow,
+      CreateLostFoundCategoryBody
+    >({
+      query: (body) => ({
+        url: '/lost-and-found-item-categories',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: ApiResponse<LostFoundCategoryApiItem>) =>
+        mapCategory(response.data),
+      invalidatesTags: ['LostAndFoundCategories'],
+    }),
+
+    updateLostAndFoundCategory: builder.mutation<
+      LostFoundCategoryRow,
+      UpdateLostFoundCategoryBody
+    >({
+      query: ({ id, name }) => ({
+        url: `/lost-and-found-item-categories/${id}`,
+        method: 'PATCH',
+        body: { name },
+      }),
+      transformResponse: (response: ApiResponse<LostFoundCategoryApiItem>) =>
+        mapCategory(response.data),
+      invalidatesTags: ['LostAndFoundCategories'],
+    }),
+
+    deleteLostAndFoundCategory: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/lost-and-found-item-categories/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['LostAndFoundCategories'],
+    }),
   }),
 })
 
@@ -462,4 +581,8 @@ export const {
   useGetLostAndFoundAnalyticsMostLostItemsQuery,
   useGetLostAndFoundAnalyticsCityReportsQuery,
   useGetLostAndFoundAnalyticsCategoryDistributionQuery,
+  useGetLostAndFoundCategoriesQuery,
+  useCreateLostAndFoundCategoryMutation,
+  useUpdateLostAndFoundCategoryMutation,
+  useDeleteLostAndFoundCategoryMutation,
 } = lostAndFoundApi
