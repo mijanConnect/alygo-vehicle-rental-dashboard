@@ -24,7 +24,6 @@ import { driverVerificationApi } from '@/services/driverVerificationApi'
 import { rideCategoryApi } from '@/services/rideCategoryApi'
 import { vehicleEligibilityApi } from '@/services/vehicleEligibilityApi'
 import { complianceCenterApi } from '@/services/complianceCenterApi'
-import { capacityLimitsApi } from '@/services/capacityLimitsApi'
 import { driverBonusApi } from '@/services/driverBonusApi'
 
 /**
@@ -52,6 +51,5 @@ export const apis = [
   rideCategoryApi,
   vehicleEligibilityApi,
   complianceCenterApi,
-  capacityLimitsApi,
   driverBonusApi,
 ] as const
