@@ -17,7 +17,12 @@ export function useTripCompletionRealtime() {
           'TripCompletionAnalytics',
         ]),
       )
-      dispatch(baseApi.util.invalidateTags(['TripCompletionComplaintStats']))
+      dispatch(
+        baseApi.util.invalidateTags([
+          'TripCompletionComplaintStats',
+          'TripCompletionComplaints',
+        ]),
+      )
     }
 
     const handler = () => {

@@ -1,17 +1,13 @@
 import { ComplaintQueueTable } from '@/features/trip-completion-review/components/ComplaintQueueTable'
-import type { TripCompletionComplaint } from '@/types/tripCompletionReview'
+import type { TripComplaintRow } from '@/redux/api/tripReportApi'
 
-const OPEN_COMPLAINT_STATUSES = new Set([
-  'pending_review',
-  'under_investigation',
-  'rejected',
-])
+const OPEN_COMPLAINT_STATUSES = new Set(['open', 'investigating'])
 
 export function PassengerComplaintsTab() {
   return (
     <ComplaintQueueTable
       description="Passenger trip completion complaints requiring review or follow-up."
-      filter={(c: TripCompletionComplaint) => OPEN_COMPLAINT_STATUSES.has(c.status)}
+      filter={(c: TripComplaintRow) => OPEN_COMPLAINT_STATUSES.has(c.status)}
     />
   )
 }
@@ -19,12 +15,8 @@ export function PassengerComplaintsTab() {
 export function PassengerRefundsTab() {
   return (
     <ComplaintQueueTable
-      description="Passenger complaints with approved refunds, partial refunds, or fare adjustments."
-      filter={(c: TripCompletionComplaint) =>
-        c.status === 'approved_refund' ||
-        c.status === 'partial_refund' ||
-        c.status === 'fare_adjusted'
-      }
+      description="Resolved passenger trip completion complaints."
+      filter={(c: TripComplaintRow) => c.status === 'resolved'}
     />
   )
 }

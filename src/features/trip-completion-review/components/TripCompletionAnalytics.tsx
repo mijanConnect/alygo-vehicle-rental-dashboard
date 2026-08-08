@@ -1,9 +1,5 @@
 import { AlertTriangle, CheckCircle, Clock, Search, XCircle } from 'lucide-react'
-import {
-  CategoryPieChart,
-  ChartCard,
-  LineTrendChart,
-} from '@/components/charts/AnalyticsCharts'
+import { ChartCard, LineTrendChart } from '@/components/charts/AnalyticsCharts'
 import {
   useGetTripReportsAnalyticsReportsTrendQuery,
   useGetTripReportsAnalyticsStatsQuery,
@@ -23,15 +19,6 @@ const cardConfig: {
   { key: 'rejected', label: 'Rejected', icon: XCircle },
 ]
 
-function buildResolutionBreakdown(stats: TripCompletionComplaintStats) {
-  return [
-    { label: 'Pending Review', value: stats.pendingReview },
-    { label: 'Under Investigation', value: stats.underInvestigation },
-    { label: 'Approved Refunds', value: stats.approvedRefunds },
-    { label: 'Rejected', value: stats.rejected },
-  ].filter((point) => point.value > 0)
-}
-
 export function TripCompletionAnalytics() {
   const statsQuery = useGetTripReportsAnalyticsStatsQuery()
   const trendQuery = useGetTripReportsAnalyticsReportsTrendQuery()
@@ -48,7 +35,6 @@ export function TripCompletionAnalytics() {
 
   const stats = statsQuery.data
   const trend = trendQuery.data ?? []
-  const resolutionBreakdown = buildResolutionBreakdown(stats)
 
   return (
     <div className="space-y-6">
@@ -68,18 +54,9 @@ export function TripCompletionAnalytics() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-1">
         <ChartCard title="Complaint Trend" subtitle="Monthly complaints filed">
           <LineTrendChart data={trend} color="#ef4444" />
-        </ChartCard>
-        <ChartCard title="Resolution Breakdown" subtitle="Complaint status mix">
-          <CategoryPieChart
-            data={
-              resolutionBreakdown.length > 0
-                ? resolutionBreakdown
-                : [{ label: 'No data', value: 1 }]
-            }
-          />
         </ChartCard>
       </div>
     </div>

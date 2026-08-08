@@ -1,5 +1,11 @@
 import type { AdminRole, Permission, RideCategory } from '@/types'
 
+export {
+  TIMEZONES,
+  TIMEZONE_OPTIONS,
+  type Timezone,
+} from '@/constants/timezones'
+
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:4000'
 export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''
 
