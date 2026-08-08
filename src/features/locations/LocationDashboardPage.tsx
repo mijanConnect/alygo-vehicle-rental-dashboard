@@ -4,6 +4,7 @@ import { PageShell } from '@/components/common/PageShell'
 import {
   AirportsPanel,
   CitiesPanel,
+  CountriesPanel,
   StatesPanel,
   ZonesPanel,
 } from '@/features/locations/components/LocationTabPanels'
@@ -17,6 +18,7 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const LOCATION_TABS = [
+  { key: 'countries', label: LOCATION_TAB_LABELS.countries, children: <CountriesPanel /> },
   { key: 'states', label: LOCATION_TAB_LABELS.states, children: <StatesPanel /> },
   { key: 'cities', label: LOCATION_TAB_LABELS.cities, children: <CitiesPanel /> },
   { key: 'zones', label: LOCATION_TAB_LABELS.zones, children: <ZonesPanel /> },
@@ -33,7 +35,7 @@ export default function LocationDashboardPage() {
   return (
     <PageShell
       title="Location Management"
-      description="Unified geographic command center for states, cities, zones, and airports."
+      description="Unified geographic command center for countries, states, cities, zones, and airports."
     >
       <div className="glass-card p-4">
         <Tabs
