@@ -2,7 +2,6 @@ import { Tabs } from 'antd'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/common/PageShell'
 import {
-  BonusProgramsTab,
   PenaltyRulesTab,
   RewardRulesTab,
 } from '@/features/driver-rewards/components/DriverRewardsTabPanels'
@@ -15,7 +14,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const REWARDS_TABS = [
   { key: 'reward-rules', label: REWARDS_TAB_LABELS['reward-rules'], children: <RewardRulesTab /> },
-  { key: 'bonus-programs', label: REWARDS_TAB_LABELS['bonus-programs'], children: <BonusProgramsTab /> },
   { key: 'penalty-rules', label: REWARDS_TAB_LABELS['penalty-rules'], children: <PenaltyRulesTab /> },
 ] as const
 
@@ -33,7 +31,7 @@ export default function DriverRewardsPage() {
   return (
     <PageShell
       title="Driver Rewards Management"
-      description="Manage reward rules, bonus programs, and penalty deductions for driver points."
+      description="Manage reward and penalty point rules for driver rewards."
     >
       <div className="glass-card p-4">
         <Tabs
