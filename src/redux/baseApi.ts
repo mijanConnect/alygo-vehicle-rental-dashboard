@@ -45,6 +45,7 @@ export const baseApi = createApi({
     'ServiceAreas',
     'Drivers',
     'Passengers',
+    'Tiers',
     'Trips',
     'Compliance',
     'Finance',

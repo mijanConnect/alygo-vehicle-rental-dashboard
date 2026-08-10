@@ -76,21 +76,20 @@ export interface TierBenefitFlags {
 
 export type DispatchPriorityLevel = 'low' | 'medium' | 'high' | 'highest'
 
+export type TierVipSupportLevel = 'basic' | 'vip' | 'premium'
+
 export interface TierBenefitRules {
   destinationFilter: {
     enabled: boolean
-    filtersAllowed: number
     dailyLimit: number
-    weeklyLimit: number
-    unlimited: boolean
   }
   priorityDispatch: {
     enabled: boolean
-    priorityLevel: DispatchPriorityLevel
+    boostMultiplier: number
   }
   reservationAccess: {
     enabled: boolean
-    advanceBookingHours: number
+    maxAdvanceHours: number
   }
   premiumRideAccess: {
     enabled: boolean
@@ -98,7 +97,7 @@ export interface TierBenefitRules {
   }
   airportQueuePriority: {
     enabled: boolean
-    queuePriorityLevel: number
+    priorityPosition: number
   }
   bonusMultiplier: {
     enabled: boolean
@@ -106,6 +105,7 @@ export interface TierBenefitRules {
   }
   vipSupport: {
     enabled: boolean
+    supportLevel: TierVipSupportLevel
   }
 }
 

@@ -14,10 +14,10 @@ import type { TierBenefitRules } from '@/types/driverRewards'
 import type { BenefitRuleKey } from '@/features/driver-rewards/utils/tierConfigHelpers'
 import {
   BENEFIT_CARD_DEFINITIONS,
-  DISPATCH_PRIORITY_OPTIONS,
   getBenefitSummaryLines,
   isBenefitEnabled,
   PREMIUM_RIDE_CATEGORY_OPTIONS,
+  VIP_SUPPORT_LEVEL_OPTIONS,
 } from '@/features/driver-rewards/utils/tierConfigHelpers'
 
 interface TierBenefitsCardGridProps {
@@ -100,24 +100,9 @@ function BenefitConfigureModal({
             <Form.Item name={['destinationFilter', 'enabled']} label="Enabled" valuePropName="checked">
               <Switch checkedChildren="On" unCheckedChildren="Off" />
             </Form.Item>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Form.Item name={['destinationFilter', 'filtersAllowed']} label="Filters Allowed">
-                <InputNumber min={0} max={99} className="w-full" />
-              </Form.Item>
-              <Form.Item name={['destinationFilter', 'dailyLimit']} label="Daily Limit">
-                <InputNumber min={0} max={999} className="w-full" />
-              </Form.Item>
-              <Form.Item name={['destinationFilter', 'weeklyLimit']} label="Weekly Limit">
-                <InputNumber min={0} max={9999} className="w-full" />
-              </Form.Item>
-              <Form.Item
-                name={['destinationFilter', 'unlimited']}
-                label="Unlimited Access"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </div>
+            <Form.Item name={['destinationFilter', 'dailyLimit']} label="Daily Limit">
+              <InputNumber min={0} max={999} className="w-full" />
+            </Form.Item>
           </>
         )}
 
@@ -126,8 +111,8 @@ function BenefitConfigureModal({
             <Form.Item name={['priorityDispatch', 'enabled']} label="Enabled" valuePropName="checked">
               <Switch checkedChildren="On" unCheckedChildren="Off" />
             </Form.Item>
-            <Form.Item name={['priorityDispatch', 'priorityLevel']} label="Priority Level">
-              <Select options={DISPATCH_PRIORITY_OPTIONS} />
+            <Form.Item name={['priorityDispatch', 'boostMultiplier']} label="Boost Multiplier">
+              <InputNumber min={1} max={5} step={0.1} className="w-full" addonAfter="x" />
             </Form.Item>
           </>
         )}
@@ -137,7 +122,7 @@ function BenefitConfigureModal({
             <Form.Item name={['reservationAccess', 'enabled']} label="Enabled" valuePropName="checked">
               <Switch checkedChildren="On" unCheckedChildren="Off" />
             </Form.Item>
-            <Form.Item name={['reservationAccess', 'advanceBookingHours']} label="Advance Booking Hours">
+            <Form.Item name={['reservationAccess', 'maxAdvanceHours']} label="Max Advance Hours">
               <InputNumber min={0} max={168} className="w-full" addonAfter="hours" />
             </Form.Item>
           </>
@@ -159,8 +144,8 @@ function BenefitConfigureModal({
             <Form.Item name={['airportQueuePriority', 'enabled']} label="Enabled" valuePropName="checked">
               <Switch checkedChildren="On" unCheckedChildren="Off" />
             </Form.Item>
-            <Form.Item name={['airportQueuePriority', 'queuePriorityLevel']} label="Queue Priority Level">
-              <InputNumber min={1} max={5} className="w-full" />
+            <Form.Item name={['airportQueuePriority', 'priorityPosition']} label="Priority Position">
+              <InputNumber min={0} max={99} className="w-full" />
             </Form.Item>
           </>
         )}
@@ -177,9 +162,14 @@ function BenefitConfigureModal({
         )}
 
         {benefitKey === 'vipSupport' && (
-          <Form.Item name={['vipSupport', 'enabled']} label="Enabled" valuePropName="checked">
-            <Switch checkedChildren="On" unCheckedChildren="Off" />
-          </Form.Item>
+          <>
+            <Form.Item name={['vipSupport', 'enabled']} label="Enabled" valuePropName="checked">
+              <Switch checkedChildren="On" unCheckedChildren="Off" />
+            </Form.Item>
+            <Form.Item name={['vipSupport', 'supportLevel']} label="Support Level">
+              <Select options={VIP_SUPPORT_LEVEL_OPTIONS} />
+            </Form.Item>
+          </>
         )}
       </Form>
     </Modal>
