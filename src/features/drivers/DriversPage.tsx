@@ -1,7 +1,6 @@
+import { useCallback, useMemo, useState } from 'react'
 import { Select, Table, Tag, Tabs, type TableProps } from 'antd'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
-import { useDispatch } from 'react-redux'
 import {
   AdminActionHost,
   createActionsColumn,
@@ -12,7 +11,8 @@ import {
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { ActiveDriversTab } from '@/features/drivers/components/ActiveDriversTab'
 import { DriverVerificationDrawer } from '@/features/drivers/components/DriverVerificationDrawer'
@@ -26,73 +26,131 @@ import {
   DRIVER_TAB_LABELS,
   type DriverTabKey,
 } from '@/features/drivers/driversNavigation'
+import {
+  mapComplianceDriver,
+  mapOnlineDriver,
+  mapOverviewDriver,
+  mapPendingDriver,
+  type DriverTableRow,
+} from '@/features/drivers/mapDriverManagement'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { api, useGetDriversQuery } from '@/services/api'
+import { baseApi } from '@/redux/baseApi'
+import {
+  useGetAllComplianceListQuery,
+  useGetAllPendingApprovalsQuery,
+  useGetAllSuspendedListQuery,
+  useGetDriverManagementListQuery,
+} from '@/redux/api/driverManagementApi'
 import {
   useApproveVerificationMutation,
   useRejectVerificationMutation,
-  IDENTITY_STATUS_LABELS,
 } from '@/services/driverVerificationApi'
-import { LEVEL_LABELS } from '@/services/driverRewardsApi'
-import type { Driver } from '@/types'
 import type { IdentityVerificationStatus } from '@/types/driverVerification'
-
-function applyTabPreset(rows: Driver[], tab: DriverTabKey): Driver[] {
-  switch (tab) {
-    case 'pending':
-      return rows.filter((d) => d.status === 'pending')
-    case 'suspended':
-      return rows.filter((d) => d.status === 'suspended' || d.status === 'deactivated')
-    case 'compliance':
-      return rows.filter(
-        (d) => d.complianceStatus !== 'approved' || d.backgroundCheckStatus !== 'approved',
-      )
-    case 'reverification':
-      return rows.filter((d) => d.identityVerificationStatus !== 'verified')
-    default:
-      return rows
-  }
-}
+import { useAppDispatch } from '@/store/hooks'
 
 export default function DriversPage() {
   useDocumentTitle('Driver Management')
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const adminActions = useAdminActions()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = (searchParams.get('tab') as DriverTabKey | null) ?? DEFAULT_DRIVER_TAB
   const validTab = DRIVER_TAB_KEYS.includes(activeTab) ? activeTab : DEFAULT_DRIVER_TAB
 
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
   const [status, setStatus] = useState('')
   const [tierFilter, setTierFilter] = useState('')
-  const [identityStatus, setIdentityStatus] = useState('')
-  const [drawerDriver, setDrawerDriver] = useState<Driver | null>(null)
+  const [drawerDriver, setDrawerDriver] = useState<DriverTableRow | null>(null)
   const [drawerFocus, setDrawerFocus] = useState<DriverVerificationFocus>('default')
-  const { data, isLoading, refetch } = useGetDriversQuery({ page, pageSize: 10, search })
+
+  const listParams = { page, limit, searchTerm }
+
+  const overviewQuery = useGetDriverManagementListQuery(
+    { ...listParams, status: status || undefined, tier: tierFilter || undefined },
+    { skip: validTab !== 'overview' && validTab !== 'reverification' },
+  )
+  const pendingQuery = useGetAllPendingApprovalsQuery(listParams, {
+    skip: validTab !== 'pending',
+  })
+  const suspendedQuery = useGetAllSuspendedListQuery(listParams, {
+    skip: validTab !== 'suspended',
+  })
+  const complianceQuery = useGetAllComplianceListQuery(listParams, {
+    skip: validTab !== 'compliance',
+  })
+
   const [approveVerification] = useApproveVerificationMutation()
   const [rejectVerification] = useRejectVerificationMutation()
 
-  const filtered = useMemo(() => {
-    let rows = data?.data ?? []
-    rows = applyTabPreset(rows, validTab)
-    if (validTab === 'overview') {
-      if (status) rows = rows.filter((d) => d.status === status)
-      if (tierFilter) rows = rows.filter((d) => d.currentTier === tierFilter)
-      if (identityStatus) rows = rows.filter((d) => d.identityVerificationStatus === identityStatus)
+  const { rows, isLoading, isFetching, totalItems, totalPages } = useMemo(() => {
+    if (validTab === 'pending') {
+      const data = pendingQuery.data
+      return {
+        rows: (data?.data ?? []).map(mapPendingDriver),
+        isLoading: pendingQuery.isLoading,
+        isFetching: pendingQuery.isFetching,
+        totalItems: data?.meta.totalItems ?? 0,
+        totalPages: data?.meta.totalPages ?? 1,
+      }
     }
-    return rows
-  }, [data?.data, validTab, status, tierFilter, identityStatus])
+    if (validTab === 'suspended') {
+      const data = suspendedQuery.data
+      return {
+        rows: (data?.data ?? []).map(mapOnlineDriver),
+        isLoading: suspendedQuery.isLoading,
+        isFetching: suspendedQuery.isFetching,
+        totalItems: data?.meta.totalItems ?? 0,
+        totalPages: data?.meta.totalPages ?? 1,
+      }
+    }
+    if (validTab === 'compliance') {
+      const data = complianceQuery.data
+      return {
+        rows: (data?.data ?? []).map(mapComplianceDriver),
+        isLoading: complianceQuery.isLoading,
+        isFetching: complianceQuery.isFetching,
+        totalItems: data?.meta.totalItems ?? 0,
+        totalPages: data?.meta.totalPages ?? 1,
+      }
+    }
 
-  const openDrawer = (driver: Driver, focus: DriverVerificationFocus = 'default') => {
+    const data = overviewQuery.data
+    let mapped = (data?.data ?? []).map(mapOverviewDriver)
+    if (validTab === 'reverification') {
+      mapped = mapped.filter((d) => d.identityVerificationStatus !== 'verified')
+    }
+    return {
+      rows: mapped,
+      isLoading: overviewQuery.isLoading,
+      isFetching: overviewQuery.isFetching,
+      totalItems: data?.meta.totalItems ?? 0,
+      totalPages: data?.meta.totalPages ?? 1,
+    }
+  }, [
+    validTab,
+    overviewQuery.data,
+    overviewQuery.isLoading,
+    overviewQuery.isFetching,
+    pendingQuery.data,
+    pendingQuery.isLoading,
+    pendingQuery.isFetching,
+    suspendedQuery.data,
+    suspendedQuery.isLoading,
+    suspendedQuery.isFetching,
+    complianceQuery.data,
+    complianceQuery.isLoading,
+    complianceQuery.isFetching,
+  ])
+
+  const openDrawer = (driver: DriverTableRow, focus: DriverVerificationFocus = 'default') => {
     setDrawerDriver(driver)
     setDrawerFocus(focus)
   }
 
   const invalidateDrivers = () => {
-    dispatch(api.util.invalidateTags(['Drivers']))
-    refetch()
+    dispatch(baseApi.util.invalidateTags(['Drivers']))
   }
 
   const verificationHandlers: DriverActionHandlers = {
@@ -106,32 +164,32 @@ export default function DriversPage() {
           await approveVerification(driver.id).unwrap()
           adminActions.notify('Verification approved', driver.name)
           invalidateDrivers()
-          openDrawer(driver, 'default')
+          openDrawer(driver as DriverTableRow, 'default')
         },
       })
     },
     onRejectVerification: (driver) => {
       adminActions.openConfirm({
         title: 'Reject Verification',
-        description: `Reject identity verification for ${driver.name}? The driver may be paused per policy settings.`,
+        description: `Reject identity verification for ${driver.name}?`,
         confirmLabel: 'Reject',
         danger: true,
         onConfirm: async () => {
           await rejectVerification({ driverId: driver.id }).unwrap()
           adminActions.notify('Verification rejected', driver.name)
           invalidateDrivers()
-          openDrawer(driver, 'default')
+          openDrawer(driver as DriverTableRow, 'default')
         },
       })
     },
   }
 
-  const identityStatusOptions = Object.entries(IDENTITY_STATUS_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  }))
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
 
-  const columns: TableProps<Driver>['columns'] = [
+  const columns: TableProps<DriverTableRow>['columns'] = [
     {
       title: 'Driver Name',
       dataIndex: 'name',
@@ -141,116 +199,152 @@ export default function DriversPage() {
         </Link>
       ),
     },
-    { title: 'Driver ID', dataIndex: 'id' },
+    {
+      title: 'Driver ID',
+      dataIndex: 'id',
+      width: 120,
+      render: (id: string) => (
+        <span className="font-mono text-xs text-white">{id.slice(-8)}</span>
+      ),
+    },
     { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
     { title: 'Completed Trips', dataIndex: 'completedTrips' },
     {
       title: 'Tier',
       dataIndex: 'currentTier',
-      render: (tier?: string) => tier ? <Tag>{LEVEL_LABELS[tier] ?? tier}</Tag> : '—',
+      render: (tier?: string) => (tier ? <Tag>{tier}</Tag> : '—'),
     },
     {
       title: 'Tier Progress',
-      dataIndex: 'tierProgress',
-      render: (progress?: number, record?: Driver) =>
-        progress != null ? `${progress}% To ${nextTierLabel(record?.currentTier)}` : '—',
+      render: (_: unknown, record: DriverTableRow) =>
+        record.tierProgressText ??
+        (record.tierProgress != null ? `${record.tierProgress}%` : '—'),
     },
     {
       title: 'Tier Status',
       dataIndex: 'tierStatus',
-      render: (tierStatus?: Driver['tierStatus']) =>
-        tierStatus ? <StatusBadge status={tierStatus === 'good_standing' ? 'active' : 'at_risk'} /> : '—',
+      render: (tierStatus?: DriverTableRow['tierStatus']) =>
+        tierStatus ? (
+          <StatusBadge status={tierStatus === 'good_standing' ? 'active' : 'at_risk'} />
+        ) : (
+          '—'
+        ),
     },
-    { title: 'Vehicle', dataIndex: 'vehicle' },
+    { title: 'Vehicle', dataIndex: 'vehicle', ellipsis: true },
     {
       title: 'Ride Categories',
       dataIndex: 'categories',
-      render: (cats: Driver['categories']) => cats.map((c) => <Tag key={c}>{RIDE_CATEGORY_LABELS[c]}</Tag>),
+      render: (cats: DriverTableRow['categories']) =>
+        cats?.length
+          ? cats.map((c) => <Tag key={c}>{RIDE_CATEGORY_LABELS[c] ?? c}</Tag>)
+          : '—',
     },
-    { title: 'Compliance', dataIndex: 'complianceStatus', render: (s: string) => <StatusBadge status={s} /> },
-    { title: 'Background Check', dataIndex: 'backgroundCheckStatus', render: (s: string) => <StatusBadge status={s} /> },
+    {
+      title: 'Compliance',
+      dataIndex: 'complianceStatus',
+      render: (s: string) => <StatusBadge status={s} />,
+    },
+    {
+      title: 'Background Check',
+      dataIndex: 'backgroundCheckStatus',
+      render: (s: string) => <StatusBadge status={s} />,
+    },
     {
       title: 'Identity Verification',
       dataIndex: 'identityVerificationStatus',
       render: (s: IdentityVerificationStatus) => <IdentityVerificationBadge status={s} />,
     },
     { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-    createActionsColumn(
+    createActionsColumn<DriverTableRow>(
       () => getDriverManagementActionItems(),
       (key, record) => handleDriverAction(key, record, adminActions, verificationHandlers),
     ),
   ]
 
   const segmentTable = (
-    <Table
-      loading={isLoading}
-      columns={columns}
-      dataSource={filtered}
-      rowKey="id"
-      scroll={{ x: 1500 }}
-      {...createTableRowProps<Driver>((record) => openDrawer(record))}
-      pagination={{
-        current: page,
-        total: data?.total,
-        pageSize: 10,
-        onChange: setPage,
-        showSizeChanger: false,
-      }}
-    />
+    <>
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <SearchingInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search drivers..."
+          className="flex-1"
+        />
+        {validTab === 'overview' && (
+          <>
+            <Select
+              allowClear
+              placeholder="Status"
+              className="w-full lg:w-40"
+              value={status || undefined}
+              onChange={(value) => {
+                setStatus(value ?? '')
+                setPage(1)
+              }}
+              options={[
+                { label: 'Active', value: 'approved' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Suspended', value: 'suspended' },
+              ]}
+            />
+            <Select
+              allowClear
+              placeholder="Filter by tier"
+              className="w-full lg:w-44"
+              value={tierFilter || undefined}
+              onChange={(value) => {
+                setTierFilter(value ?? '')
+                setPage(1)
+              }}
+              options={[
+                { label: 'Platinum', value: 'Platinum' },
+                { label: 'Diamond', value: 'Diamond' },
+                { label: 'Elite', value: 'Elite' },
+              ]}
+            />
+          </>
+        )}
+      </div>
+
+      <Table
+        loading={isLoading || isFetching}
+        columns={columns}
+        dataSource={rows}
+        rowKey="id"
+        scroll={{ x: 1500 }}
+        pagination={false}
+        {...createTableRowProps<DriverTableRow>((record) => openDrawer(record))}
+      />
+
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(totalPages, 1)}
+        totalItems={totalItems}
+        itemsPerPage={limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(next) => {
+          setLimit(next)
+          setPage(1)
+        }}
+      />
+    </>
   )
 
   return (
-    <PageShell title="Driver Management" description="Manage driver onboarding, compliance, identity verification, and lifecycle.">
+    <PageShell
+      title="Driver Management"
+      description="Manage driver onboarding, compliance, identity verification, and lifecycle."
+    >
       {validTab === 'overview' && <DriverVerificationOverviewCards />}
 
-      {validTab === 'overview' && (
-        <div className="glass-card mb-4 mt-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
-          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-            <TableFilters
-              variant="inline"
-              search={search}
-              onSearchChange={setSearch}
-              searchPlaceholder="Search drivers..."
-              status={status}
-              onStatusChange={setStatus}
-              statusOptions={[
-                { label: 'Active', value: 'active' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Suspended', value: 'suspended' },
-                { label: 'Deactivated', value: 'deactivated' },
-              ]}
-            />
-          </div>
-          <Select
-            placeholder="Filter by tier"
-            value={tierFilter || undefined}
-            onChange={setTierFilter}
-            allowClear
-            options={[
-              { label: 'Journey', value: 'journey' },
-              { label: 'Pro Go', value: 'pro_go' },
-              { label: 'Elite', value: 'elite' },
-              { label: 'Platinum', value: 'platinum' },
-              { label: 'Diamond', value: 'diamond' },
-            ]}
-            className="!min-w-[180px] sm:mb-4"
-          />
-          <Select
-            value={identityStatus || undefined}
-            onChange={setIdentityStatus}
-            allowClear
-            options={identityStatusOptions}
-            placeholder="Identity status"
-            className="!min-w-[220px] sm:mb-4"
-          />
-        </div>
-      )}
-
-      <div className={`glass-card p-4 ${validTab === 'overview' ? '' : 'mt-6'}`}>
+      <div className={`glass-card p-4 ${validTab === 'overview' ? 'mt-6' : ''}`}>
         <Tabs
           activeKey={validTab}
           onChange={(key) => {
             setPage(1)
+            setSearchTerm('')
+            setStatus('')
+            setTierFilter('')
             setSearchParams({ tab: key })
           }}
           items={[
@@ -305,19 +399,4 @@ export default function DriversPage() {
       <AdminActionHost actions={adminActions} />
     </PageShell>
   )
-}
-
-function nextTierLabel(currentTier?: string) {
-  const order = ['journey', 'pro_go', 'elite', 'platinum', 'diamond']
-  const labels: Record<string, string> = {
-    journey: 'Pro Go',
-    pro_go: 'Elite',
-    pro: 'Elite',
-    elite: 'Platinum',
-    platinum: 'Diamond',
-    diamond: 'Diamond',
-  }
-  if (!currentTier) return 'Next Tier'
-  const idx = order.indexOf(currentTier)
-  return idx >= 0 ? labels[currentTier] : 'Next Tier'
 }
