@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Table } from 'antd'
 import { Link } from 'react-router-dom'
 import {
@@ -9,9 +9,11 @@ import {
   openPassengerDetails,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
+import { mapLivePassengerItem } from '@/features/passengers/mapPassengerManagement'
 import type { useAdminActions } from '@/hooks/useAdminActions'
-import { useGetPassengersQuery } from '@/services/api'
+import { useGetAllLiveActivityPassengersQuery } from '@/redux/api/passengersApi'
 import type { Passenger } from '@/types'
 
 interface ActivePassengersTabProps {
@@ -19,37 +21,47 @@ interface ActivePassengersTabProps {
 }
 
 export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) {
-  const [search, setSearch] = useState('')
-  const { data, isLoading } = useGetPassengersQuery({ page: 1, pageSize: 100, search })
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const activePassengers = useMemo(() => {
-    const rows = data?.data.filter((p) => p.status === 'active') ?? []
-    if (!search.trim()) return rows
-    const q = search.trim().toLowerCase()
-    return rows.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.id.toLowerCase().includes(q) ||
-        p.city.toLowerCase().includes(q),
-    )
-  }, [data?.data, search])
+  const { data, isLoading, isFetching } = useGetAllLiveActivityPassengersQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const rows = (data?.data ?? []).map(mapLivePassengerItem)
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
+  const totalItems = meta?.totalItems ?? 0
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-alygo-text-muted">
-        Real-time passenger activity monitor — online status, account health, and recent engagement.
+        Real-time passenger activity monitor — online status, account health, and recent
+        engagement.
       </p>
-      <TableFilters
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search active passengers..."
+      <SearchingInput
+        value={searchTerm}
+        onChange={handleSearchChange}
+        placeholder="Search live passengers..."
       />
       <Table
-        loading={isLoading}
+        loading={isLoading || isFetching}
         rowKey="id"
-        dataSource={activePassengers}
+        dataSource={rows}
+        pagination={false}
         scroll={{ x: 900 }}
-        {...createTableRowProps<Passenger>((record) => openPassengerDetails(record, adminActions))}
+        locale={{ emptyText: 'No live passengers right now' }}
+        {...createTableRowProps<Passenger>((record) =>
+          openPassengerDetails(record, adminActions),
+        )}
         columns={[
           {
             title: 'Passenger',
@@ -60,16 +72,38 @@ export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) 
               </Link>
             ),
           },
-          { title: 'ID', dataIndex: 'id' },
-          { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
+          {
+            title: 'ID',
+            dataIndex: 'id',
+            width: 120,
+            render: (id: string) => (
+              <span className="font-mono text-xs text-white">{id.slice(-8)}</span>
+            ),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (s: string) => <StatusBadge status={s} />,
+          },
           { title: 'Trips', dataIndex: 'completedTrips' },
           { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
-          { title: 'City', dataIndex: 'city' },
+          { title: 'City', dataIndex: 'city', ellipsis: true },
           createActionsColumn<Passenger>(
             () => getPassengerActionItems(),
             (key, record) => handlePassengerAction(key, record, adminActions),
           ),
         ]}
+      />
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(totalPages, 1)}
+        totalItems={totalItems}
+        itemsPerPage={limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(next) => {
+          setLimit(next)
+          setPage(1)
+        }}
       />
     </div>
   )
