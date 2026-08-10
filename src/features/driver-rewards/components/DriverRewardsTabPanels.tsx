@@ -7,8 +7,8 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TableFilters } from '@/components/common/TableFilters'
 import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { getRewardsConfigActionItems } from '@/features/driver-rewards/driverRewardsConfigHelpers'
 import {
   buildPointRuleWritePayload,
@@ -57,15 +57,21 @@ function ConfigTableHeader({
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <TableFilters
-        variant="inline"
-        search={search}
-        onSearchChange={onSearchChange}
-        searchPlaceholder={searchPlaceholder}
-        statusOptions={REWARDS_STATUS_OPTIONS}
-        status={status}
-        onStatusChange={onStatusChange}
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchingInput
+          value={search}
+          onChange={onSearchChange}
+          placeholder={searchPlaceholder}
+        />
+        <Select
+          placeholder="Filter by status"
+          value={status || undefined}
+          onChange={onStatusChange}
+          allowClear
+          options={REWARDS_STATUS_OPTIONS}
+          className="!min-w-[180px]"
+        />
+      </div>
       <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={onAdd}>
         {addLabel}
       </Button>
