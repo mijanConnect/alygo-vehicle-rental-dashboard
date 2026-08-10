@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button, Table } from 'antd'
 import { CreditCard, Download } from 'lucide-react'
 import {
@@ -8,31 +9,83 @@ import {
   handleFinanceAction,
   openTransactionDetails,
 } from '@/components/admin'
+import { StatusBadge } from '@/components/common/StatusBadge'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { ChartCard, RevenueTrendChart } from '@/components/charts/AnalyticsCharts'
-import {
-  MOCK_PAYOUTS,
-  MOCK_TRANSACTIONS,
-  WALLET_SUMMARY,
-} from '@/features/finance/financeData'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { useAdminActions } from '@/hooks/useAdminActions'
-import { useGetDashboardKpisQuery, useGetRevenueTrendQuery } from '@/services/api'
-import { formatCurrency } from '@/utils/format'
+import {
+  useGetFinancialPayoutsQuery,
+  useGetFinancialRevenueSummaryQuery,
+  useGetFinancialTransactionsQuery,
+  useGetFinancialWalletsSummaryQuery,
+} from '@/redux/api/finalcialCenter'
+import type {
+  FinancePayoutItem,
+  FinanceTransactionItem,
+} from '@/redux/api/finalcialCenter'
+import type { ChartPoint, KpiMetric } from '@/types'
+import { formatCurrency, formatDateTime, formatNumber } from '@/utils/format'
 
 export function FinanceRevenuePanel() {
-  const { data: trend = [] } = useGetRevenueTrendQuery()
-  const { data: kpis = [] } = useGetDashboardKpisQuery()
-  const revenueKpis = kpis.filter((k) => k.key.includes('revenue') || k.key.includes('Revenue'))
+  const { data, isLoading } = useGetFinancialRevenueSummaryQuery()
+
+  const kpis: KpiMetric[] = [
+    {
+      key: 'revenueToday',
+      label: 'Revenue Today',
+      value: data?.revenue.today ?? 0,
+      change: 0,
+      format: 'currency',
+      icon: 'dollar',
+    },
+    {
+      key: 'revenueMonth',
+      label: 'Revenue This Month',
+      value: data?.revenue.thisMonth ?? 0,
+      change: 0,
+      format: 'currency',
+      icon: 'dollar',
+    },
+    {
+      key: 'totalRevenue',
+      label: 'Total Revenue',
+      value: data?.summary.totalRevenue ?? 0,
+      change: 0,
+      format: 'currency',
+      icon: 'dollar',
+    },
+    {
+      key: 'platformEarnings',
+      label: 'Platform Earnings',
+      value: data?.summary.platformEarnings ?? 0,
+      change: 0,
+      format: 'currency',
+      icon: 'dollar',
+    },
+  ]
+
+  const trend: ChartPoint[] = (data?.trend ?? []).map((point) => ({
+    label: point.label,
+    value: point.revenue,
+  }))
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {revenueKpis.map((k) => (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((k) => (
           <KpiCard key={k.key} metric={k} />
         ))}
       </div>
-      <ChartCard title="Revenue Trend" subtitle="Daily revenue vs forecast">
-        <RevenueTrendChart data={trend} />
+      <ChartCard title="Revenue Trend" subtitle="Daily revenue">
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center text-sm text-alygo-text-muted">
+            Loading trend...
+          </div>
+        ) : (
+          <RevenueTrendChart data={trend} />
+        )}
       </ChartCard>
     </div>
   )
@@ -40,36 +93,104 @@ export function FinanceRevenuePanel() {
 
 export function FinancePayoutsPanel() {
   const adminActions = useAdminActions()
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { data, isLoading, isFetching } = useGetFinancialPayoutsQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const rows = data?.data ?? []
+  const meta = data?.meta
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-alygo-text-muted">Stripe Connect payout management and driver disbursements.</p>
-        <Button type="primary" icon={<CreditCard className="h-4 w-4" />} onClick={() => adminActions.notify('Payout batch queued')}>
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value)
+            setPage(1)
+          }}
+          placeholder="Search payouts..."
+        />
+        <Button
+          type="primary"
+          icon={<CreditCard className="h-4 w-4" />}
+          onClick={() => adminActions.notify('Payout batch queued')}
+        >
           Process Payouts
         </Button>
       </div>
-      <div className="glass-card flex items-center gap-3 p-4 text-sm text-alygo-text-muted">
-        <CreditCard className="h-5 w-5 text-indigo-400" />
-        Stripe integration configured for automated driver payouts
-      </div>
       <Table
-        rowKey="driver"
-        dataSource={MOCK_PAYOUTS}
-        scroll={{ x: 700 }}
-        {...createTableRowProps<typeof MOCK_PAYOUTS[number]>((record) =>
-          openTransactionDetails(record as unknown as Record<string, unknown>, adminActions),
+        loading={isLoading || isFetching}
+        rowKey="payoutId"
+        dataSource={rows}
+        pagination={false}
+        scroll={{ x: 800 }}
+        {...createTableRowProps<FinancePayoutItem>((record) =>
+          openTransactionDetails(
+            {
+              id: record.payoutId,
+              driver: record.driver?.name,
+              amount: record.amount,
+              status: record.status,
+              date: record.date,
+            },
+            adminActions,
+          ),
         )}
         columns={[
-          { title: 'Driver', dataIndex: 'driver' },
-          { title: 'Amount', dataIndex: 'amount', render: (a: number) => formatCurrency(a) },
-          { title: 'Status', dataIndex: 'status' },
-          { title: 'Date', dataIndex: 'date' },
-          createActionsColumn<typeof MOCK_PAYOUTS[number]>(
+          { title: 'Payout ID', dataIndex: 'payoutId' },
+          {
+            title: 'Driver',
+            render: (_: unknown, record: FinancePayoutItem) => record.driver?.name ?? '—',
+          },
+          {
+            title: 'Amount',
+            dataIndex: 'amount',
+            render: (a: number) => formatCurrency(a),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (s: string) => <StatusBadge status={s} />,
+          },
+          {
+            title: 'Date',
+            dataIndex: 'date',
+            render: (d: string) => formatDateTime(d),
+          },
+          createActionsColumn<FinancePayoutItem>(
             () => getFinanceActionItems(),
-            (key, record) => handleFinanceAction(key, record as unknown as Record<string, unknown>, adminActions),
+            (key, record) =>
+              handleFinanceAction(
+                key,
+                {
+                  id: record.payoutId,
+                  driver: record.driver?.name,
+                  amount: record.amount,
+                  status: record.status,
+                  date: record.date,
+                },
+                adminActions,
+              ),
           ),
         ]}
+      />
+      <Pagination
+        currentPage={meta?.page ?? page}
+        totalPages={Math.max(meta?.totalPages ?? 1, 1)}
+        totalItems={meta?.totalItems ?? 0}
+        itemsPerPage={meta?.limit ?? limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(size) => {
+          setLimit(size)
+          setPage(1)
+        }}
       />
       <AdminActionHost actions={adminActions} />
     </div>
@@ -77,21 +198,39 @@ export function FinancePayoutsPanel() {
 }
 
 export function FinanceWalletsPanel() {
+  const { data, isLoading } = useGetFinancialWalletsSummaryQuery()
+
+  if (isLoading || !data) {
+    return (
+      <div className="glass-card p-6 text-center text-sm text-alygo-text-muted">
+        Loading wallets...
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      <p className="text-sm text-alygo-text-muted">Passenger and driver wallet balances across the platform.</p>
+      <p className="text-sm text-alygo-text-muted">
+        Passenger and driver wallet balances across the platform.
+      </p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="glass-card p-5">
           <p className="text-sm text-alygo-text-muted">Total Wallet Balance</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{formatCurrency(WALLET_SUMMARY.totalBalance)}</p>
+          <p className="mt-2 text-3xl font-semibold text-white">
+            {formatCurrency(data.totalWalletBalance)}
+          </p>
         </div>
         <div className="glass-card p-5">
           <p className="text-sm text-alygo-text-muted">Active Wallets</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{WALLET_SUMMARY.activeWallets.toLocaleString()}</p>
+          <p className="mt-2 text-3xl font-semibold text-white">
+            {formatNumber(data.activeWallets)}
+          </p>
         </div>
         <div className="glass-card p-5">
           <p className="text-sm text-alygo-text-muted">Pending Top-ups</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{formatCurrency(WALLET_SUMMARY.pendingTopUps)}</p>
+          <p className="mt-2 text-3xl font-semibold text-white">
+            {formatCurrency(data.pendingTopUps)}
+          </p>
         </div>
       </div>
     </div>
@@ -100,28 +239,103 @@ export function FinanceWalletsPanel() {
 
 export function FinanceTransactionsPanel() {
   const adminActions = useAdminActions()
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { data, isLoading, isFetching } = useGetFinancialTransactionsQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const rows = data?.data ?? []
+  const meta = data?.meta
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-alygo-text-muted">All platform financial transactions including trips, payouts, and refunds.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value)
+            setPage(1)
+          }}
+          placeholder="Search transactions..."
+        />
+        <p className="text-sm text-alygo-text-muted">
+          Platform transactions including trips, payouts, and refunds.
+        </p>
+      </div>
       <Table
-        rowKey="id"
-        dataSource={MOCK_TRANSACTIONS}
-        scroll={{ x: 800 }}
-        {...createTableRowProps<typeof MOCK_TRANSACTIONS[number]>((record) =>
-          openTransactionDetails(record as unknown as Record<string, unknown>, adminActions),
+        loading={isLoading || isFetching}
+        rowKey="transactionId"
+        dataSource={rows}
+        pagination={false}
+        scroll={{ x: 900 }}
+        {...createTableRowProps<FinanceTransactionItem>((record) =>
+          openTransactionDetails(
+            {
+              id: record.transactionId,
+              type: record.type,
+              amount: record.amount,
+              fee: record.platformFee,
+              status: record.status,
+              createdAt: record.createdAt,
+            },
+            adminActions,
+          ),
         )}
         columns={[
-          { title: 'Transaction ID', dataIndex: 'id' },
+          { title: 'Transaction ID', dataIndex: 'transactionId' },
           { title: 'Type', dataIndex: 'type' },
-          { title: 'Amount', dataIndex: 'amount', render: (a: number) => formatCurrency(Math.abs(a)) },
-          { title: 'Platform Fee', dataIndex: 'fee', render: (f: number) => formatCurrency(f) },
-          { title: 'Status', dataIndex: 'status' },
-          createActionsColumn<typeof MOCK_TRANSACTIONS[number]>(
+          {
+            title: 'Amount',
+            dataIndex: 'amount',
+            render: (a: number) => formatCurrency(Math.abs(a)),
+          },
+          {
+            title: 'Platform Fee',
+            dataIndex: 'platformFee',
+            render: (f: number) => formatCurrency(f),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (s: string) => <StatusBadge status={s} />,
+          },
+          {
+            title: 'Created',
+            dataIndex: 'createdAt',
+            render: (d: string) => formatDateTime(d),
+          },
+          createActionsColumn<FinanceTransactionItem>(
             () => getFinanceActionItems(),
-            (key, record) => handleFinanceAction(key, record as unknown as Record<string, unknown>, adminActions),
+            (key, record) =>
+              handleFinanceAction(
+                key,
+                {
+                  id: record.transactionId,
+                  type: record.type,
+                  amount: record.amount,
+                  fee: record.platformFee,
+                  status: record.status,
+                },
+                adminActions,
+              ),
           ),
         ]}
+      />
+      <Pagination
+        currentPage={meta?.page ?? page}
+        totalPages={Math.max(meta?.totalPages ?? 1, 1)}
+        totalItems={meta?.totalItems ?? 0}
+        itemsPerPage={meta?.limit ?? limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(size) => {
+          setLimit(size)
+          setPage(1)
+        }}
       />
       <AdminActionHost actions={adminActions} />
     </div>
@@ -146,13 +360,23 @@ export function FinanceReportsPanel() {
         Export financial reports for accounting, reconciliation, and executive review.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Financial report exported as CSV')}>
+        <Button
+          icon={<Download className="h-4 w-4" />}
+          onClick={() => adminActions.notify('Financial report exported as CSV')}
+        >
           Export CSV
         </Button>
-        <Button icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Financial report exported as PDF')}>
+        <Button
+          icon={<Download className="h-4 w-4" />}
+          onClick={() => adminActions.notify('Financial report exported as PDF')}
+        >
           Export PDF
         </Button>
-        <Button type="primary" icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Financial report exported as Excel')}>
+        <Button
+          type="primary"
+          icon={<Download className="h-4 w-4" />}
+          onClick={() => adminActions.notify('Financial report exported as Excel')}
+        >
           Export Excel
         </Button>
       </div>
