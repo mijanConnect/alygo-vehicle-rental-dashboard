@@ -1,6 +1,7 @@
 export { LostFoundOverviewCards } from './LostFoundOverviewCards'
 export { LostItemTable } from './LostItemTable'
 export { ReportDetailsDrawer } from './ReportDetailsDrawer'
+export { ReturnDetailsDrawer } from './ReturnDetailsDrawer'
 export { ReturnManagementTable } from './ReturnManagementTable'
 export { DeliveryFeeSettingsTable } from './DeliveryFeeSettingsTable'
 export { CategoryManagementTable } from './CategoryManagementTable'

@@ -20,10 +20,10 @@ import type { ReturnRecord, ReturnStatus } from '@/types/lostFound'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import {
   getReturnActionItems,
-  openLostFoundDrawer,
   RETURN_METHOD_LABELS,
   RETURN_STATUS_LABELS,
 } from '@/features/lost-found/lostFoundHelpers'
+import { ReturnDetailsDrawer } from '@/features/lost-found/components/ReturnDetailsDrawer'
 
 function toReturnRecord(row: LostFoundReturnRow): ReturnRecord {
   return {
@@ -38,38 +38,13 @@ function toReturnRecord(row: LostFoundReturnRow): ReturnRecord {
   }
 }
 
-function openReturnDetails(record: LostFoundReturnRow, adminActions: ReturnType<typeof useAdminActions>) {
-  openLostFoundDrawer(
-    `Return — ${record.reportId.slice(-8)}`,
-    [
-      { label: 'Report ID', value: record.reportId },
-      {
-        label: 'Return Method',
-        value: RETURN_METHOD_LABELS[record.returnMethod] ?? record.returnMethod,
-      },
-      { label: 'Passenger', value: record.passengerName },
-      { label: 'Passenger Email', value: record.passengerEmail },
-      { label: 'Passenger Phone', value: record.passengerPhone },
-      { label: 'Driver', value: record.driverName },
-      { label: 'Driver Email', value: record.driverEmail },
-      { label: 'Driver Phone', value: record.driverPhone },
-      { label: 'Scheduled Date', value: formatDateTime(record.scheduledDate) },
-      {
-        label: 'Return Status',
-        value: RETURN_STATUS_LABELS[record.returnStatus] ?? record.returnStatus.replace(/_/g, ' '),
-      },
-      { label: 'Fee', value: formatCurrency(record.fee) },
-    ],
-    adminActions,
-  )
-}
-
 export function ReturnManagementTable() {
   const adminActions = useAdminActions()
 
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
   const [statusRecord, setStatusRecord] = useState<LostFoundReturnRow | null>(null)
 
   const { data, isLoading, isFetching } = useGetLostAndFoundReturnsQuery({
@@ -96,10 +71,14 @@ export function ReturnManagementTable() {
     setPage(1)
   }
 
+  const openDetails = (record: LostFoundReturnRow) => {
+    setSelectedReportId(record.reportId || record.id)
+  }
+
   const handleAction = (key: string, record: LostFoundReturnRow) => {
     switch (key) {
       case 'view':
-        openReturnDetails(record, adminActions)
+        openDetails(record)
         break
       case 'update-status':
         setStatusRecord(record)
@@ -129,9 +108,7 @@ export function ReturnManagementTable() {
         dataSource={rows}
         pagination={false}
         scroll={{ x: 1100 }}
-        {...createTableRowProps<LostFoundReturnRow>((record) =>
-          openReturnDetails(record, adminActions),
-        )}
+        {...createTableRowProps<LostFoundReturnRow>(openDetails)}
         columns={[
           {
             title: 'Report ID',
@@ -181,6 +158,12 @@ export function ReturnManagementTable() {
         onItemsPerPageChange={handleItemsPerPageChange}
       />
 
+      <ReturnDetailsDrawer
+        open={Boolean(selectedReportId)}
+        reportId={selectedReportId}
+        onClose={() => setSelectedReportId(null)}
+      />
+
       {statusRecord && (
         <Modal
           title={`Update Status — ${statusRecord.reportId.slice(-8)}`}
@@ -220,7 +203,6 @@ export function ReturnManagementTable() {
                     value,
                     label,
                   })),
-                  // Ensure current API status is selectable even if not in defaults
                   ...(RETURN_STATUS_LABELS[statusRecord.returnStatus]
                     ? []
                     : [

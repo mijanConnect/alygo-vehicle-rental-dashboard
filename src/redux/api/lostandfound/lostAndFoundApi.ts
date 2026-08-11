@@ -152,6 +152,32 @@ export interface LostFoundReportDetail {
   timeline: LostFoundReportDetailTimelineItem[]
 }
 
+export interface LostFoundReturnInformation {
+  returnMethod: string
+  returnLocation: string | null
+  scheduledAt: string | null
+  completedAt: string | null
+  receivedBy: string | null
+  receiverName: string | null
+  returnNotes: string | null
+}
+
+export interface LostFoundReturnAssignment {
+  assignedAdmin?: string | null
+  assignedAt?: string | null
+  notes?: string | null
+}
+
+export interface LostFoundReturnDetailApi extends LostFoundReportDetailApi {
+  assignment: LostFoundReturnAssignment | null
+  returnInformation: LostFoundReturnInformation | null
+}
+
+export interface LostFoundReturnDetail extends LostFoundReportDetail {
+  assignment: LostFoundReturnAssignment | null
+  returnInformation: LostFoundReturnInformation | null
+}
+
 export interface LostFoundReportsMeta {
   page: number
   limit: number
@@ -291,6 +317,30 @@ function mapReportDetail(data: LostFoundReportDetailApi): LostFoundReportDetail 
         }
       : null,
     timeline: data.timeline ?? [],
+  }
+}
+
+function mapReturnDetail(data: LostFoundReturnDetailApi): LostFoundReturnDetail {
+  return {
+    ...mapReportDetail(data),
+    assignment: data.assignment
+      ? {
+          assignedAdmin: data.assignment.assignedAdmin ?? null,
+          assignedAt: data.assignment.assignedAt ?? null,
+          notes: data.assignment.notes ?? null,
+        }
+      : null,
+    returnInformation: data.returnInformation
+      ? {
+          returnMethod: data.returnInformation.returnMethod || '—',
+          returnLocation: data.returnInformation.returnLocation,
+          scheduledAt: data.returnInformation.scheduledAt,
+          completedAt: data.returnInformation.completedAt,
+          receivedBy: data.returnInformation.receivedBy,
+          receiverName: data.returnInformation.receiverName,
+          returnNotes: data.returnInformation.returnNotes,
+        }
+      : null,
   }
 }
 
@@ -523,6 +573,15 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
       },
       providesTags: ['LostAndFoundReturns'],
     }),
+    getSingleLostAndFoundReturn: builder.query<LostFoundReturnDetail, string>({
+      query: (id) => ({
+        url: `/admin/lost-found/${id}/return-details`,
+        method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<LostFoundReturnDetailApi>) =>
+        mapReturnDetail(response.data),
+      providesTags: (_res, _err, id) => [{ type: 'LostAndFoundReturns', id }],
+    }),
     getLostAndFoundDeliveryFee: builder.query<LostFoundDeliveryFeeSettings, void>({
       query: () => ({
         url: '/admin/lost-found/delivery-fee',
@@ -713,6 +772,7 @@ export const {
   useGetLostAndFoundReportsQuery,
   useGetSingleLostAndFoundReportQuery,
   useGetLostAndFoundReturnsQuery,
+  useGetSingleLostAndFoundReturnQuery,
   useGetLostAndFoundDeliveryFeeQuery,
   useUpdateLostAndFoundDeliveryFeeMutation,
   useGetDriverCompensationQuery,
