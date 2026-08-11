@@ -6,7 +6,7 @@ import {
   Building2,
   Car,
   CreditCard,
-  FileCheck,
+  // FileCheck,
   Gauge,
   Globe2,
   LayoutDashboard,
@@ -19,7 +19,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
-  Gift,
+  // Gift,
 } from 'lucide-react'
 import type { Permission } from '@/types'
 
