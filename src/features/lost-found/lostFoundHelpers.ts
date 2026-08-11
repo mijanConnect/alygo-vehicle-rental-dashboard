@@ -30,6 +30,7 @@ export const REPORT_STATUS_LABELS: Record<string, string> = {
   pickup_scheduled: 'Pickup Scheduled',
   delivery_scheduled: 'Delivery Scheduled',
   waiting_payment: 'Waiting Payment',
+  return_completed: 'Return Completed',
   completed: 'Completed',
   closed: 'Closed',
 }

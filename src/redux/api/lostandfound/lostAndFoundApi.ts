@@ -67,6 +67,91 @@ export interface LostFoundReportRow {
   timeline: []
 }
 
+export interface LostFoundReportDetailPhoto {
+  id: string
+  url: string
+}
+
+export interface LostFoundReportDetailTimelineItem {
+  status: string
+  title: string
+  description: string
+  createdBy: string
+  createdAt: string
+}
+
+export interface LostFoundReportDetailApi {
+  report: {
+    reportId: string
+    reportNumber: string
+    currentStatus: string
+    createdAt: string
+  }
+  passenger: {
+    id: string
+    fullName: string
+    email: string
+    phone: string
+    avatar?: string | null
+  } | null
+  driver: {
+    id: string
+    fullName: string
+    driverId: string
+    rating: number
+    avatar?: string | null
+  } | null
+  trip: {
+    rideId: string
+    bookingReference: string
+    pickupAddress: string
+    destinationAddress: string
+    tripDate: string
+  } | null
+  lostItem: {
+    category: string
+    itemName: string
+    description: string
+    photos: LostFoundReportDetailPhoto[]
+  } | null
+  timeline: LostFoundReportDetailTimelineItem[]
+}
+
+export interface LostFoundReportDetail {
+  reportId: string
+  reportNumber: string
+  status: string
+  createdAt: string
+  passenger: {
+    id: string
+    fullName: string
+    email: string
+    phone: string
+    avatar?: string | null
+  } | null
+  driver: {
+    id: string
+    fullName: string
+    driverCode: string
+    rating: number
+    avatar?: string | null
+  } | null
+  trip: {
+    rideId: string
+    bookingReference: string
+    pickupAddress: string
+    destinationAddress: string
+    tripDate: string
+  } | null
+  lostItem: {
+    category: string
+    itemName: string
+    description: string
+    photos: LostFoundReportDetailPhoto[]
+  } | null
+  timeline: LostFoundReportDetailTimelineItem[]
+}
+
 export interface LostFoundReportsMeta {
   page: number
   limit: number
@@ -161,6 +246,51 @@ function mapReport(item: LostFoundReportApiItem): LostFoundReportRow {
     status: item.status,
     createdAt: item.createdDate,
     timeline: [],
+  }
+}
+
+function mapReportDetail(data: LostFoundReportDetailApi): LostFoundReportDetail {
+  return {
+    reportId: data.report?.reportId ?? '',
+    reportNumber: data.report?.reportNumber ?? '—',
+    status: data.report?.currentStatus ?? '—',
+    createdAt: data.report?.createdAt ?? '—',
+    passenger: data.passenger
+      ? {
+          id: data.passenger.id,
+          fullName: data.passenger.fullName,
+          email: data.passenger.email,
+          phone: data.passenger.phone,
+          avatar: data.passenger.avatar,
+        }
+      : null,
+    driver: data.driver
+      ? {
+          id: data.driver.id,
+          fullName: data.driver.fullName,
+          driverCode: data.driver.driverId,
+          rating: data.driver.rating ?? 0,
+          avatar: data.driver.avatar,
+        }
+      : null,
+    trip: data.trip
+      ? {
+          rideId: data.trip.rideId || '—',
+          bookingReference: data.trip.bookingReference || '—',
+          pickupAddress: data.trip.pickupAddress || '—',
+          destinationAddress: data.trip.destinationAddress || '—',
+          tripDate: data.trip.tripDate || '—',
+        }
+      : null,
+    lostItem: data.lostItem
+      ? {
+          category: data.lostItem.category || '—',
+          itemName: data.lostItem.itemName || '—',
+          description: data.lostItem.description || '—',
+          photos: data.lostItem.photos ?? [],
+        }
+      : null,
+    timeline: data.timeline ?? [],
   }
 }
 
@@ -357,6 +487,15 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
         }
       },
       providesTags: ['LostAndFoundReports'],
+    }),
+    getSingleLostAndFoundReport: builder.query<LostFoundReportDetail, string>({
+      query: (id) => ({
+        url: `/admin/lost-found/${id}/details`,
+        method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<LostFoundReportDetailApi>) =>
+        mapReportDetail(response.data),
+      providesTags: (_res, _err, id) => [{ type: 'LostAndFoundReports', id }],
     }),
 
     getLostAndFoundReturns: builder.query<
@@ -572,6 +711,7 @@ export const lostAndFoundApi = baseApi.injectEndpoints({
 export const {
   useGetLostAndFoundOverviewQuery,
   useGetLostAndFoundReportsQuery,
+  useGetSingleLostAndFoundReportQuery,
   useGetLostAndFoundReturnsQuery,
   useGetLostAndFoundDeliveryFeeQuery,
   useUpdateLostAndFoundDeliveryFeeMutation,

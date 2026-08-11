@@ -56,7 +56,7 @@ export function LostItemTable() {
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const [selectedReport, setSelectedReport] = useState<LostItemReport | null>(null)
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
   const [assignRecord, setAssignRecord] = useState<LostFoundReportRow | null>(null)
   const [closeRecord, setCloseRecord] = useState<LostFoundReportRow | null>(null)
   const [assignAdmin, setAssignAdmin] = useState('Admin Ops')
@@ -86,7 +86,7 @@ export function LostItemTable() {
   }
 
   const openDetails = (record: LostFoundReportRow) => {
-    setSelectedReport(toLostItemReport(record))
+    setSelectedReportId(record.id)
   }
 
   const handleAction = (key: string, record: LostFoundReportRow) => {
@@ -145,7 +145,9 @@ export function LostItemTable() {
             dataIndex: 'tripId',
             width: 120,
             render: (id: string) => (
-              <span className="font-mono text-xs text-white">{id.slice(-8)}</span>
+              <span className="font-mono text-xs text-white">
+                {id ? id.slice(-8) : '—'}
+              </span>
             ),
           },
           { title: 'Item Category', dataIndex: 'itemCategory' },
@@ -179,9 +181,9 @@ export function LostItemTable() {
       />
 
       <ReportDetailsDrawer
-        open={Boolean(selectedReport)}
-        report={selectedReport}
-        onClose={() => setSelectedReport(null)}
+        open={Boolean(selectedReportId)}
+        reportId={selectedReportId}
+        onClose={() => setSelectedReportId(null)}
       />
 
       <Modal
