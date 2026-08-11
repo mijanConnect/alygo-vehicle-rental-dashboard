@@ -100,6 +100,46 @@ export interface UpdateDutyPolicyStatusArgs {
   status: DutyPolicyStatus
 }
 
+export interface DriverDutyHourMonitoringItem {
+  driverId: string
+  name: string
+  email: string
+  phone: string
+  profileImage?: string
+  city: string
+  state: string
+  maxHours: number
+  resetHours: number
+  dailyLimit: number
+  weeklyLimit: number
+  breakMinutes: number
+  drivingHoursToday: number
+  remainingHoursToday: number
+  continuousDrivingHours: number
+  status: string
+}
+
+export interface DriverDutyHourMonitoringQueryParams {
+  page?: number
+  limit?: number
+  searchTerm?: string
+  status?: string
+}
+
+export interface DriverDutyHourMonitoringListResult {
+  data: DriverDutyHourMonitoringItem[]
+  meta: {
+    page: number
+    limit: number
+    totalItems: number
+    totalPages: number
+  }
+}
+
+export interface DriverDutyHourAnalyticsItem {
+  [key: string]: unknown
+}
+
 function mapMeta(meta: PaginationMeta | undefined, count: number) {
   return {
     page: meta?.page ?? 1,
@@ -209,6 +249,36 @@ export const driverDutyPoliciesApi = baseApi.injectEndpoints({
         { type: 'DrivingHours', id: 'LIST-all' },
       ],
     }),
+
+    getDriverDutyHourMonitoring: builder.query<
+      DriverDutyHourMonitoringListResult,
+      DriverDutyHourMonitoringQueryParams | void
+    >({
+      query: ({ page = 1, limit = 10, searchTerm, status } = {}) => ({
+        url: '/admin/duty-hour/monitoring/drivers',
+        method: 'GET',
+        params: cleanObject({
+          page,
+          limit,
+          searchTerm: searchTerm?.trim(),
+          status,
+        }),
+      }),
+      transformResponse: (response: PaginatedApiResponse<DriverDutyHourMonitoringItem>) => ({
+        data: response.data ?? [],
+        meta: mapMeta(response.meta, response.data?.length ?? 0),
+      }),
+      providesTags: [{ type: 'DrivingHours', id: 'MONITORING' }],
+    }),
+
+    getDriverDutyHourAnalytics: builder.query<DriverDutyHourAnalyticsItem, void>({
+      query: () => ({
+        url: '/admin/duty-hour/analytics',
+        method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<DriverDutyHourAnalyticsItem>) => response.data,
+      providesTags: [{ type: 'DrivingHours', id: 'ANALYTICS' }],
+    }),
   }),
 })
 
@@ -219,4 +289,6 @@ export const {
   useUpdateDriverDutyPolicyMutation,
   useUpdateDriverDutyPolicyStatusMutation,
   useDeleteDriverDutyPolicyMutation,
+  useGetDriverDutyHourMonitoringQuery,
+  useGetDriverDutyHourAnalyticsQuery,
 } = driverDutyPoliciesApi
