@@ -12,12 +12,12 @@ export interface DutyPolicyFormValues {
   cityId?: string
   zoneId?: string
   airportId?: string
-  maxDrivingHoursPerDay: number
-  maxContinuousDrivingHours: number
-  breakAfterHours: number
-  breakDurationMinutes: number
-  maxTripsPerDay: number
-  minimumRestHours: number
+  maxDrivingHoursPerDay?: number | null
+  maxContinuousDrivingHours?: number | null
+  breakAfterHours?: number | null
+  breakDurationMinutes?: number | null
+  maxTripsPerDay?: number | null
+  minimumRestHours?: number | null
 }
 
 export function resolveLocationId(value: DutyPolicyLocationField): string {
@@ -41,20 +41,16 @@ export function resolveLocationName(value: DutyPolicyLocationField): string {
 }
 
 export function defaultDutyPolicyFormValues(
-  scopeType: DutyPolicyScopeType,
+  _scopeType: DutyPolicyScopeType,
 ): DutyPolicyFormValues {
   return {
     name: '',
-    maxDrivingHoursPerDay: 8,
-    maxContinuousDrivingHours: 4,
-    breakAfterHours: 4,
-    breakDurationMinutes: 30,
-    maxTripsPerDay: 20,
-    minimumRestHours: 8,
-    ...(scopeType === 'state' ? { stateId: undefined } : {}),
-    ...(scopeType === 'city' ? { cityId: undefined } : {}),
-    ...(scopeType === 'zone' ? { zoneId: undefined } : {}),
-    ...(scopeType === 'airport' ? { airportId: undefined } : {}),
+    maxDrivingHoursPerDay: null,
+    maxContinuousDrivingHours: null,
+    breakAfterHours: null,
+    breakDurationMinutes: null,
+    maxTripsPerDay: null,
+    minimumRestHours: null,
   }
 }
 
@@ -82,12 +78,12 @@ export function buildDutyPolicyWritePayload(
   const payload: DutyPolicyWritePayload = {
     name: values.name.trim(),
     scopeType,
-    maxDrivingHoursPerDay: values.maxDrivingHoursPerDay,
-    maxContinuousDrivingHours: values.maxContinuousDrivingHours,
-    breakAfterHours: values.breakAfterHours,
-    breakDurationMinutes: values.breakDurationMinutes,
-    maxTripsPerDay: values.maxTripsPerDay,
-    minimumRestHours: values.minimumRestHours,
+    maxDrivingHoursPerDay: Number(values.maxDrivingHoursPerDay ?? 0),
+    maxContinuousDrivingHours: Number(values.maxContinuousDrivingHours ?? 0),
+    breakAfterHours: Number(values.breakAfterHours ?? 0),
+    breakDurationMinutes: Number(values.breakDurationMinutes ?? 0),
+    maxTripsPerDay: Number(values.maxTripsPerDay ?? 0),
+    minimumRestHours: Number(values.minimumRestHours ?? 0),
   }
 
   if (scopeType === 'state' && values.stateId) payload.stateId = values.stateId

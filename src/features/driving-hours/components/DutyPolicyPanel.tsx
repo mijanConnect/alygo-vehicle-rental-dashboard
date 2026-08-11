@@ -355,32 +355,44 @@ export function DutyPolicyPanel({ scopeType }: DutyPolicyPanelProps) {
             <Form.Item
               name="maxDrivingHoursPerDay"
               label="Max Driving Hours / Day"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Required' }]}
             >
-              <InputNumber min={1} max={24} className="w-full" addonAfter="hours" />
+              <InputNumber min={0} max={24} className="w-full" addonAfter="hours" placeholder="0" />
             </Form.Item>
             <Form.Item
               name="maxContinuousDrivingHours"
               label="Max Continuous Hours"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Required' }]}
             >
-              <InputNumber min={1} max={24} className="w-full" addonAfter="hours" />
+              <InputNumber min={0} max={24} className="w-full" addonAfter="hours" placeholder="0" />
             </Form.Item>
-            <Form.Item name="breakAfterHours" label="Break After" rules={[{ required: true }]}>
-              <InputNumber min={1} max={24} className="w-full" addonAfter="hours" />
+            <Form.Item
+              name="breakAfterHours"
+              label="Break After"
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <InputNumber min={0} max={24} className="w-full" addonAfter="hours" placeholder="0" />
             </Form.Item>
             <Form.Item
               name="breakDurationMinutes"
               label="Break Duration"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: 'Required' }]}
             >
-              <InputNumber min={1} max={240} className="w-full" addonAfter="min" />
+              <InputNumber min={0} max={240} className="w-full" addonAfter="min" placeholder="0" />
             </Form.Item>
-            <Form.Item name="maxTripsPerDay" label="Max Trips / Day" rules={[{ required: true }]}>
-              <InputNumber min={1} max={200} className="w-full" />
+            <Form.Item
+              name="maxTripsPerDay"
+              label="Max Trips / Day"
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <InputNumber min={0} max={200} className="w-full" placeholder="0" />
             </Form.Item>
-            <Form.Item name="minimumRestHours" label="Minimum Rest" rules={[{ required: true }]}>
-              <InputNumber min={1} max={24} className="w-full" addonAfter="hours" />
+            <Form.Item
+              name="minimumRestHours"
+              label="Minimum Rest"
+              rules={[{ required: true, message: 'Required' }]}
+            >
+              <InputNumber min={0} max={24} className="w-full" addonAfter="hours" placeholder="0" />
             </Form.Item>
           </div>
         </Form>
