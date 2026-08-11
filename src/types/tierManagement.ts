@@ -42,17 +42,15 @@ export const TIER_ICON_OPTIONS = [
 import type { TierBenefitRules } from '@/types/driverRewards'
 
 export interface TierFormValues {
-  label: string
+  name: string
+  code: string
   level: number
-  tierColor: string
   status: 'active' | 'inactive'
-  requiredTrips: number
-  requiredRating: number
-  requiredAcceptanceRate: number
-  requiredCompletionRate: number
-  requiredSafetyScore: number
+  pointsRequired: number
+  tripsRequired: number
+  ratingRequired: number
+  acceptanceRateRequired: number
   benefitRules: TierBenefitRules
-  notes?: string
 }
 
 /** @deprecated Use TierFormValues */

@@ -1,35 +1,48 @@
 import { Tabs } from 'antd'
+import { useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/common/PageShell'
-import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { CityRulesTable } from '@/features/driving-hours/components/CityRulesTable'
 import { DriverHoursMonitoringTable } from '@/features/driving-hours/components/DriverHoursMonitoringTable'
 import { DrivingHoursAnalytics } from '@/features/driving-hours/components/DrivingHoursAnalytics'
-import { DrivingHoursOverviewCards } from '@/features/driving-hours/components/DrivingHoursOverviewCards'
-import { GlobalPolicySettings } from '@/features/driving-hours/components/GlobalPolicySettings'
-import { StateRulesTable } from '@/features/driving-hours/components/StateRulesTable'
-import { useDrivingHoursRealtime } from '@/features/driving-hours/hooks/useDrivingHoursRealtime'
+import { DutyPolicyPanel } from '@/features/driving-hours/components/DutyPolicyPanel'
+import {
+  DRIVING_HOURS_TAB_LABELS,
+  resolveDrivingHoursTab,
+} from '@/features/driving-hours/drivingHoursNavigation'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+
+const DRIVING_HOURS_TABS = [
+  { key: 'global', label: DRIVING_HOURS_TAB_LABELS.global, children: <DutyPolicyPanel scopeType="global" /> },
+  { key: 'state', label: DRIVING_HOURS_TAB_LABELS.state, children: <DutyPolicyPanel scopeType="state" /> },
+  { key: 'city', label: DRIVING_HOURS_TAB_LABELS.city, children: <DutyPolicyPanel scopeType="city" /> },
+  { key: 'zone', label: DRIVING_HOURS_TAB_LABELS.zone, children: <DutyPolicyPanel scopeType="zone" /> },
+  { key: 'airport', label: DRIVING_HOURS_TAB_LABELS.airport, children: <DutyPolicyPanel scopeType="airport" /> },
+  {
+    key: 'monitoring',
+    label: DRIVING_HOURS_TAB_LABELS.monitoring,
+    children: <DriverHoursMonitoringTable />,
+  },
+  {
+    key: 'analytics',
+    label: DRIVING_HOURS_TAB_LABELS.analytics,
+    children: <DrivingHoursAnalytics />,
+  },
+] as const
 
 export default function DrivingHoursManagementPage() {
   useDocumentTitle('Driving Hours Management')
-  useDrivingHoursRealtime()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const validTab = resolveDrivingHoursTab(searchParams.get('tab'))
 
   return (
     <PageShell
       title="Driving Hours Management"
-      description="Configure maximum driving hours, reset requirements, warning thresholds, and monitor driver compliance."
+      description="Configure driver duty policies by scope, and monitor compliance and analytics."
     >
-      <DrivingHoursOverviewCards />
-
-      <div className="glass-card mt-6 p-4">
+      <div className="glass-card p-4">
         <Tabs
-          defaultActiveKey="policy"
-          items={[
-            { key: 'policy', label: 'Global Policy', children: <GlobalPolicySettings /> },
-            { key: 'state-rules', label: 'State Rules', children: <StateRulesTable /> },
-            { key: 'city-rules', label: 'City Rules', children: <CityRulesTable /> },
-            { key: 'monitoring', label: 'Driver Monitoring', children: <DriverHoursMonitoringTable /> },
-            { key: 'analytics', label: 'Analytics', children: <DrivingHoursAnalytics /> },
-          ]}
+          activeKey={validTab}
+          onChange={(key) => setSearchParams({ tab: key })}
+          items={[...DRIVING_HOURS_TABS]}
         />
       </div>
     </PageShell>

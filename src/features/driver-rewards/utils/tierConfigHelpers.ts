@@ -1,39 +1,4 @@
-import type { DispatchPriorityLevel, DriverLevel, TierBenefitRules, TierBenefitsConfig } from '@/types/driverRewards'
-
-const RESERVATION_ACCESS_LABELS: Record<string, string> = {
-  none: 'No Access',
-  standard: 'Standard Access',
-  priority: 'Priority Access',
-  exclusive: 'Exclusive Priority Access',
-}
-
-export const DISPATCH_PRIORITY_OPTIONS: Array<{ value: DispatchPriorityLevel; label: string }> = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'highest', label: 'Highest' },
-]
-
-export const PREMIUM_RIDE_CATEGORY_OPTIONS = [
-  { value: 'comfort', label: 'Comfort' },
-  { value: 'xl', label: 'XL' },
-  { value: 'black', label: 'Black' },
-  { value: 'black_suv', label: 'Black SUV' },
-]
-
-const DISPATCH_LEVEL_MAP: Record<DispatchPriorityLevel, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-  highest: 5,
-}
-
-function dispatchLevelToPriority(level: number): DispatchPriorityLevel {
-  if (level >= 5) return 'highest'
-  if (level >= 3) return 'high'
-  if (level >= 2) return 'medium'
-  return 'low'
-}
+import type { DriverLevel, TierBenefitRules, TierBenefitsConfig, TierVipSupportLevel } from '@/types/driverRewards'
 
 export type BenefitRuleKey = keyof TierBenefitRules
 
@@ -42,8 +7,29 @@ export interface BenefitSummaryLine {
   value: string
 }
 
-export function formatDispatchPriorityLabel(level: DispatchPriorityLevel): string {
-  return DISPATCH_PRIORITY_OPTIONS.find((o) => o.value === level)?.label ?? level
+export const PREMIUM_RIDE_CATEGORY_OPTIONS = [
+  { value: 'comfort', label: 'Comfort' },
+  { value: 'xl', label: 'XL' },
+  { value: 'black', label: 'Black' },
+  { value: 'black_suv', label: 'Black SUV' },
+]
+
+export const VIP_SUPPORT_LEVEL_OPTIONS: Array<{ value: TierVipSupportLevel; label: string }> = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'vip', label: 'VIP' },
+  { value: 'premium', label: 'Premium' },
+]
+
+const RESERVATION_ACCESS_LABELS: Record<string, string> = {
+  none: 'No Access',
+  standard: 'Standard Access',
+  priority: 'Priority Access',
+  exclusive: 'Exclusive Priority Access',
+}
+
+function toSupportLevel(value: unknown): TierVipSupportLevel {
+  if (value === 'vip' || value === 'premium' || value === 'basic') return value
+  return 'basic'
 }
 
 export function formatPremiumCategories(categories: string[]): string {
@@ -55,28 +41,20 @@ export function formatPremiumCategories(categories: string[]): string {
 
 export function getBenefitSummaryLines(key: BenefitRuleKey, rules: TierBenefitRules): BenefitSummaryLine[] {
   switch (key) {
-    case 'destinationFilter': {
-      if (rules.destinationFilter.unlimited) {
-        return [{ label: 'Access', value: 'Unlimited' }]
-      }
-      return [
-        { label: 'Filters Allowed', value: String(rules.destinationFilter.filtersAllowed) },
-        { label: 'Daily Limit', value: String(rules.destinationFilter.dailyLimit) },
-        { label: 'Weekly Limit', value: String(rules.destinationFilter.weeklyLimit) },
-      ]
-    }
+    case 'destinationFilter':
+      return [{ label: 'Daily Limit', value: String(rules.destinationFilter.dailyLimit) }]
     case 'priorityDispatch':
-      return [{ label: 'Level', value: formatDispatchPriorityLabel(rules.priorityDispatch.priorityLevel) }]
+      return [{ label: 'Boost Multiplier', value: `${rules.priorityDispatch.boostMultiplier.toFixed(2)}x` }]
     case 'reservationAccess':
-      return [{ label: 'Advance Booking', value: `${rules.reservationAccess.advanceBookingHours} Hours` }]
+      return [{ label: 'Advance Booking', value: `${rules.reservationAccess.maxAdvanceHours} Hours` }]
     case 'premiumRideAccess':
       return [{ label: 'Categories', value: formatPremiumCategories(rules.premiumRideAccess.allowedCategories) }]
     case 'airportQueuePriority':
-      return [{ label: 'Queue Level', value: String(rules.airportQueuePriority.queuePriorityLevel) }]
+      return [{ label: 'Priority Position', value: String(rules.airportQueuePriority.priorityPosition) }]
     case 'bonusMultiplier':
       return [{ label: 'Multiplier', value: `${rules.bonusMultiplier.multiplierValue.toFixed(2)}x` }]
     case 'vipSupport':
-      return [{ label: 'Support', value: 'Dedicated VIP channel' }]
+      return [{ label: 'Support Level', value: rules.vipSupport.supportLevel }]
     default:
       return []
   }
@@ -133,26 +111,24 @@ export function formatReservationAccess(access: TierBenefitsConfig['reservationA
 }
 
 export function parseBenefitRules(benefits: TierBenefitsConfig): TierBenefitRules {
-  const unlimited = benefits.destinationFiltersUnlimited ?? false
   const destinationEnabled =
     benefits.destinationFilterActive ??
-    (unlimited || benefits.destinationFilters > 0 || benefits.dailyUsageLimit > 0)
+    (Boolean(benefits.destinationFiltersUnlimited) ||
+      benefits.destinationFilters > 0 ||
+      benefits.dailyUsageLimit > 0)
 
   return {
     destinationFilter: {
       enabled: destinationEnabled,
-      filtersAllowed: benefits.destinationFilters,
       dailyLimit: benefits.dailyUsageLimit,
-      weeklyLimit: benefits.weeklyUsageLimit,
-      unlimited,
     },
     priorityDispatch: {
       enabled: benefits.flags.priorityDispatch,
-      priorityLevel: dispatchLevelToPriority(benefits.dispatchPriorityLevel),
+      boostMultiplier: Math.max(1, benefits.dispatchPriorityLevel / 2),
     },
     reservationAccess: {
       enabled: benefits.reservationAccess !== 'none' || benefits.advanceBookingAccess,
-      advanceBookingHours: benefits.advanceBookingHours ?? (benefits.reservationAccess === 'none' ? 0 : 12),
+      maxAdvanceHours: benefits.advanceBookingHours ?? (benefits.reservationAccess === 'none' ? 0 : 12),
     },
     premiumRideAccess: {
       enabled: benefits.flags.premiumRideAccess,
@@ -160,7 +136,7 @@ export function parseBenefitRules(benefits: TierBenefitsConfig): TierBenefitRule
     },
     airportQueuePriority: {
       enabled: benefits.flags.airportQueuePriority,
-      queuePriorityLevel: benefits.airportQueuePriorityLevel ?? Math.max(1, benefits.dispatchPriorityLevel - 1),
+      priorityPosition: benefits.airportQueuePriorityLevel ?? Math.max(0, benefits.dispatchPriorityLevel - 1),
     },
     bonusMultiplier: {
       enabled: benefits.bonusMultiplier > 1,
@@ -168,49 +144,57 @@ export function parseBenefitRules(benefits: TierBenefitsConfig): TierBenefitRule
     },
     vipSupport: {
       enabled: benefits.vipSupportAccess,
+      supportLevel: benefits.vipSupportAccess
+        ? benefits.customerSupportLevel === 'vip'
+          ? 'vip'
+          : 'premium'
+        : 'basic',
     },
   }
 }
 
 export function applyBenefitRules(benefits: TierBenefitsConfig, rules: TierBenefitRules): TierBenefitsConfig {
-  const unlimited = rules.destinationFilter.unlimited
   const destinationEnabled = rules.destinationFilter.enabled
+  const dispatchLevel = rules.priorityDispatch.enabled
+    ? Math.max(1, Math.round(rules.priorityDispatch.boostMultiplier * 2))
+    : 1
 
   const merged: Omit<TierBenefitsConfig, 'flags'> & { flags?: TierBenefitsConfig['flags'] } = {
     ...benefits,
-    destinationFilters: rules.destinationFilter.filtersAllowed,
+    destinationFilters: destinationEnabled ? Math.max(1, rules.destinationFilter.dailyLimit) : 0,
     dailyUsageLimit: rules.destinationFilter.dailyLimit,
-    weeklyUsageLimit: rules.destinationFilter.weeklyLimit,
-    destinationFiltersUnlimited: unlimited,
+    weeklyUsageLimit: rules.destinationFilter.dailyLimit * 7,
+    destinationFiltersUnlimited: false,
     destinationFilterActive: destinationEnabled,
-    dispatchPriorityLevel: rules.priorityDispatch.enabled
-      ? DISPATCH_LEVEL_MAP[rules.priorityDispatch.priorityLevel]
-      : 1,
-    rideMatchingPriority: rules.priorityDispatch.enabled
-      ? DISPATCH_LEVEL_MAP[rules.priorityDispatch.priorityLevel]
-      : 1,
+    dispatchPriorityLevel: dispatchLevel,
+    rideMatchingPriority: dispatchLevel,
     advanceBookingAccess: rules.reservationAccess.enabled,
-    advanceBookingHours: rules.reservationAccess.advanceBookingHours,
+    advanceBookingHours: rules.reservationAccess.maxAdvanceHours,
     reservationAccess: rules.reservationAccess.enabled
-      ? rules.reservationAccess.advanceBookingHours >= 48
+      ? rules.reservationAccess.maxAdvanceHours >= 48
         ? 'exclusive'
-        : rules.reservationAccess.advanceBookingHours >= 24
+        : rules.reservationAccess.maxAdvanceHours >= 24
           ? 'priority'
           : 'standard'
       : 'none',
     preferredRideAllocation: rules.premiumRideAccess.enabled,
     premiumRideCategories: rules.premiumRideAccess.allowedCategories,
-    airportQueuePriorityLevel: rules.airportQueuePriority.queuePriorityLevel,
+    airportQueuePriorityLevel: rules.airportQueuePriority.priorityPosition,
     airportRideBonusEnabled: rules.airportQueuePriority.enabled,
     bonusMultiplier: rules.bonusMultiplier.enabled ? rules.bonusMultiplier.multiplierValue : 1,
     vipSupportAccess: rules.vipSupport.enabled,
-    customerSupportLevel: rules.vipSupport.enabled ? 'vip' : benefits.customerSupportLevel,
+    customerSupportLevel:
+      rules.vipSupport.enabled && rules.vipSupport.supportLevel !== 'basic'
+        ? 'vip'
+        : benefits.customerSupportLevel,
   }
 
   return syncBenefitFlags(merged)
 }
 
-export function syncBenefitFlags(benefits: Omit<TierBenefitsConfig, 'flags'> & { flags?: TierBenefitsConfig['flags'] }): TierBenefitsConfig {
+export function syncBenefitFlags(
+  benefits: Omit<TierBenefitsConfig, 'flags'> & { flags?: TierBenefitsConfig['flags'] },
+): TierBenefitsConfig {
   const flags: TierBenefitsConfig['flags'] = {
     priorityDispatch: benefits.dispatchPriorityLevel >= 2,
     priorityMatching: benefits.rideMatchingPriority >= 2,
@@ -235,29 +219,25 @@ export function deriveActiveBenefitLabels(level: DriverLevel): string[] {
   const labels: string[] = []
 
   if (rules.destinationFilter.enabled) {
-    labels.push(
-      rules.destinationFilter.unlimited
-        ? 'Unlimited Destination Filters'
-        : `${rules.destinationFilter.filtersAllowed} Destination Filters`,
-    )
+    labels.push(`Destination Filter (${rules.destinationFilter.dailyLimit}/day)`)
   }
   if (rules.priorityDispatch.enabled) {
-    labels.push(`Priority Dispatch (${rules.priorityDispatch.priorityLevel})`)
+    labels.push(`Priority Dispatch (${rules.priorityDispatch.boostMultiplier}x)`)
   }
   if (rules.reservationAccess.enabled) {
-    labels.push(`${rules.reservationAccess.advanceBookingHours}h Advance Booking`)
+    labels.push(`${rules.reservationAccess.maxAdvanceHours}h Advance Booking`)
   }
   if (rules.premiumRideAccess.enabled && rules.premiumRideAccess.allowedCategories.length > 0) {
     labels.push(`Premium Rides (${rules.premiumRideAccess.allowedCategories.join(', ')})`)
   }
   if (rules.airportQueuePriority.enabled) {
-    labels.push(`Airport Queue Priority L${rules.airportQueuePriority.queuePriorityLevel}`)
+    labels.push(`Airport Queue Priority #${rules.airportQueuePriority.priorityPosition}`)
   }
   if (rules.bonusMultiplier.enabled) {
     labels.push(`${rules.bonusMultiplier.multiplierValue}x Bonus Multiplier`)
   }
   if (rules.vipSupport.enabled) {
-    labels.push('VIP Support')
+    labels.push(`VIP Support (${rules.vipSupport.supportLevel})`)
   }
 
   return labels
@@ -283,18 +263,14 @@ export function countActiveBenefitRules(rules: TierBenefitRules): number {
 
 export function createDefaultBenefitRules(): TierBenefitRules {
   return {
-    destinationFilter: {
-      enabled: false,
-      filtersAllowed: 0,
-      dailyLimit: 0,
-      weeklyLimit: 0,
-      unlimited: false,
-    },
-    priorityDispatch: { enabled: false, priorityLevel: 'low' },
-    reservationAccess: { enabled: false, advanceBookingHours: 0 },
+    destinationFilter: { enabled: false, dailyLimit: 0 },
+    priorityDispatch: { enabled: false, boostMultiplier: 1 },
+    reservationAccess: { enabled: false, maxAdvanceHours: 0 },
     premiumRideAccess: { enabled: false, allowedCategories: [] },
-    airportQueuePriority: { enabled: false, queuePriorityLevel: 1 },
+    airportQueuePriority: { enabled: false, priorityPosition: 0 },
     bonusMultiplier: { enabled: false, multiplierValue: 1 },
-    vipSupport: { enabled: false },
+    vipSupport: { enabled: false, supportLevel: 'basic' },
   }
 }
+
+export { toSupportLevel }

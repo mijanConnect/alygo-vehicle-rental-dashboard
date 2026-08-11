@@ -1,11 +1,10 @@
-import { Form, Input, InputNumber, Modal, Select, Switch } from 'antd'
+import { Form, Input, Modal, Select } from 'antd'
 import type { CancellationReasonType } from '@/types/cancellation'
 
 export interface ReasonFormValues {
   name: string
+  description: string
   userType: CancellationReasonType
-  sortOrder: number
-  active: boolean
 }
 
 interface ReasonFormModalProps {
@@ -25,9 +24,8 @@ const USER_TYPE_OPTIONS = [
 
 const DEFAULT_VALUES: ReasonFormValues = {
   name: '',
+  description: '',
   userType: 'passenger',
-  sortOrder: 1,
-  active: true,
 }
 
 function ReasonFormModal({
@@ -63,24 +61,31 @@ function ReasonFormModal({
           label="Reason Name"
           rules={[{ required: true, message: 'Please enter a reason name' }]}
         >
-          <Input placeholder="e.g. Changed My Mind" />
+          <Input
+            placeholder="e.g. Driver is taking too long"
+            className="!h-[45px]"
+          />
+        </Form.Item>
+        <Form.Item
+          name="description"
+          label="Description"
+          rules={[{ required: true, message: 'Please enter a description' }]}
+        >
+          <Input.TextArea
+            rows={3}
+            placeholder="Explain when this reason should be used"
+          />
         </Form.Item>
         <Form.Item
           name="userType"
           label="User Type"
           rules={[{ required: true, message: 'Please select a user type' }]}
         >
-          <Select options={USER_TYPE_OPTIONS} disabled={userTypeDisabled} />
-        </Form.Item>
-        <Form.Item
-          name="sortOrder"
-          label="Sort Order"
-          rules={[{ required: true, message: 'Please enter a sort order' }]}
-        >
-          <InputNumber min={1} className="w-full" placeholder="Display order in the mobile app" />
-        </Form.Item>
-        <Form.Item name="active" label="Active" valuePropName="checked">
-          <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+          <Select
+            options={USER_TYPE_OPTIONS}
+            disabled={userTypeDisabled}
+            className="!h-[45px] [&_.ant-select-selector]:!h-[45px] [&_.ant-select-selector]:!items-center"
+          />
         </Form.Item>
       </Form>
     </Modal>
@@ -131,7 +136,6 @@ export function EditReasonModal({
       open={open}
       title="Edit Cancellation Reason"
       initialValues={initialValues}
-      userTypeDisabled
       confirmLoading={confirmLoading}
       onCancel={onCancel}
       onSubmit={onSubmit}

@@ -143,9 +143,9 @@ export const router = createBrowserRouter([
         path: 'pricing',
         children: [
           { index: true, element: withSuspense(<DynamicPricingCenterPage />) },
-          { path: 'rules', element: <Navigate to="/pricing?tab=rules" replace /> },
-          { path: 'surge-zones', element: <Navigate to="/pricing?tab=zones" replace /> },
-          { path: 'surge-history', element: <Navigate to="/pricing?tab=analytics" replace /> },
+          { path: 'rules', element: <Navigate to="/pricing" replace /> },
+          { path: 'surge-zones', element: <Navigate to="/pricing" replace /> },
+          { path: 'surge-history', element: <Navigate to="/pricing" replace /> },
         ],
       },
       { path: 'driver-bonuses', element: withSuspense(<DriverBonusesPage />) },

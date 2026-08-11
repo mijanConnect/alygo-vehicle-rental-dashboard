@@ -1,15 +1,24 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Ban, CheckCircle2, Eye, Pencil, Trash2 } from 'lucide-react'
 import type { ActionMenuItem, DetailField } from '@/components/admin/types'
-import type { DriverLevel, LevelBenefit } from '@/types/driverRewards'
+import { apiBenefitsToRules, countApiBenefitRules } from '@/features/driver-rewards/mapTierManagement'
+import type { TierItem } from '@/redux/api/tiersManagementsApi'
+import type { LevelBenefit } from '@/types/driverRewards'
 import { LEVEL_LABELS } from '@/services/driverRewardsApi'
-import { countActiveBenefitRules, parseBenefitRules } from '@/features/driver-rewards/utils/tierConfigHelpers'
 
-export function getTierManagementActionItems(): ActionMenuItem[] {
-  return [
+export function getTierManagementActionItems(record?: TierItem): ActionMenuItem[] {
+  const items: ActionMenuItem[] = [
     { key: 'view', label: 'View', icon: Eye, group: 1 },
     { key: 'edit', label: 'Edit', icon: Pencil, group: 1 },
-    { key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 2 },
   ]
+
+  if (record?.status === 'active') {
+    items.push({ key: 'deactivate', label: 'Deactivate', icon: Ban, group: 2 })
+  } else if (record) {
+    items.push({ key: 'activate', label: 'Activate', icon: CheckCircle2, group: 2 })
+  }
+
+  items.push({ key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 2 })
+  return items
 }
 
 export function getTierBenefitActionItems(): ActionMenuItem[] {
@@ -19,20 +28,17 @@ export function getTierBenefitActionItems(): ActionMenuItem[] {
   ]
 }
 
-export function buildTierDetailFields(record: DriverLevel): DetailField[] {
-  const rules = parseBenefitRules(record.benefits)
+export function buildTierDetailFields(record: TierItem): DetailField[] {
   return [
-    { label: 'Tier Name', value: record.label },
+    { label: 'Tier Name', value: record.name },
+    { label: 'Code', value: record.code },
     { label: 'Level', value: record.level },
-    { label: 'Trips Required', value: record.requiredTrips },
-    { label: 'Rating Required', value: record.requiredRating },
-    { label: 'Acceptance Rate', value: `${record.requiredAcceptanceRate}%` },
-    { label: 'Completion Rate', value: `${record.requiredCompletionRate}%` },
-    { label: 'Safety Score', value: record.requirements.safetyScore },
-    { label: 'Active Benefits', value: countActiveBenefitRules(rules) },
-    { label: 'Driver Count', value: record.driverCount },
+    { label: 'Points Required', value: record.requirements.pointsRequired },
+    { label: 'Trips Required', value: record.requirements.tripsRequired },
+    { label: 'Rating Required', value: record.requirements.ratingRequired },
+    { label: 'Acceptance Rate', value: `${record.requirements.acceptanceRateRequired}%` },
+    { label: 'Active Benefits', value: countApiBenefitRules(apiBenefitsToRules(record.benefits)) },
     { label: 'Status', value: record.status === 'active' ? 'Active' : 'Inactive' },
-    { label: 'Notes', value: record.description || '—' },
   ]
 }
 

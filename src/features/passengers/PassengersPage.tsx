@@ -1,6 +1,6 @@
+import { useCallback, useMemo, useState } from 'react'
 import { Table, Tabs, type TableProps } from 'antd'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
 import {
   AdminActionHost,
   createActionsColumn,
@@ -11,9 +11,16 @@ import {
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { ActivePassengersTab } from '@/features/passengers/components/ActivePassengersTab'
-import { PassengerComplaintsTab, PassengerRefundsTab } from '@/features/passengers/components/PassengerCaseTabs'
+import {
+  PassengerComplaintsTab,
+  PassengerRefundsTab,
+} from '@/features/passengers/components/PassengerCaseTabs'
+import {
+  mapPassengerListItem,
+} from '@/features/passengers/mapPassengerManagement'
 import {
   DEFAULT_PASSENGER_TAB,
   PASSENGER_TAB_KEYS,
@@ -22,7 +29,10 @@ import {
 } from '@/features/passengers/passengersNavigation'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useGetPassengersQuery } from '@/services/api'
+import {
+  useGetAllSuspendedPassengersQuery,
+  useGetPassengersListQuery,
+} from '@/redux/api/passengersApi'
 import type { Passenger } from '@/types'
 import { formatCurrency } from '@/utils/format'
 
@@ -30,20 +40,41 @@ export default function PassengersPage() {
   useDocumentTitle('Passenger Management')
   const adminActions = useAdminActions()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = (searchParams.get('tab') as PassengerTabKey | null) ?? DEFAULT_PASSENGER_TAB
-  const validTab = PASSENGER_TAB_KEYS.includes(activeTab) ? activeTab : DEFAULT_PASSENGER_TAB
+  const activeTab =
+    (searchParams.get('tab') as PassengerTabKey | null) ?? DEFAULT_PASSENGER_TAB
+  const validTab = PASSENGER_TAB_KEYS.includes(activeTab)
+    ? activeTab
+    : DEFAULT_PASSENGER_TAB
 
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const { data, isLoading } = useGetPassengersQuery({ page, pageSize: 10, search })
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const filtered = useMemo(() => {
-    let rows = data?.data ?? []
-    if (validTab === 'suspended') {
-      rows = rows.filter((p) => p.status === 'suspended' || p.status === 'banned')
+  const listParams = { page, limit, searchTerm }
+
+  const overviewQuery = useGetPassengersListQuery(listParams, {
+    skip: validTab !== 'overview',
+  })
+  const suspendedQuery = useGetAllSuspendedPassengersQuery(listParams, {
+    skip: validTab !== 'suspended',
+  })
+
+  const { rows, isLoading, isFetching, totalItems, totalPages } = useMemo(() => {
+    const query = validTab === 'suspended' ? suspendedQuery : overviewQuery
+    const data = query.data
+    return {
+      rows: (data?.data ?? []).map(mapPassengerListItem),
+      isLoading: query.isLoading,
+      isFetching: query.isFetching,
+      totalItems: data?.meta.totalItems ?? 0,
+      totalPages: data?.meta.totalPages ?? 1,
     }
-    return rows
-  }, [data?.data, validTab])
+  }, [validTab, overviewQuery, suspendedQuery])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
 
   const columns: TableProps<Passenger>['columns'] = [
     {
@@ -55,13 +86,28 @@ export default function PassengersPage() {
         </Link>
       ),
     },
-    { title: 'Passenger ID', dataIndex: 'id' },
-    { title: 'Email', dataIndex: 'email' },
+    {
+      title: 'Passenger ID',
+      dataIndex: 'id',
+      width: 120,
+      render: (id: string) => (
+        <span className="font-mono text-xs text-white">{id.slice(-8)}</span>
+      ),
+    },
+    { title: 'Email', dataIndex: 'email', ellipsis: true },
     { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
     { title: 'Trips', dataIndex: 'completedTrips' },
-    { title: 'Wallet', dataIndex: 'walletBalance', render: (v: number) => formatCurrency(v) },
-    { title: 'City', dataIndex: 'city' },
-    { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
+    {
+      title: 'Wallet',
+      dataIndex: 'walletBalance',
+      render: (v: number) => formatCurrency(v),
+    },
+    { title: 'City', dataIndex: 'city', ellipsis: true },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      render: (s: string) => <StatusBadge status={s} />,
+    },
     createActionsColumn(
       () => getPassengerActionItems(),
       (key, record) => handlePassengerAction(key, record, adminActions),
@@ -69,32 +115,50 @@ export default function PassengersPage() {
   ]
 
   const passengerTable = (
-    <Table
-      loading={isLoading}
-      columns={columns}
-      dataSource={filtered}
-      rowKey="id"
-      scroll={{ x: 1100 }}
-      {...createTableRowProps<Passenger>((record) => openPassengerDetails(record, adminActions))}
-      pagination={{ current: page, total: data?.total, pageSize: 10, onChange: setPage }}
-    />
+    <>
+      <div className="mb-4">
+        <SearchingInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search passengers..."
+        />
+      </div>
+      <Table
+        loading={isLoading || isFetching}
+        columns={columns}
+        dataSource={rows}
+        rowKey="id"
+        scroll={{ x: 1100 }}
+        pagination={false}
+        {...createTableRowProps<Passenger>((record) =>
+          openPassengerDetails(record, adminActions),
+        )}
+      />
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(totalPages, 1)}
+        totalItems={totalItems}
+        itemsPerPage={limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(next) => {
+          setLimit(next)
+          setPage(1)
+        }}
+      />
+    </>
   )
 
   return (
-    <PageShell title="Passenger Management" description="Manage passenger accounts, wallets, and support actions.">
-      {validTab === 'overview' && (
-        <TableFilters
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search passengers..."
-        />
-      )}
-
-      <div className={`glass-card p-4 ${validTab === 'overview' ? 'mt-4' : 'mt-6'}`}>
+    <PageShell
+      title="Passenger Management"
+      description="Manage passenger accounts, wallets, and support actions."
+    >
+      <div className="glass-card mt-6 p-4">
         <Tabs
           activeKey={validTab}
           onChange={(key) => {
             setPage(1)
+            setSearchTerm('')
             setSearchParams({ tab: key })
           }}
           items={[

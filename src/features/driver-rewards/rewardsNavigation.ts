@@ -1,11 +1,11 @@
-export const REWARDS_TAB_KEYS = ['reward-rules', 'bonus-programs', 'penalty-rules'] as const
+export const REWARDS_TAB_KEYS = ['reward-rules', 'penalty-rules', 'admin-override'] as const
 
 export type RewardsTabKey = (typeof REWARDS_TAB_KEYS)[number]
 
 export const REWARDS_TAB_LABELS: Record<RewardsTabKey, string> = {
   'reward-rules': 'Reward Rules',
-  'bonus-programs': 'Bonus Programs',
   'penalty-rules': 'Penalty Rules',
+  'admin-override': 'Admin Override',
 }
 
 export const DEFAULT_REWARDS_TAB: RewardsTabKey = 'reward-rules'
@@ -19,8 +19,11 @@ const LEGACY_TAB_MAP: Record<string, RewardsTabKey> = {
   'points-rules': 'reward-rules',
   'performance-rewards': 'reward-rules',
   'performance-rules': 'reward-rules',
-  'bonus-campaigns': 'bonus-programs',
+  'bonus-campaigns': 'reward-rules',
+  'bonus-programs': 'reward-rules',
   'penalty-rules': 'penalty-rules',
+  override: 'admin-override',
+  'admin-overrides': 'admin-override',
 }
 
 export function resolveRewardsTab(tab: string | null): RewardsTabKey {

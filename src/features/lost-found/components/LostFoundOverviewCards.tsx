@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   CheckCircle2,
   Clock,
   Package,
@@ -8,10 +7,17 @@ import {
   Search,
   Truck,
 } from 'lucide-react'
-import { useGetLostFoundOverviewQuery } from '@/services/lostFoundApi'
+import {
+  useGetLostAndFoundOverviewQuery,
+  type LostFoundOverviewSummary,
+} from '@/redux/api/lostandfound/lostAndFoundApi'
 import { formatNumber } from '@/utils/format'
 
-const overviewConfig = [
+const overviewConfig: {
+  key: keyof LostFoundOverviewSummary
+  label: string
+  icon: typeof Package
+}[] = [
   { key: 'totalReports', label: 'Total Reports', icon: Package },
   { key: 'pendingDriverReview', label: 'Pending Driver Review', icon: Clock },
   { key: 'itemsFound', label: 'Items Found', icon: PackageCheck },
@@ -19,16 +25,15 @@ const overviewConfig = [
   { key: 'pickupScheduled', label: 'Pickup Scheduled', icon: Search },
   { key: 'deliveryScheduled', label: 'Delivery Scheduled', icon: Truck },
   { key: 'completedReturns', label: 'Completed Returns', icon: CheckCircle2 },
-  { key: 'openDisputes', label: 'Open Disputes', icon: AlertTriangle },
-] as const
+]
 
 export function LostFoundOverviewCards() {
-  const { data, isLoading } = useGetLostFoundOverviewQuery()
+  const { data, isLoading } = useGetLostAndFoundOverviewQuery()
 
   if (isLoading || !data) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="glass-card h-28 animate-pulse p-5" />
         ))}
       </div>

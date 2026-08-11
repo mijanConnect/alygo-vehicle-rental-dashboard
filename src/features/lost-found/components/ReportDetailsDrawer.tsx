@@ -8,6 +8,7 @@ const statusLabels: Record<string, string> = {
   not_found: 'Not Found',
   pickup_scheduled: 'Pickup Scheduled',
   delivery_scheduled: 'Delivery Scheduled',
+  waiting_payment: 'Waiting Payment',
   completed: 'Completed',
   closed: 'Closed',
 }

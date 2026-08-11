@@ -3,7 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { router } from '@/routes'
-import { store } from '@/store'
+import { store } from '@/redux/store'
 
 const antTheme = {
   algorithm: theme.darkAlgorithm,

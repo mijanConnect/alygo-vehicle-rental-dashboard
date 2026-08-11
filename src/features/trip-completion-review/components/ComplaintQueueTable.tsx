@@ -1,91 +1,92 @@
-import { useMemo, useState } from 'react'
-import { Form, Input, InputNumber, Modal, Table, Tag } from 'antd'
+import { useCallback, useState } from 'react'
+import { Form, Input, Modal, Select, Table, Tag } from 'antd'
 import {
   AdminActionHost,
   createActionsColumn,
   createTableRowProps,
 } from '@/components/admin'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
-  useAddDriverWarningMutation,
-  useAdjustFareMutation,
-  useApproveRefundMutation,
-  useGetTripComplaintsQuery,
-  usePartialRefundMutation,
-  useRejectComplaintMutation,
-  useSuspendDriverFromComplaintMutation,
-} from '@/services/tripCompletionReviewApi'
-import type { TripCompletionComplaint } from '@/types/tripCompletionReview'
+  useGetAllTripReportsQuery,
+  useUpdateAdminTripCompletionComplaintMutation,
+  type TripComplaintAdminStatus,
+  type TripComplaintRow,
+} from '@/redux/api/tripReportApi'
 import {
   COMPLAINT_STATUS_LABELS,
   getComplaintActionItems,
 } from '@/features/trip-completion-review/tripCompletionReviewHelpers'
 import { ComplaintReviewDrawer } from '@/features/trip-completion-review/components/ComplaintReviewDrawer'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, formatDateTime } from '@/utils/format'
 
 interface ComplaintQueueTableProps {
-  filter?: (complaint: TripCompletionComplaint) => boolean
+  filter?: (complaint: TripComplaintRow) => boolean
   description?: string
 }
 
-export function ComplaintQueueTable({ filter, description }: ComplaintQueueTableProps = {}) {
+const STATUS_OPTIONS: { value: TripComplaintAdminStatus; label: string }[] = [
+  { value: 'open', label: 'Open' },
+  { value: 'investigating', label: 'Investigating' },
+  { value: 'resolved', label: 'Resolved' },
+]
+
+export function ComplaintQueueTable({
+  filter,
+  description,
+}: ComplaintQueueTableProps = {}) {
   const adminActions = useAdminActions()
-  const { data = [], isLoading } = useGetTripComplaintsQuery()
-  const filteredData = useMemo(
-    () => (filter ? data.filter(filter) : data),
-    [data, filter],
-  )
-  const [selected, setSelected] = useState<TripCompletionComplaint | null>(null)
-  const [partialRecord, setPartialRecord] = useState<TripCompletionComplaint | null>(null)
-  const [adjustRecord, setAdjustRecord] = useState<TripCompletionComplaint | null>(null)
-  const [partialAmount, setPartialAmount] = useState(0)
-  const [newFare, setNewFare] = useState(0)
 
-  const [approveRefund] = useApproveRefundMutation()
-  const [partialRefund, { isLoading: partialLoading }] = usePartialRefundMutation()
-  const [rejectComplaint] = useRejectComplaintMutation()
-  const [adjustFare, { isLoading: adjustLoading }] = useAdjustFareMutation()
-  const [addWarning] = useAddDriverWarningMutation()
-  const [suspendDriver] = useSuspendDriverFromComplaintMutation()
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const openDetails = (record: TripCompletionComplaint) => setSelected(record)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [statusRecord, setStatusRecord] = useState<TripComplaintRow | null>(null)
+  const [statusForm] = Form.useForm<{
+    status: TripComplaintAdminStatus
+    adminNote: string
+  }>()
 
-  const handleAction = (key: string, record: TripCompletionComplaint) => {
+  const { data, isLoading, isFetching } = useGetAllTripReportsQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const [updateComplaint, { isLoading: updating }] =
+    useUpdateAdminTripCompletionComplaintMutation()
+
+  const rows = filter ? (data?.data ?? []).filter(filter) : (data?.data ?? [])
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
+  const totalItems = meta?.totalItems ?? 0
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
+
+  const handleItemsPerPageChange = (nextLimit: number) => {
+    setLimit(nextLimit)
+    setPage(1)
+  }
+
+  const handleAction = (key: string, record: TripComplaintRow) => {
     switch (key) {
       case 'view':
-        openDetails(record)
+        setSelectedId(record.complaintId)
         break
-      case 'approve-refund':
-        approveRefund({ id: record.id }).unwrap()
-          .then(() => adminActions.notify('Full refund approved'))
-        break
-      case 'partial-refund':
-        setPartialRecord(record)
-        setPartialAmount(record.fareTotal * 0.5)
-        break
-      case 'reject':
-        rejectComplaint({ id: record.id }).unwrap()
-          .then(() => adminActions.notify('Complaint rejected'))
-        break
-      case 'adjust-fare':
-        setAdjustRecord(record)
-        setNewFare(record.fareTotal)
-        break
-      case 'driver-warning':
-        addWarning(record.id).unwrap()
-          .then(() => adminActions.notify(`Warning added for ${record.driverName}`))
-        break
-      case 'suspend-driver':
-        adminActions.openConfirm({
-          title: 'Suspend Driver',
-          description: `Suspend ${record.driverName} due to trip completion complaint?`,
-          confirmLabel: 'Suspend Driver',
-          danger: true,
-          onConfirm: async () => {
-            await suspendDriver(record.id).unwrap()
-            adminActions.notify(`${record.driverName} suspended`)
-          },
+      case 'update-status':
+        statusForm.setFieldsValue({
+          status:
+            record.status === 'investigating' || record.status === 'resolved'
+              ? record.status
+              : 'open',
+          adminNote: '',
         })
+        setStatusRecord(record)
         break
     }
   }
@@ -95,99 +96,142 @@ export function ComplaintQueueTable({ filter, description }: ComplaintQueueTable
       {description && (
         <p className="mb-4 text-sm text-alygo-text-muted">{description}</p>
       )}
+
+      <div className="mb-4">
+        <SearchingInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search by complaint, passenger, driver..."
+        />
+      </div>
+
       <Table
-        loading={isLoading}
+        loading={isLoading || isFetching}
         rowKey="id"
-        dataSource={filteredData}
-        scroll={{ x: 1400 }}
-        {...createTableRowProps<TripCompletionComplaint>(openDetails)}
+        dataSource={rows}
+        pagination={false}
+        scroll={{ x: 1200 }}
+        {...createTableRowProps<TripComplaintRow>((record) =>
+          setSelectedId(record.complaintId),
+        )}
         columns={[
-          { title: 'Complaint ID', dataIndex: 'id', width: 110 },
-          { title: 'Trip ID', dataIndex: 'tripId', width: 110 },
+          {
+            title: 'Complaint ID',
+            dataIndex: 'complaintId',
+            width: 170,
+            render: (id: string) => (
+              <span className="font-mono text-xs text-white">{id}</span>
+            ),
+          },
+          {
+            title: 'Ride ID',
+            dataIndex: 'rideId',
+            width: 120,
+            render: (id: string) => (
+              <span className="font-mono text-xs text-white">
+                {id ? id.slice(-8) : '—'}
+              </span>
+            ),
+          },
           { title: 'Passenger', dataIndex: 'passengerName' },
           { title: 'Driver', dataIndex: 'driverName' },
           { title: 'Type', dataIndex: 'complaintType' },
           {
             title: 'Distance Delta',
             dataIndex: 'distanceDeltaMeters',
+            width: 130,
             render: (m: number) => `${m}m`,
           },
-          { title: 'Fare', dataIndex: 'fareTotal', render: (f: number) => formatCurrency(f) },
+          {
+            title: 'Fare',
+            dataIndex: 'fare',
+            width: 100,
+            render: (f: number) => formatCurrency(f),
+          },
           {
             title: 'Reported',
             dataIndex: 'reportedAt',
-            render: (d: string) => new Date(d).toLocaleDateString(),
+            width: 170,
+            render: (d: string) => formatDateTime(d),
           },
           {
             title: 'Status',
             dataIndex: 'status',
-            render: (s: string) => <Tag>{COMPLAINT_STATUS_LABELS[s] ?? s}</Tag>,
+            width: 130,
+            render: (s: string) => (
+              <Tag>{COMPLAINT_STATUS_LABELS[s] ?? s.replace(/_/g, ' ')}</Tag>
+            ),
           },
-          createActionsColumn<TripCompletionComplaint>(
+          createActionsColumn<TripComplaintRow>(
             (record) => getComplaintActionItems(record),
             (key, record) => handleAction(key, record),
           ),
         ]}
       />
 
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(totalPages, 1)}
+        totalItems={totalItems}
+        itemsPerPage={limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={handleItemsPerPageChange}
+      />
+
       <ComplaintReviewDrawer
-        open={Boolean(selected)}
-        complaint={selected}
-        onClose={() => setSelected(null)}
+        open={Boolean(selectedId)}
+        complaintId={selectedId}
+        onClose={() => setSelectedId(null)}
       />
 
       <Modal
-        title={`Partial Refund — ${partialRecord?.id}`}
-        open={Boolean(partialRecord)}
-        confirmLoading={partialLoading}
-        onCancel={() => setPartialRecord(null)}
-        onOk={async () => {
-          if (!partialRecord) return
-          await partialRefund({ id: partialRecord.id, amount: partialAmount }).unwrap()
-          adminActions.notify('Partial refund issued')
-          setPartialRecord(null)
-        }}
+        title={`Update Status — ${statusRecord?.complaintId ?? ''}`}
+        open={Boolean(statusRecord)}
+        confirmLoading={updating}
+        onCancel={() => setStatusRecord(null)}
+        onOk={() => statusForm.submit()}
+        okText="Save"
         destroyOnClose
       >
-        <Form layout="vertical" className="mt-4">
-          <Form.Item label="Refund Amount">
-            <InputNumber
-              min={0}
-              max={partialRecord?.fareTotal}
-              prefix="$"
+        <Form
+          form={statusForm}
+          layout="vertical"
+          className="mt-4"
+          onFinish={async (values) => {
+            if (!statusRecord) return
+            try {
+              await updateComplaint({
+                complaintId: statusRecord.complaintId,
+                status: values.status,
+                adminNote: values.adminNote.trim(),
+              }).unwrap()
+              adminActions.notify('Complaint status updated')
+              setStatusRecord(null)
+            } catch {
+              adminActions.notify('Unable to update complaint')
+            }
+          }}
+        >
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: 'Status is required' }]}
+          >
+            <Select
               className="w-full"
-              value={partialAmount}
-              onChange={(v) => setPartialAmount(v ?? 0)}
+              options={STATUS_OPTIONS}
+              optionFilterProp="label"
             />
           </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={`Adjust Fare — ${adjustRecord?.id}`}
-        open={Boolean(adjustRecord)}
-        confirmLoading={adjustLoading}
-        onCancel={() => setAdjustRecord(null)}
-        onOk={async () => {
-          if (!adjustRecord) return
-          await adjustFare({ id: adjustRecord.id, newTotal: newFare }).unwrap()
-          adminActions.notify('Fare adjusted')
-          setAdjustRecord(null)
-        }}
-        destroyOnClose
-      >
-        <Form layout="vertical" className="mt-4">
-          <Form.Item label="New Fare Total">
-            <InputNumber
-              min={0}
-              prefix="$"
-              className="w-full"
-              value={newFare}
-              onChange={(v) => setNewFare(v ?? 0)}
+          <Form.Item
+            name="adminNote"
+            label="Admin Note"
+            rules={[{ required: true, message: 'Admin note is required' }]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="We resolve this issue, thanks a lot for report this issue..."
             />
-          </Form.Item>
-          <Form.Item label="Notes">
-            <Input placeholder="Adjustment reason" />
           </Form.Item>
         </Form>
       </Modal>

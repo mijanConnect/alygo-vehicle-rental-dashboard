@@ -3,10 +3,10 @@ import type { ActionMenuItem, DetailField } from '@/components/admin/types'
 import type { useAdminActions } from '@/hooks/useAdminActions'
 
 type AdminActions = ReturnType<typeof useAdminActions>
+import type { CancellationReasonRow } from '@/redux/api/cancellationApiReason'
 import type {
   CancellationFee,
   CancellationReason,
-  CancellationReasonRow,
   CityCancellationPolicy,
   NoShowPolicy,
 } from '@/types/cancellation'
@@ -16,7 +16,7 @@ import {
 } from '@/features/cancellations/cancellationPolicyHelpers'
 import { formatCurrency } from '@/utils/format'
 
-export function getReasonActionItems(record: CancellationReason): ActionMenuItem[] {
+export function getReasonActionItems(record: Pick<CancellationReason, 'status'>): ActionMenuItem[] {
   const items: ActionMenuItem[] = [
     { key: 'view', label: 'View', icon: Eye },
     { key: 'edit', label: 'Edit', icon: Pencil, group: 1 },
@@ -75,8 +75,8 @@ export function getReasonUserTypeLabel(userType: 'passenger' | 'driver') {
 export function buildReasonDetailFields(record: CancellationReasonRow): DetailField[] {
   return [
     { label: 'Reason Name', value: record.name },
+    { label: 'Description', value: record.description || '—' },
     { label: 'User Type', value: getReasonUserTypeLabel(record.userType) },
-    { label: 'Sort Order', value: String(record.sortOrder) },
     { label: 'Status', value: statusLabel(record.status) },
   ]
 }

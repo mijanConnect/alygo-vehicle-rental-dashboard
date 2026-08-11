@@ -43,7 +43,10 @@ export default function OtpVerificationPage() {
     if (otp.length !== 6) return
     if (secondsLeft === 0) return
     try {
-      await verifyOtp({ email: email!, otp }).unwrap()
+      await verifyOtp({
+        email: email!,
+        oneTimeCode: Number(otp),
+      }).unwrap()
       navigate('/auth/reset-password')
     } catch {
       // handled in slice
@@ -111,7 +114,6 @@ export default function OtpVerificationPage() {
         />
       </div>
 
-      <p className="mt-4 text-center text-xs text-[#64748B]">Demo code: 123456</p>
     </AuthCard>
   )
 }

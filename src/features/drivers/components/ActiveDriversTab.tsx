@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Table, Tag } from 'antd'
 import { Link } from 'react-router-dom'
 import {
@@ -9,56 +9,61 @@ import {
   openDriverDetails,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TableFilters } from '@/components/common/TableFilters'
-import { RIDE_CATEGORY_LABELS } from '@/constants'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
+import { mapOnlineDriver, type DriverTableRow } from '@/features/drivers/mapDriverManagement'
 import type { useAdminActions } from '@/hooks/useAdminActions'
-import { LEVEL_LABELS } from '@/services/driverRewardsApi'
-import { useGetDriversQuery } from '@/services/api'
-import type { Driver, RideCategory } from '@/types'
+import { useGetAllOnlineDriversQuery } from '@/redux/api/driverManagementApi'
 
 interface ActiveDriversTabProps {
   adminActions: ReturnType<typeof useAdminActions>
 }
 
 export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
-  const [search, setSearch] = useState('')
-  const { data, isLoading } = useGetDriversQuery({ page: 1, pageSize: 100, search })
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const onlineDrivers = useMemo(() => {
-    const rows = data?.data.filter((d) => d.status === 'active') ?? []
-    if (!search.trim()) return rows
-    const q = search.trim().toLowerCase()
-    return rows.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.id.toLowerCase().includes(q) ||
-        d.city.toLowerCase().includes(q) ||
-        d.vehicle.toLowerCase().includes(q),
-    )
-  }, [data?.data, search])
+  const { data, isLoading, isFetching } = useGetAllOnlineDriversQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const rows = (data?.data ?? []).map(mapOnlineDriver)
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
+  const totalItems = meta?.totalItems ?? 0
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-alygo-text-muted">
-        Real-time online drivers monitor — availability, tier, vehicle category, and operational status.
+        Real-time online drivers monitor — availability, tier, vehicle, and operational status.
       </p>
-      <TableFilters
-        variant="inline"
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search online drivers..."
+      <SearchingInput
+        value={searchTerm}
+        onChange={handleSearchChange}
+        placeholder="Search online drivers..."
       />
       <Table
-        loading={isLoading}
+        loading={isLoading || isFetching}
         rowKey="id"
-        dataSource={onlineDrivers}
+        dataSource={rows}
+        pagination={false}
         scroll={{ x: 1200 }}
-        {...createTableRowProps<Driver>((record) => openDriverDetails(record, adminActions))}
+        {...createTableRowProps<DriverTableRow>((record) =>
+          openDriverDetails(record, adminActions),
+        )}
         columns={[
           {
             title: 'Driver',
             dataIndex: 'name',
-            render: (name: string, record: Driver) => (
+            render: (name: string, record: DriverTableRow) => (
               <Link to={`/drivers/${record.id}`} onClick={(e) => e.stopPropagation()}>
                 {name}
               </Link>
@@ -66,35 +71,44 @@ export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
           },
           {
             title: 'Online Status',
-            dataIndex: 'status',
-            render: () => <StatusBadge status="active" />,
+            dataIndex: 'availabilityStatus',
+            render: (status?: string) => (
+              <StatusBadge status={status === 'online' || !status ? 'active' : status} />
+            ),
           },
-          { title: 'City', dataIndex: 'city' },
-          {
-            title: 'Vehicle Category',
-            dataIndex: 'categories',
-            render: (categories: RideCategory[]) =>
-              categories?.slice(0, 2).map((c) => (
-                <Tag key={c} className="!mr-1">{RIDE_CATEGORY_LABELS[c]}</Tag>
-              )) ?? '—',
-          },
+          { title: 'City', dataIndex: 'city', ellipsis: true },
           {
             title: 'Tier',
             dataIndex: 'currentTier',
-            render: (tier?: string) =>
-              tier ? LEVEL_LABELS[tier] ?? tier : '—',
+            render: (tier?: string) => (tier ? <Tag>{tier}</Tag> : '—'),
           },
           { title: 'Vehicle', dataIndex: 'vehicle', ellipsis: true },
+          {
+            title: 'Plate',
+            dataIndex: 'vehiclePlate',
+            render: (plate?: string) => plate || '—',
+          },
           { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
           {
             title: 'Availability',
             render: () => <Tag color="green">Available</Tag>,
           },
-          createActionsColumn<Driver>(
+          createActionsColumn<DriverTableRow>(
             () => getActiveDriverActionItems(),
             (key, record) => handleDriverAction(key, record, adminActions),
           ),
         ]}
+      />
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(totalPages, 1)}
+        totalItems={totalItems}
+        itemsPerPage={limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(next) => {
+          setLimit(next)
+          setPage(1)
+        }}
       />
     </div>
   )

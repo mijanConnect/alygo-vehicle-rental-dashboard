@@ -1,45 +1,51 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Form, Input, InputNumber, Select } from 'antd'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { AdminActionHost } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { TierBenefitsCardGrid } from '@/features/driver-rewards/components/TierBenefitsCardGrid'
 import {
-  countActiveBenefitRules,
-  createDefaultBenefitRules,
-  parseBenefitRules,
-} from '@/features/driver-rewards/utils/tierConfigHelpers'
-import {
-  buildTierPayload,
+  apiBenefitsToRules,
+  buildTierWritePayload,
+  countApiBenefitRules,
+  createDefaultApiBenefitRules,
   tierToFormValues,
-} from '@/features/driver-rewards/utils/tierFormHelpers'
+} from '@/features/driver-rewards/mapTierManagement'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
-  useGetDriverLevelsQuery,
-  useUpdateDriverLevelMutation,
-} from '@/services/driverRewardsApi'
+  useGetSingleTierQuery,
+  useUpdateTierMutation,
+  useUpdateTierStatusMutation,
+} from '@/redux/api/tiersManagementsApi'
 import type { TierFormValues } from '@/types/tierManagement'
 
 export default function TierDetailPage() {
   const { id = '' } = useParams()
   const adminActions = useAdminActions()
-  const { data: tiers = [], isLoading } = useGetDriverLevelsQuery()
-  const [updateLevel, { isLoading: saving }] = useUpdateDriverLevelMutation()
-  const tier = useMemo(() => tiers.find((t) => t.id === id), [tiers, id])
+  const { data: tier, isLoading } = useGetSingleTierQuery(id, { skip: !id })
+  const [updateTier, { isLoading: saving }] = useUpdateTierMutation()
+  const [updateTierStatus, { isLoading: updatingStatus }] = useUpdateTierStatusMutation()
   const [form] = Form.useForm<TierFormValues>()
-  const [benefitRules, setBenefitRules] = useState(createDefaultBenefitRules)
+  const [benefitRules, setBenefitRules] = useState(createDefaultApiBenefitRules)
 
-  useDocumentTitle(tier ? `${tier.label} Tier` : 'Tier Details')
+  useDocumentTitle(tier ? `${tier.name} Tier` : 'Tier Details')
 
   useEffect(() => {
     if (!tier) return
     form.setFieldsValue(tierToFormValues(tier))
-    setBenefitRules(parseBenefitRules(tier.benefits))
+    setBenefitRules(apiBenefitsToRules(tier.benefits))
   }, [tier, form])
 
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <PageShell title="Tier Details">
+        <div className="glass-card p-6 text-center text-sm text-alygo-text-muted">Loading tier...</div>
+      </PageShell>
+    )
+  }
 
   if (!tier) {
     return (
@@ -51,12 +57,18 @@ export default function TierDetailPage() {
     )
   }
 
+  const persistTier = async (values: TierFormValues) => {
+    await updateTier({ id: tier._id, body: buildTierWritePayload(values) }).unwrap()
+    if (values.status !== tier.status) {
+      await updateTierStatus({ id: tier._id, status: values.status }).unwrap()
+    }
+  }
+
   const saveRequirements = async () => {
     const values = await form.validateFields()
     try {
-      const payload = buildTierPayload({ ...values, benefitRules }, tier, tier.sortOrder)
-      await updateLevel({ id: tier.id, ...payload }).unwrap()
-      adminActions.notify('Tier requirements saved', tier.label)
+      await persistTier({ ...values, benefitRules })
+      adminActions.notify('Tier requirements saved', tier.name)
     } catch (err) {
       adminActions.notify('Unable to save requirements', String(err))
     }
@@ -66,18 +78,20 @@ export default function TierDetailPage() {
     setBenefitRules(nextRules)
     try {
       const values = form.getFieldsValue(true) as TierFormValues
-      const payload = buildTierPayload({ ...values, benefitRules: nextRules }, tier, tier.sortOrder)
-      await updateLevel({ id: tier.id, ...payload }).unwrap()
-      adminActions.notify('Tier benefits saved', tier.label)
+      await persistTier({ ...values, benefitRules: nextRules })
+      adminActions.notify('Tier benefits saved', tier.name)
     } catch (err) {
       adminActions.notify('Unable to save benefits', String(err))
     }
   }
 
+  const busy = saving || updatingStatus
+  const badge = (tier.code || tier.name).slice(0, 2).toUpperCase()
+
   return (
     <PageShell
-      title={`${tier.label} Tier`}
-      description={`Level ${tier.level} · ${tier.driverCount} drivers · ${countActiveBenefitRules(benefitRules)} active benefits`}
+      title={`${tier.name} Tier`}
+      description={`Level ${tier.level} · ${countApiBenefitRules(benefitRules)} active benefits`}
       actions={
         <Link to="/drivers/tiers?tab=configuration">
           <Button icon={<ArrowLeft className="h-4 w-4" />}>Back</Button>
@@ -85,14 +99,11 @@ export default function TierDetailPage() {
       }
     >
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold text-white"
-          style={{ backgroundColor: tier.tierColor }}
-        >
-          {tier.tierBadge}
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-alygo-primary/20 text-sm font-semibold text-alygo-primary">
+          {badge}
         </span>
         <StatusBadge status={tier.status} />
-        <span className="text-sm text-alygo-text-muted">Tier ID: {tier.id}</span>
+        <span className="text-sm text-alygo-text-muted">Tier ID: {tier._id}</span>
       </div>
 
       <section className="glass-card mb-6 p-5">
@@ -106,7 +117,7 @@ export default function TierDetailPage() {
           <Button
             type="primary"
             icon={<Save className="h-4 w-4" />}
-            loading={saving}
+            loading={busy}
             onClick={saveRequirements}
           >
             Save Requirements
@@ -115,7 +126,10 @@ export default function TierDetailPage() {
 
         <Form form={form} layout="vertical">
           <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
-            <Form.Item name="label" label="Tier Name" rules={[{ required: true }]}>
+            <Form.Item name="name" label="Tier Name" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="code" label="Code" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
             <Form.Item name="level" label="Level" rules={[{ required: true }]}>
@@ -129,28 +143,19 @@ export default function TierDetailPage() {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="tierColor" label="Color" rules={[{ required: true }]}>
-              <Input type="color" className="h-10 w-full" />
-            </Form.Item>
-            <Form.Item name="requiredTrips" label="Trips Required" rules={[{ required: true }]}>
+            <Form.Item name="pointsRequired" label="Points Required" rules={[{ required: true }]}>
               <InputNumber min={0} className="w-full" />
             </Form.Item>
-            <Form.Item name="requiredRating" label="Rating Required" rules={[{ required: true }]}>
+            <Form.Item name="tripsRequired" label="Trips Required" rules={[{ required: true }]}>
+              <InputNumber min={0} className="w-full" />
+            </Form.Item>
+            <Form.Item name="ratingRequired" label="Rating Required" rules={[{ required: true }]}>
               <InputNumber min={0} max={5} step={0.1} className="w-full" />
             </Form.Item>
-            <Form.Item name="requiredAcceptanceRate" label="Acceptance Rate" rules={[{ required: true }]}>
+            <Form.Item name="acceptanceRateRequired" label="Acceptance Rate" rules={[{ required: true }]}>
               <InputNumber min={0} max={100} addonAfter="%" className="w-full" />
-            </Form.Item>
-            <Form.Item name="requiredCompletionRate" label="Completion Rate" rules={[{ required: true }]}>
-              <InputNumber min={0} max={100} addonAfter="%" className="w-full" />
-            </Form.Item>
-            <Form.Item name="requiredSafetyScore" label="Safety Score" rules={[{ required: true }]}>
-              <InputNumber min={0} max={100} className="w-full" />
             </Form.Item>
           </div>
-          <Form.Item name="notes" label="Notes">
-            <Input.TextArea rows={2} />
-          </Form.Item>
         </Form>
       </section>
 
@@ -164,12 +169,12 @@ export default function TierDetailPage() {
         <TierBenefitsCardGrid
           rules={benefitRules}
           onRulesChange={saveBenefits}
-          tierLabel={tier.label}
-          tierColor={tier.tierColor}
-          tierBadge={tier.tierBadge}
-          saving={saving}
+          tierLabel={tier.name}
+          tierBadge={badge}
+          saving={busy}
         />
       </section>
+      <AdminActionHost actions={adminActions} />
     </PageShell>
   )
 }

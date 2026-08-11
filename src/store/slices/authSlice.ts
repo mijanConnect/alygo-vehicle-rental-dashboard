@@ -1,2 +1,2 @@
-export { default } from "@/features/auth/slices/authSlice";
-export * from "@/features/auth/slices/authSlice";
+export { default } from '@/redux/slice/authSlice'
+export * from '@/redux/slice/authSlice'

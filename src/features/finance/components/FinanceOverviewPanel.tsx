@@ -1,24 +1,50 @@
-import { useGetDashboardKpisQuery } from '@/services/api'
-import { computeFinanceOverview } from '@/features/finance/financeData'
-import { formatCurrency } from '@/utils/format'
+import {
+  useGetFinancialRevenueSummaryQuery,
+  useGetFinancialWalletsSummaryQuery,
+} from '@/redux/api/finalcialCenter'
+import { formatCurrency, formatNumber } from '@/utils/format'
 
 export function FinanceOverviewCards() {
-  const { data: kpis = [] } = useGetDashboardKpisQuery()
-  const revenueToday = kpis.find((k) => k.key === 'revenueToday')?.value ?? 284_750
-  const revenueMonth = kpis.find((k) => k.key === 'revenueMonth')?.value ?? 8_420_000
-  const overview = computeFinanceOverview(revenueToday, revenueMonth)
+  const { data: revenue, isLoading: revenueLoading } = useGetFinancialRevenueSummaryQuery()
+  const { data: wallets, isLoading: walletsLoading } = useGetFinancialWalletsSummaryQuery()
+
+  const summary = revenue?.summary
+  const period = revenue?.revenue
 
   const metrics = [
-    { label: 'Total Revenue', value: formatCurrency(overview.revenueThisMonth) },
-    { label: 'Platform Earnings', value: formatCurrency(overview.platformCommission) },
-    { label: 'Driver Payouts', value: formatCurrency(overview.completedPayouts) },
-    { label: 'Wallet Balance', value: formatCurrency(overview.totalWalletBalance) },
     {
-      label: 'Pending Payouts',
-      value: formatCurrency(overview.pendingDriverPayouts),
-      meta: `${overview.pendingPayoutCount} pending`,
+      label: 'Total Revenue',
+      value: formatCurrency(summary?.totalRevenue ?? 0),
+      meta: period ? `Today ${formatCurrency(period.today)}` : undefined,
+    },
+    {
+      label: 'Platform Earnings',
+      value: formatCurrency(summary?.platformEarnings ?? 0),
+    },
+    {
+      label: 'Driver Payouts',
+      value: formatCurrency(summary?.driverPayouts ?? 0),
+    },
+    {
+      label: 'Wallet Balance',
+      value: formatCurrency(wallets?.totalWalletBalance ?? 0),
+      meta: wallets ? `${formatNumber(wallets.activeWallets)} active` : undefined,
+    },
+    {
+      label: 'Pending Top-ups',
+      value: formatCurrency(wallets?.pendingTopUps ?? 0),
     },
   ]
+
+  if (revenueLoading || walletsLoading) {
+    return (
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="glass-card h-28 animate-pulse p-5" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -31,9 +57,4 @@ export function FinanceOverviewCards() {
       ))}
     </div>
   )
-}
-
-/** @deprecated Use FinanceOverviewCards on the dashboard shell instead. */
-export function FinanceOverviewPanel() {
-  return <FinanceOverviewCards />
 }

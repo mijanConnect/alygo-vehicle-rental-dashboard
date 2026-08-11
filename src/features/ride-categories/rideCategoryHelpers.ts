@@ -1,29 +1,30 @@
-import { Ban, CheckCircle, Pencil, Trash2 } from 'lucide-react'
+import { Ban, CheckCircle2, Pencil, Trash2 } from 'lucide-react'
 import type { ActionMenuItem } from '@/components/admin/types'
-import type { RideCategoryDefinition } from '@/types/rideCategoryManagement'
+import type { RideCategoryRow } from '@/features/ride-categories/mapRideCategory'
+import type { RideCategoryStatus } from '@/redux/api/rideCategoriesApi'
 
 export const RIDE_CATEGORY_STATUS_OPTIONS = [
-  { label: 'Enabled', value: 'enabled' },
-  { label: 'Disabled', value: 'disabled' },
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
 ]
 
-export function getRideCategoryActionItems(record: RideCategoryDefinition): ActionMenuItem[] {
+export function getRideCategoryActionItems(record: RideCategoryRow): ActionMenuItem[] {
   return [
     { key: 'edit', label: 'Edit', icon: Pencil, group: 0 },
     {
       key: 'toggle',
-      label: record.status === 'enabled' ? 'Disable' : 'Enable',
-      icon: record.status === 'enabled' ? Ban : CheckCircle,
+      label: record.status === 'active' ? 'Deactivate' : 'Activate',
+      icon: record.status === 'active' ? Ban : CheckCircle2,
       group: 1,
     },
     { key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 2 },
   ]
 }
 
-export function getRideCategoryStatusColor(status: RideCategoryDefinition['status']): string {
-  return status === 'enabled' ? 'success' : 'default'
+export function getRideCategoryStatusColor(status: RideCategoryStatus): string {
+  return status === 'active' ? 'success' : 'default'
 }
 
-export function getRideCategoryStatusLabel(status: RideCategoryDefinition['status']): string {
-  return status === 'enabled' ? 'Enabled' : 'Disabled'
+export function getRideCategoryStatusLabel(status: RideCategoryStatus): string {
+  return status === 'active' ? 'Active' : 'Inactive'
 }

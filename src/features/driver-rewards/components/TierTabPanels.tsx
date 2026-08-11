@@ -8,18 +8,24 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { TierCreateWizard } from '@/features/driver-rewards/components/TierCreateWizard'
 import { TierOverviewPanel } from '@/features/driver-rewards/components/TierOverviewPanel'
+import {
+  apiBenefitsToRules,
+  buildTierWritePayload,
+  countApiBenefitRules,
+} from '@/features/driver-rewards/mapTierManagement'
 import { getTierManagementActionItems } from '@/features/driver-rewards/tierManagementHelpers'
-import { buildTierPayload } from '@/features/driver-rewards/utils/tierFormHelpers'
-import { countActiveBenefitRules, parseBenefitRules } from '@/features/driver-rewards/utils/tierConfigHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
-  useCreateDriverLevelMutation,
-  useDeleteDriverLevelMutation,
-  useGetDriverLevelsQuery,
-} from '@/services/driverRewardsApi'
-import type { DriverLevel } from '@/types/driverRewards'
+  useCreateTierMutation,
+  useDeleteTierMutation,
+  useGetTiersListQuery,
+  useUpdateTierStatusMutation,
+} from '@/redux/api/tiersManagementsApi'
+import type { TierItem } from '@/redux/api/tiersManagementsApi'
 import type { TierFormValues } from '@/types/tierManagement'
 
 export function TierOverviewTab() {
@@ -29,21 +35,41 @@ export function TierOverviewTab() {
 export function TierConfigurationTab() {
   const navigate = useNavigate()
   const adminActions = useAdminActions()
-  const { data = [], isLoading } = useGetDriverLevelsQuery()
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
   const [wizardOpen, setWizardOpen] = useState(false)
-  const [deleteRecord, setDeleteRecord] = useState<DriverLevel | null>(null)
+  const [deleteRecord, setDeleteRecord] = useState<TierItem | null>(null)
 
-  const [createLevel, { isLoading: creating }] = useCreateDriverLevelMutation()
-  const [deleteLevel, { isLoading: deleting }] = useDeleteDriverLevelMutation()
+  const { data, isLoading, isFetching } = useGetTiersListQuery({ page, limit, searchTerm })
+  const [createTier, { isLoading: creating }] = useCreateTierMutation()
+  const [deleteTier, { isLoading: deleting }] = useDeleteTierMutation()
+  const [updateTierStatus, { isLoading: updatingStatus }] = useUpdateTierStatusMutation()
 
-  const nextLevel = data.length + 1
+  const tiers = data?.data ?? []
+  const meta = data?.meta
+  const nextLevel = (meta?.totalItems ?? tiers.length) + 1
 
-  const handleAction = (key: string, record: DriverLevel) => {
+  const handleAction = async (key: string, record: TierItem) => {
     switch (key) {
       case 'view':
       case 'edit':
-        navigate(`/drivers/tiers/${record.id}`)
+        navigate(`/drivers/tiers/${record._id}`)
         break
+      case 'activate':
+      case 'deactivate': {
+        const status = key === 'activate' ? 'active' : 'inactive'
+        try {
+          await updateTierStatus({ id: record._id, status }).unwrap()
+          adminActions.notify(
+            status === 'active' ? 'Tier activated' : 'Tier deactivated',
+            record.name,
+          )
+        } catch (err) {
+          adminActions.notify('Unable to update status', String(err))
+        }
+        break
+      }
       case 'delete':
         setDeleteRecord(record)
         break
@@ -52,9 +78,11 @@ export function TierConfigurationTab() {
 
   const handleCreate = async (values: TierFormValues) => {
     try {
-      const payload = buildTierPayload(values, undefined, values.level)
-      await createLevel(payload).unwrap()
-      adminActions.notify('Tier created', values.label)
+      const created = await createTier(buildTierWritePayload(values)).unwrap()
+      if (values.status === 'inactive' && created._id) {
+        await updateTierStatus({ id: created._id, status: 'inactive' }).unwrap()
+      }
+      adminActions.notify('Tier created', values.name)
       setWizardOpen(false)
     } catch (err) {
       adminActions.notify('Unable to create tier', String(err))
@@ -63,7 +91,15 @@ export function TierConfigurationTab() {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value)
+            setPage(1)
+          }}
+          placeholder="Search tiers..."
+        />
         <Button
           type="primary"
           icon={<Plus className="h-4 w-4" />}
@@ -73,63 +109,85 @@ export function TierConfigurationTab() {
         </Button>
       </div>
       <Table
-        loading={isLoading || creating || deleting}
-        rowKey="id"
-        dataSource={[...data].sort((a, b) => a.sortOrder - b.sortOrder)}
+        loading={isLoading || isFetching || creating || deleting || updatingStatus}
+        rowKey="_id"
+        dataSource={[...tiers].sort((a, b) => a.level - b.level)}
+        pagination={false}
         scroll={{ x: 1100 }}
         columns={[
           {
             title: 'Tier Name',
-            dataIndex: 'label',
-            render: (label: string, record: DriverLevel) => (
+            dataIndex: 'name',
+            render: (name: string, record: TierItem) => (
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-left text-white hover:text-alygo-primary"
-                onClick={() => navigate(`/drivers/tiers/${record.id}`)}
+                onClick={() => navigate(`/drivers/tiers/${record._id}`)}
               >
-                <span
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold text-white"
-                  style={{ backgroundColor: record.tierColor }}
-                >
-                  {record.tierBadge}
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-alygo-primary/20 text-xs font-semibold text-alygo-primary">
+                  {(record.code || name).slice(0, 2).toUpperCase()}
                 </span>
-                {label}
+                {name}
               </button>
             ),
           },
+          { title: 'Code', dataIndex: 'code', width: 100 },
           { title: 'Level', dataIndex: 'level', width: 80 },
-          { title: 'Driver Count', dataIndex: 'driverCount' },
-          { title: 'Trips Required', dataIndex: 'requiredTrips' },
-          { title: 'Rating Required', dataIndex: 'requiredRating' },
+          {
+            title: 'Points',
+            render: (_: unknown, record: TierItem) => record.requirements?.pointsRequired ?? 0,
+          },
+          {
+            title: 'Trips Required',
+            render: (_: unknown, record: TierItem) => record.requirements?.tripsRequired ?? 0,
+          },
+          {
+            title: 'Rating Required',
+            render: (_: unknown, record: TierItem) => record.requirements?.ratingRequired ?? 0,
+          },
           {
             title: 'Acceptance Rate',
-            dataIndex: 'requiredAcceptanceRate',
-            render: (v: number) => `${v}%`,
+            render: (_: unknown, record: TierItem) =>
+              `${record.requirements?.acceptanceRateRequired ?? 0}%`,
           },
           {
             title: 'Active Benefits',
-            render: (_: unknown, record: DriverLevel) =>
-              countActiveBenefitRules(parseBenefitRules(record.benefits)),
+            render: (_: unknown, record: TierItem) =>
+              countApiBenefitRules(apiBenefitsToRules(record.benefits)),
           },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-          createActionsColumn<DriverLevel>(
-            () => getTierManagementActionItems(),
-            (key, record) => handleAction(key, record),
+          createActionsColumn<TierItem>(
+            (record) => getTierManagementActionItems(record),
+            (key, record) => {
+              void handleAction(key, record)
+            },
           ),
         ]}
+      />
+
+      <Pagination
+        currentPage={meta?.page ?? page}
+        totalPages={Math.max(meta?.totalPages ?? 1, 1)}
+        totalItems={meta?.totalItems ?? 0}
+        itemsPerPage={meta?.limit ?? limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(size) => {
+          setLimit(size)
+          setPage(1)
+        }}
       />
 
       <TierCreateWizard
         open={wizardOpen}
         nextLevel={nextLevel}
-        loading={creating}
+        loading={creating || updatingStatus}
         onCancel={() => setWizardOpen(false)}
         onSubmit={handleCreate}
       />
       <ConfirmationModal
         open={Boolean(deleteRecord)}
         title="Delete Tier"
-        description={`Delete tier "${deleteRecord?.label}"? This cannot be undone.`}
+        description={`Delete tier "${deleteRecord?.name}"? This cannot be undone.`}
         confirmLabel="Delete"
         danger
         loading={deleting}
@@ -137,8 +195,8 @@ export function TierConfigurationTab() {
         onConfirm={async () => {
           if (!deleteRecord) return
           try {
-            await deleteLevel(deleteRecord.id).unwrap()
-            adminActions.notify('Tier deleted', deleteRecord.label)
+            await deleteTier(deleteRecord._id).unwrap()
+            adminActions.notify('Tier deleted', deleteRecord.name)
             setDeleteRecord(null)
           } catch (err) {
             adminActions.notify('Unable to delete tier', String(err))

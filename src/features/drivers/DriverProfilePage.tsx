@@ -1,4 +1,4 @@
-import { Button, Descriptions, Tabs, Table, Tag } from 'antd'
+import { Button, Descriptions, Spin, Tabs, Table, Tag } from 'antd'
 import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
@@ -8,55 +8,102 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { DriverVerificationDrawer } from '@/features/drivers/components/DriverVerificationDrawer'
 import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
 import { PhotoCompareView } from '@/features/drivers/components/PhotoCompareView'
-import { RIDE_CATEGORY_LABELS } from '@/constants'
+import { mapDriverDetailsToDriver } from '@/features/drivers/mapDriverManagement'
+import { DriverTierRewardsTab } from '@/features/driver-rewards/components/DriverTierRewardsTab'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useGetDriverByIdQuery } from '@/services/api'
-import {
-  useGetDriverVerificationQuery,
-  useGetVerificationHistoryQuery,
-  VERIFICATION_SOURCE_LABELS,
-} from '@/services/driverVerificationApi'
-import { DriverTierRewardsTab } from '@/features/driver-rewards/components/DriverTierRewardsTab'
-import { formatCurrency, formatDate, formatDateTime } from '@/utils/format'
+import { useGetSingleDriverQuery } from '@/redux/api/driverManagementApi'
+import { formatDateTime } from '@/utils/format'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1\/?$/, '') ?? ''
+
+function resolveAssetUrl(path?: string | null) {
+  if (!path) return undefined
+  if (path.startsWith('http')) return path
+  return `${API_BASE}${path}`
+}
 
 export default function DriverProfilePage() {
   const { id = '' } = useParams()
   const adminActions = useAdminActions()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const { data: driver, isLoading } = useGetDriverByIdQuery(id)
-  const { data: verification } = useGetDriverVerificationQuery(id, { skip: !id })
-  const { data: history = [] } = useGetVerificationHistoryQuery(id, { skip: !id })
-  useDocumentTitle(driver ? `${driver.name} - Driver Profile` : 'Driver Profile')
+  const { data, isLoading } = useGetSingleDriverQuery(id, { skip: !id })
+  const driverRow = data ? mapDriverDetailsToDriver(data) : null
+  useDocumentTitle(driverRow ? `${driverRow.name} - Driver Profile` : 'Driver Profile')
 
-  if (isLoading) return null
-  if (!driver) {
+  if (isLoading) {
     return (
-      <PageShell title="Driver Not Found">
-        <Link to="/drivers"><Button icon={<ArrowLeft className="h-4 w-4" />}>Back to Drivers</Button></Link>
+      <PageShell title="Driver Profile">
+        <div className="flex justify-center py-16">
+          <Spin />
+        </div>
       </PageShell>
     )
   }
 
+  if (!data || !driverRow) {
+    return (
+      <PageShell title="Driver Not Found">
+        <Link to="/drivers">
+          <Button icon={<ArrowLeft className="h-4 w-4" />}>Back to Drivers</Button>
+        </Link>
+      </PageShell>
+    )
+  }
+
+  const { driver, identityVerification, verificationImages, verificationHistory } = data
+  const profilePhoto = resolveAssetUrl(verificationImages.profilePhoto?.imageUrl)
+  const liveSelfie = resolveAssetUrl(verificationImages.latestLiveSelfie?.imageUrl)
+
   return (
     <PageShell
-      title={driver.name}
-      description={`Driver ID: ${driver.id}`}
+      title={driver.fullName || 'Driver'}
+      description={`Driver ID: ${driver.driverId}`}
       actions={
-        <SpaceActions driver={driver} adminActions={adminActions} />
+        <div className="flex gap-2">
+          <Button
+            onClick={() =>
+              adminActions.openApproval({
+                title: 'Approve Driver',
+                entityLabel: driver.fullName,
+                onApprove: async () => adminActions.notify('Driver approved', driver.fullName),
+              })
+            }
+          >
+            Approve
+          </Button>
+          <Button
+            danger
+            onClick={() =>
+              adminActions.openSuspension({
+                title: 'Suspend Driver',
+                entityLabel: `Suspend ${driver.fullName}`,
+                onConfirm: async () => adminActions.notify('Driver suspended', driver.fullName),
+              })
+            }
+          >
+            Suspend
+          </Button>
+        </div>
       }
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="glass-card p-5 lg:col-span-1">
           <Descriptions column={1} size="small" title="Personal Information">
-            <Descriptions.Item label="Email">{driver.email}</Descriptions.Item>
-            <Descriptions.Item label="Phone">{driver.phone}</Descriptions.Item>
-            <Descriptions.Item label="City">{driver.city}, {driver.state}</Descriptions.Item>
-            <Descriptions.Item label="Joined">{formatDate(driver.joinedAt)}</Descriptions.Item>
-            <Descriptions.Item label="Rating">{driver.rating} ★</Descriptions.Item>
-            <Descriptions.Item label="Status"><StatusBadge status={driver.status} /></Descriptions.Item>
+            <Descriptions.Item label="Email">{driver.email || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Phone">{driver.phone || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Rating">{driver.averageRating} ★</Descriptions.Item>
+            <Descriptions.Item label="Completed Trips">
+              {driver.completedTrips}
+            </Descriptions.Item>
+            <Descriptions.Item label="Identity">
+              <IdentityVerificationBadge
+                status={driverRow.identityVerificationStatus}
+              />
+            </Descriptions.Item>
           </Descriptions>
         </div>
+
         <div className="glass-card p-5 lg:col-span-2">
           <Tabs
             items={[
@@ -65,34 +112,11 @@ export default function DriverProfilePage() {
                 label: 'Vehicle Information',
                 children: (
                   <Descriptions column={2}>
-                    <Descriptions.Item label="Vehicle">{driver.vehicle}</Descriptions.Item>
-                    <Descriptions.Item label="Year">{driver.vehicleYear}</Descriptions.Item>
-                    <Descriptions.Item label="Categories">
-                      {driver.categories.map((c) => <Tag key={c}>{RIDE_CATEGORY_LABELS[c]}</Tag>)}
+                    <Descriptions.Item label="Vehicle">
+                      {driver.vehicleName || '—'}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Earnings">{formatCurrency(driver.earnings)}</Descriptions.Item>
-                  </Descriptions>
-                ),
-              },
-              {
-                key: 'documents',
-                label: 'Documents',
-                children: <Table size="small" pagination={false} dataSource={[]} locale={{ emptyText: 'Document records loaded from compliance module' }} />,
-              },
-              {
-                key: 'trips',
-                label: 'Trip History',
-                children: <Table size="small" pagination={false} dataSource={[]} locale={{ emptyText: 'Trip history available via operations module' }} />,
-              },
-              {
-                key: 'compliance',
-                label: 'Compliance History',
-                children: (
-                  <Descriptions column={1}>
-                    <Descriptions.Item label="Compliance"><StatusBadge status={driver.complianceStatus} /></Descriptions.Item>
-                    <Descriptions.Item label="Background Check"><StatusBadge status={driver.backgroundCheckStatus} /></Descriptions.Item>
-                    <Descriptions.Item label="Identity Verification">
-                      <IdentityVerificationBadge status={driver.identityVerificationStatus} />
+                    <Descriptions.Item label="Plate">
+                      {driver.vehicleNumber || '—'}
                     </Descriptions.Item>
                   </Descriptions>
                 ),
@@ -100,96 +124,98 @@ export default function DriverProfilePage() {
               {
                 key: 'identity',
                 label: 'Identity Verification',
-                children: verification ? (
+                children: (
                   <div className="space-y-6">
                     <Descriptions column={2} size="small" bordered>
                       <Descriptions.Item label="Status">
-                        <IdentityVerificationBadge status={verification.status} />
+                        <Tag>{identityVerification.verificationStatus}</Tag>
                       </Descriptions.Item>
                       <Descriptions.Item label="Verification Source">
-                        {VERIFICATION_SOURCE_LABELS[verification.verificationSource]}
+                        {identityVerification.verificationSource || '—'}
                       </Descriptions.Item>
                       <Descriptions.Item label="Verification Date">
-                        {verification.verifiedAt ? formatDateTime(verification.verifiedAt) : '—'}
+                        {identityVerification.verificationDate || '—'}
                       </Descriptions.Item>
                       <Descriptions.Item label="Last Verification Date">
-                        {verification.lastVerifiedAt ? formatDateTime(verification.lastVerifiedAt) : '—'}
+                        {identityVerification.lastVerificationDate || '—'}
                       </Descriptions.Item>
                       <Descriptions.Item label="Verification Notes" span={2}>
-                        {verification.verificationNotes ?? '—'}
+                        {identityVerification.verificationNotes || '—'}
                       </Descriptions.Item>
                     </Descriptions>
+
                     <PhotoCompareView
-                      profilePhoto={verification.profilePhoto}
-                      liveSelfiePhoto={verification.liveSelfiePhoto}
-                      driverName={driver.name}
+                      profilePhoto={profilePhoto ?? ''}
+                      liveSelfiePhoto={liveSelfie}
+                      driverName={driver.fullName}
                     />
+
                     <Table
                       size="small"
                       pagination={{ pageSize: 5 }}
-                      rowKey="id"
-                      dataSource={history}
+                      rowKey={(_, index) => String(index)}
+                      dataSource={(verificationHistory as Array<Record<string, unknown>>) ?? []}
+                      locale={{ emptyText: 'No verification history' }}
                       columns={[
-                        { title: 'Date', dataIndex: 'date', render: (d: string) => formatDateTime(d) },
-                        { title: 'Trigger Source', dataIndex: 'triggerSource' },
                         {
-                          title: 'Status',
-                          dataIndex: 'status',
-                          render: (s: typeof verification.status) => <IdentityVerificationBadge status={s} />,
+                          title: 'Date',
+                          dataIndex: 'date',
+                          render: (d?: string) => (d ? formatDateTime(d) : '—'),
                         },
+                        { title: 'Trigger Source', dataIndex: 'triggerSource' },
+                        { title: 'Status', dataIndex: 'status' },
                         { title: 'Reviewed By', dataIndex: 'reviewedBy' },
                         { title: 'Notes', dataIndex: 'notes', ellipsis: true },
                       ]}
                     />
+
                     <Button type="primary" onClick={() => setDrawerOpen(true)}>
                       Open Full Verification Review
                     </Button>
                   </div>
-                ) : (
-                  <p className="text-sm text-alygo-text-muted">No verification record found.</p>
                 ),
               },
               {
                 key: 'tier-rewards',
                 label: 'Tier & Rewards',
-                children: <DriverTierRewardsTab driverId={driver.id} driverName={driver.name} />,
+                children: (
+                  <DriverTierRewardsTab
+                    driverId={driver.driverId}
+                    driverName={driver.fullName}
+                  />
+                ),
+              },
+              {
+                key: 'compliance',
+                label: 'Compliance',
+                children: (
+                  <Descriptions column={1}>
+                    <Descriptions.Item label="Identity Verification">
+                      <IdentityVerificationBadge
+                        status={driverRow.identityVerificationStatus}
+                      />
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Status">
+                      <StatusBadge status={driverRow.status} />
+                    </Descriptions.Item>
+                  </Descriptions>
+                ),
               },
             ]}
           />
         </div>
       </div>
-      <Link to="/drivers"><Button icon={<ArrowLeft className="h-4 w-4" />}>Back to Drivers</Button></Link>
-      <DriverVerificationDrawer open={drawerOpen} driver={driver} onClose={() => setDrawerOpen(false)} />
+
+      <Link to="/drivers" className="mt-4 inline-block">
+        <Button icon={<ArrowLeft className="h-4 w-4" />}>Back to Drivers</Button>
+      </Link>
+
+      <DriverVerificationDrawer
+        open={drawerOpen}
+        driver={driverRow}
+        onClose={() => setDrawerOpen(false)}
+      />
       <AdminActionHost actions={adminActions} />
     </PageShell>
-  )
-}
-
-function SpaceActions({
-  driver,
-  adminActions,
-}: {
-  driver: NonNullable<ReturnType<typeof useGetDriverByIdQuery>['data']>
-  adminActions: ReturnType<typeof useAdminActions>
-}) {
-  return (
-    <div className="flex gap-2">
-      <Button onClick={() => adminActions.openApproval({
-        title: 'Approve Driver',
-        entityLabel: driver.name,
-        onApprove: async () => adminActions.notify('Driver approved', driver.name),
-      })}>Approve</Button>
-      <Button danger onClick={() => adminActions.openSuspension({
-        title: 'Suspend Driver',
-        entityLabel: `Suspend ${driver.name}`,
-        onConfirm: async () => adminActions.notify('Driver suspended', driver.name),
-      })}>Suspend</Button>
-      <Button type="primary" onClick={() => adminActions.openConfirm({
-        title: 'Reactivate Driver',
-        description: `Restore access for ${driver.name}?`,
-        confirmLabel: 'Reactivate',
-        onConfirm: async () => adminActions.notify('Driver reactivated', driver.name),
-      })}>Reactivate</Button>
-    </div>
   )
 }

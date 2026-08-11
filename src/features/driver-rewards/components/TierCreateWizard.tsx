@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Form, Input, InputNumber, Modal, Select, Steps } from 'antd'
 import { TierBenefitsCardGrid } from '@/features/driver-rewards/components/TierBenefitsCardGrid'
-import {
-  defaultTierFormValues,
-} from '@/features/driver-rewards/utils/tierFormHelpers'
+import { defaultTierFormValues, tierCodeFromName } from '@/features/driver-rewards/mapTierManagement'
 import type { TierFormValues } from '@/types/tierManagement'
 
 interface TierCreateWizardProps {
@@ -28,8 +26,7 @@ export function TierCreateWizard({ open, nextLevel, loading, onCancel, onSubmit 
   useEffect(() => {
     if (!open) return
     setStep(0)
-    const defaults = defaultTierFormValues()
-    defaults.level = nextLevel
+    const defaults = defaultTierFormValues(nextLevel)
     form.setFieldsValue(defaults)
     setBenefitRules(defaults.benefitRules)
   }, [open, nextLevel, form])
@@ -47,14 +44,13 @@ export function TierCreateWizard({ open, nextLevel, loading, onCancel, onSubmit 
 
   const validateStep = async () => {
     if (step === 0) {
-      await form.validateFields(['label', 'level', 'tierColor', 'status'])
+      await form.validateFields(['name', 'code', 'level', 'status'])
     } else if (step === 1) {
       await form.validateFields([
-        'requiredTrips',
-        'requiredRating',
-        'requiredAcceptanceRate',
-        'requiredCompletionRate',
-        'requiredSafetyScore',
+        'pointsRequired',
+        'tripsRequired',
+        'ratingRequired',
+        'acceptanceRateRequired',
       ])
     }
   }
@@ -65,8 +61,22 @@ export function TierCreateWizard({ open, nextLevel, loading, onCancel, onSubmit 
   }
 
   const handleCreate = async () => {
-    const values = await form.validateFields()
-    await onSubmit({ ...values, benefitRules })
+    await form.validateFields([
+      'name',
+      'code',
+      'level',
+      'status',
+      'pointsRequired',
+      'tripsRequired',
+      'ratingRequired',
+      'acceptanceRateRequired',
+    ])
+    const values: TierFormValues = {
+      ...defaultTierFormValues(nextLevel),
+      ...(form.getFieldsValue(true) as Partial<TierFormValues>),
+      benefitRules,
+    }
+    await onSubmit(values)
     reset()
   }
 
@@ -101,17 +111,39 @@ export function TierCreateWizard({ open, nextLevel, loading, onCancel, onSubmit 
     >
       <Steps current={step} size="small" className="mb-6" items={STEP_ITEMS} />
 
-      <Form form={form} layout="vertical" preserve={false}>
+      <Form form={form} layout="vertical" preserve>
         {step === 0 && (
           <>
-            <Form.Item name="label" label="Tier Name" rules={[{ required: true, message: 'Enter a tier name' }]}>
-              <Input placeholder="e.g. Elite" />
+            <Form.Item
+              name="name"
+              label="Tier Name"
+              preserve
+              rules={[{ required: true, message: 'Enter a tier name' }]}
+            >
+              <Input
+                placeholder="e.g. Bronze"
+                onChange={(e) => {
+                  const name = e.target.value
+                  const currentCode = form.getFieldValue('code')
+                  if (!currentCode) {
+                    form.setFieldValue('code', tierCodeFromName(name))
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="code"
+              label="Code"
+              preserve
+              rules={[{ required: true, message: 'Enter a tier code' }]}
+            >
+              <Input placeholder="e.g. bronze" />
             </Form.Item>
             <div className="grid gap-0 sm:grid-cols-2 sm:gap-4">
-              <Form.Item name="level" label="Level" rules={[{ required: true }]}>
+              <Form.Item name="level" label="Level" preserve rules={[{ required: true }]}>
                 <InputNumber min={1} max={99} className="w-full" />
               </Form.Item>
-              <Form.Item name="status" label="Status" rules={[{ required: true }]}>
+              <Form.Item name="status" label="Status" preserve rules={[{ required: true }]}>
                 <Select
                   options={[
                     { value: 'active', label: 'Active' },
@@ -120,46 +152,39 @@ export function TierCreateWizard({ open, nextLevel, loading, onCancel, onSubmit 
                 />
               </Form.Item>
             </div>
-            <Form.Item name="tierColor" label="Color" rules={[{ required: true }]}>
-              <Input type="color" className="h-10 w-full max-w-[120px]" />
-            </Form.Item>
-            <Form.Item name="notes" label="Notes">
-              <Input.TextArea rows={2} placeholder="Optional admin notes" />
-            </Form.Item>
           </>
         )}
 
         {step === 1 && (
-          <>
-            <Form.Item name="requiredTrips" label="Trips Required" rules={[{ required: true }]}>
+          <div className="grid gap-0 sm:grid-cols-2 sm:gap-4">
+            <Form.Item name="pointsRequired" label="Points Required" preserve rules={[{ required: true }]}>
               <InputNumber min={0} className="w-full" />
             </Form.Item>
-            <div className="grid gap-0 sm:grid-cols-2 sm:gap-4">
-              <Form.Item name="requiredRating" label="Rating Required" rules={[{ required: true }]}>
-                <InputNumber min={0} max={5} step={0.1} className="w-full" />
-              </Form.Item>
-              <Form.Item name="requiredSafetyScore" label="Safety Score" rules={[{ required: true }]}>
-                <InputNumber min={0} max={100} className="w-full" />
-              </Form.Item>
-            </div>
-            <div className="grid gap-0 sm:grid-cols-2 sm:gap-4">
-              <Form.Item name="requiredAcceptanceRate" label="Acceptance Rate" rules={[{ required: true }]}>
-                <InputNumber min={0} max={100} addonAfter="%" className="w-full" />
-              </Form.Item>
-              <Form.Item name="requiredCompletionRate" label="Completion Rate" rules={[{ required: true }]}>
-                <InputNumber min={0} max={100} addonAfter="%" className="w-full" />
-              </Form.Item>
-            </div>
-          </>
+            <Form.Item name="tripsRequired" label="Trips Required" preserve rules={[{ required: true }]}>
+              <InputNumber min={0} className="w-full" />
+            </Form.Item>
+            <Form.Item name="ratingRequired" label="Rating Required" preserve rules={[{ required: true }]}>
+              <InputNumber min={0} max={5} step={0.1} className="w-full" />
+            </Form.Item>
+            <Form.Item
+              name="acceptanceRateRequired"
+              label="Acceptance Rate"
+              preserve
+              rules={[{ required: true }]}
+            >
+              <InputNumber min={0} max={100} addonAfter="%" className="w-full" />
+            </Form.Item>
+          </div>
         )}
 
         {step === 2 && (
           <TierBenefitsCardGrid
             rules={benefitRules}
             onRulesChange={setBenefitRules}
-            tierLabel={form.getFieldValue('label') || 'New Tier'}
-            tierColor={form.getFieldValue('tierColor')}
-            tierBadge={(form.getFieldValue('label') || 'NT').slice(0, 2).toUpperCase()}
+            tierLabel={form.getFieldValue('name') || 'New Tier'}
+            tierBadge={(form.getFieldValue('code') || form.getFieldValue('name') || 'NT')
+              .slice(0, 2)
+              .toUpperCase()}
             showHeader={false}
           />
         )}

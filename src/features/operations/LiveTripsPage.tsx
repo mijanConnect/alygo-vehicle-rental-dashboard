@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { Table, Tag } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -9,18 +10,63 @@ import {
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useGetTripsQuery } from '@/services/api'
-import { formatCurrency } from '@/utils/format'
-import { RIDE_CATEGORY_LABELS } from '@/constants'
+import {
+  useGetLiveTripsQuery,
+  type LiveTrip,
+} from '@/redux/api/liveTripApi'
+import { formatCurrency, formatDateTime } from '@/utils/format'
 import type { Trip } from '@/types'
+
+function toTripRecord(trip: LiveTrip): Trip {
+  return {
+    id: trip._id,
+    driverId: trip.driver?._id ?? '',
+    driverName: trip.driver?.name?.trim() || 'Unassigned',
+    passengerId: trip.passenger?._id ?? '',
+    passengerName: trip.passenger?.name ?? '—',
+    category: 'standard',
+    status: trip.status as Trip['status'],
+    pickup: trip.pickup,
+    dropoff: trip.dropoff,
+    fare: trip.fare,
+    startedAt: trip.createdAt,
+    city: trip.city?.trim() || '—',
+  }
+}
 
 export default function LiveTripsPage() {
   useDocumentTitle('Live Trips')
   const navigate = useNavigate()
   const adminActions = useAdminActions()
-  const { data: trips = [], isLoading } = useGetTripsQuery()
+
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { data, isLoading, isFetching } = useGetLiveTripsQuery({
+    page,
+    limit,
+    searchTerm,
+  })
+
+  const trips = data?.data ?? []
+  const meta = data?.meta
+  const totalPages = meta?.totalPages ?? 1
+  const totalItems = meta?.totalItems ?? 0
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+  }, [])
+
+  const handleItemsPerPageChange = (nextLimit: number) => {
+    setLimit(nextLimit)
+    setPage(1)
+  }
 
   const goToTripDetails = (tripId: string) => {
     navigate(`/operations/live-trips/${tripId}`)
@@ -32,32 +78,85 @@ export default function LiveTripsPage() {
       description="Real-time view of active and recent trips. Open a trip to monitor route progress, timeline, and safety events."
     >
       <div className="glass-card p-4">
+        <div className="mb-4">
+          <SearchingInput
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search by trip, driver, passenger..."
+          />
+        </div>
+
         <Table
-          loading={isLoading}
-          rowKey="id"
+          loading={isLoading || isFetching}
+          rowKey="_id"
           dataSource={trips}
+          pagination={false}
           scroll={{ x: 1200 }}
-          {...createTableRowProps<Trip>((record) => goToTripDetails(record.id))}
+          {...createTableRowProps<LiveTrip>((record) => goToTripDetails(record._id))}
           columns={[
-            { title: 'Trip ID', dataIndex: 'id' },
-            { title: 'Driver', dataIndex: 'driverName' },
-            { title: 'Passenger', dataIndex: 'passengerName' },
+            {
+              title: 'Trip ID',
+              dataIndex: '_id',
+              render: (id: string) => (
+                <span className="font-mono text-xs text-white">{id.slice(-8)}</span>
+              ),
+            },
+            {
+              title: 'Driver',
+              key: 'driver',
+              render: (_: unknown, record: LiveTrip) =>
+                record.driver?.name?.trim() || 'Unassigned',
+            },
+            {
+              title: 'Passenger',
+              key: 'passenger',
+              render: (_: unknown, record: LiveTrip) =>
+                record.passenger?.name?.trim() || '—',
+            },
             {
               title: 'Category',
               dataIndex: 'category',
-              render: (c: keyof typeof RIDE_CATEGORY_LABELS) => <Tag>{RIDE_CATEGORY_LABELS[c]}</Tag>,
+              render: (category: string) => <Tag>{category || '—'}</Tag>,
             },
             { title: 'Pickup', dataIndex: 'pickup', ellipsis: true },
             { title: 'Dropoff', dataIndex: 'dropoff', ellipsis: true },
-            { title: 'City', dataIndex: 'city' },
-            { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-            { title: 'Fare', dataIndex: 'fare', render: (f: number) => formatCurrency(f) },
-            createActionsColumn<Trip>(
+            {
+              title: 'City',
+              dataIndex: 'city',
+              render: (city: string) => city?.trim() || '—',
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              render: (status: string) => <StatusBadge status={status} />,
+            },
+            {
+              title: 'Fare',
+              dataIndex: 'fare',
+              render: (fare: number) => formatCurrency(fare),
+            },
+            {
+              title: 'Created',
+              dataIndex: 'createdAt',
+              render: (createdAt: string) => formatDateTime(createdAt),
+            },
+            createActionsColumn<LiveTrip>(
               () => getTripActionItems(),
               (key, record) =>
-                handleTripAction(key, record, adminActions, { onNavigate: navigate }),
+                handleTripAction(key, toTripRecord(record), adminActions, {
+                  onNavigate: navigate,
+                }),
             ),
           ]}
+        />
+
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(totalPages, 1)}
+          totalItems={totalItems}
+          itemsPerPage={limit}
+          onPageChange={setPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
       <AdminActionHost actions={adminActions} />

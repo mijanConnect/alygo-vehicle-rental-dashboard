@@ -21,7 +21,7 @@ export interface ForgotPasswordResponse {
 
 export interface VerifyOtpRequest {
   email: string
-  otp: string
+  oneTimeCode: number
 }
 
 export interface VerifyOtpResponse {
@@ -35,17 +35,16 @@ export interface ResendOtpRequest {
 
 export interface ResendOtpResponse {
   message: string
-  expiresIn: number
+  expiresIn?: number
 }
 
 export interface ResetPasswordRequest {
-  email: string
-  resetToken: string
-  password: string
+  newPassword: string
   confirmPassword: string
 }
 
 export interface ResetPasswordResponse {
+  success?: boolean
   message: string
 }
 

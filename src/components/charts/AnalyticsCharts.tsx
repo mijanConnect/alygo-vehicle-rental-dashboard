@@ -59,8 +59,20 @@ export function RevenueTrendChart({ data }: { data: ChartPoint[] }) {
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="label" stroke="#64748b" fontSize={12} />
-        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-        <Tooltip {...tooltipStyle} formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+        <YAxis
+          stroke="#64748b"
+          fontSize={12}
+          tickFormatter={(v) =>
+            Number(v) >= 1000 ? `$${(Number(v) / 1000).toFixed(0)}k` : `$${Number(v)}`
+          }
+        />
+        <Tooltip
+          {...tooltipStyle}
+          formatter={(value) => [
+            `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+            'Revenue',
+          ]}
+        />
         <Area type="monotone" dataKey="value" stroke="#6366f1" fill="url(#revenueGradient)" strokeWidth={2} />
         <Area type="monotone" dataKey="secondary" stroke="#22d3ee" fill="transparent" strokeWidth={2} strokeDasharray="4 4" />
         <Legend />

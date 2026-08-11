@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { message } from 'antd'
+import { baseApi } from '@/redux/baseApi'
 import { tripCompletionReviewApi } from '@/services/tripCompletionReviewApi'
 import { socketService } from '@/services/socket'
 import { useAppDispatch } from '@/store/hooks'
@@ -14,6 +15,12 @@ export function useTripCompletionRealtime() {
           'TripComplaints',
           'TripCompletionOverview',
           'TripCompletionAnalytics',
+        ]),
+      )
+      dispatch(
+        baseApi.util.invalidateTags([
+          'TripCompletionComplaintStats',
+          'TripCompletionComplaints',
         ]),
       )
     }

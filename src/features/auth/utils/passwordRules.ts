@@ -1,6 +1,5 @@
 import type { PasswordRule } from '@/features/auth/types'
 
-export const DEMO_OTP = '123456'
 export const OTP_EXPIRY_SECONDS = 60
 
 export const passwordRules: PasswordRule[] = [
