@@ -168,7 +168,7 @@ export const NAVIGATION: NavItem[] = [
 
 export const QUICK_LINKS = [
   { label: 'Airport Queue', path: '/locations?tab=airports', icon: Plane },
-  { label: 'Surge Monitor', path: '/pricing?tab=zones', icon: AlertTriangle },
+  { label: 'Surge Monitor', path: '/pricing', icon: AlertTriangle },
   { label: 'Live Trips', path: '/operations/live-trips', icon: Map },
   { label: 'Stripe Payouts', path: '/finance?tab=payouts', icon: CreditCard },
   { label: 'Compliance Alerts', path: '/compliance', icon: Building2 },
