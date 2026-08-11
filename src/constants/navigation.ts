@@ -9,6 +9,7 @@ import {
   // FileCheck,
   Gauge,
   Globe2,
+  Image,
   LayoutDashboard,
   Map,
   MapPin,
@@ -61,6 +62,13 @@ export const NAVIGATION: NavItem[] = [
     path: '/communication',
     icon: MessageSquare,
     permission: 'communication.view',
+  },
+  {
+    key: 'banners',
+    label: 'Banner Management',
+    path: '/banners',
+    icon: Image,
+    permission: 'settings.view',
   },
   {
     key: 'users',
