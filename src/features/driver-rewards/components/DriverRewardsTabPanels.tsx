@@ -302,3 +302,5 @@ export function PenaltyRulesTab() {
     />
   )
 }
+
+export { AdminOverrideTab } from '@/features/driver-rewards/components/AdminOverrideTab'

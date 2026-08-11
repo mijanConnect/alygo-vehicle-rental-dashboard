@@ -74,6 +74,18 @@ export interface UpdatePointRuleArgs {
   body: PointRuleWritePayload
 }
 
+export interface OverridePointsPayload {
+  driverUserId: string
+  points: number
+  notes: string
+}
+
+export interface OverrideTierPayload {
+  driverUserId: string
+  tierId: string
+  reason: string
+}
+
 function mapMeta(meta: PaginationMeta | undefined, count: number) {
   return {
     page: meta?.page ?? 1,
@@ -159,6 +171,33 @@ export const driverRewardManagementApi = baseApi.injectEndpoints({
         { type: 'DriverRewards', id: 'LIST-all' },
       ],
     }),
+
+    adminOverridePoints: builder.mutation<unknown, OverridePointsPayload>({
+      query: (body) => ({
+        url: '/rewards/override-points',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => response.data,
+      invalidatesTags: [
+        { type: 'DriverRewards', id: 'LIST-all' },
+        'Drivers',
+      ],
+    }),
+
+    adminOverrideTier: builder.mutation<unknown, OverrideTierPayload>({
+      query: (body) => ({
+        url: '/rewards/override-tier',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => response.data,
+      invalidatesTags: [
+        { type: 'DriverRewards', id: 'LIST-all' },
+        'Drivers',
+        'Tiers',
+      ],
+    }),
   }),
 })
 
@@ -168,4 +207,6 @@ export const {
   useCreatePointRuleMutation,
   useUpdatePointRuleMutation,
   useDeletePointRuleMutation,
+  useAdminOverridePointsMutation,
+  useAdminOverrideTierMutation,
 } = driverRewardManagementApi

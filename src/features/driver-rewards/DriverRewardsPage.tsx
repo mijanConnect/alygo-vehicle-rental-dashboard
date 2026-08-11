@@ -2,6 +2,7 @@ import { Tabs } from 'antd'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/common/PageShell'
 import {
+  AdminOverrideTab,
   PenaltyRulesTab,
   RewardRulesTab,
 } from '@/features/driver-rewards/components/DriverRewardsTabPanels'
@@ -15,6 +16,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 const REWARDS_TABS = [
   { key: 'reward-rules', label: REWARDS_TAB_LABELS['reward-rules'], children: <RewardRulesTab /> },
   { key: 'penalty-rules', label: REWARDS_TAB_LABELS['penalty-rules'], children: <PenaltyRulesTab /> },
+  { key: 'admin-override', label: REWARDS_TAB_LABELS['admin-override'], children: <AdminOverrideTab /> },
 ] as const
 
 export default function DriverRewardsPage() {
@@ -31,7 +33,7 @@ export default function DriverRewardsPage() {
   return (
     <PageShell
       title="Driver Rewards Management"
-      description="Manage reward and penalty point rules for driver rewards."
+      description="Manage reward rules, penalty deductions, and admin overrides for driver rewards."
     >
       <div className="glass-card p-4">
         <Tabs
