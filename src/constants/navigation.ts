@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
+  CalendarDays,
   Car,
   CreditCard,
   // FileCheck,
@@ -69,6 +70,13 @@ export const NAVIGATION: NavItem[] = [
     path: '/banners',
     icon: Image,
     permission: 'settings.view',
+  },
+  {
+    key: 'events',
+    label: 'Events Management',
+    path: '/events',
+    icon: CalendarDays,
+    permission: 'operations.view',
   },
   {
     key: 'users',

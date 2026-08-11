@@ -43,6 +43,7 @@ const LegacyCommunicationRedirect = lazy(() =>
 const VehicleEligibilityPage = lazy(() => import('@/features/vehicle-eligibility/VehicleEligibilityPage'))
 const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCategoriesPage'))
 const BannerManagementPage = lazy(() => import('@/features/banners/BannerManagementPage'))
+const EventsManagementPage = lazy(() => import('@/features/events/EventsManagementPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
 const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBonusesPage'))
@@ -138,6 +139,7 @@ export const router = createBrowserRouter([
       { path: 'ride-categories', element: withSuspense(<RideCategoriesPage />) },
       { path: 'categories/:category', element: <Navigate to="/ride-categories" replace /> },
       { path: 'banners', element: withSuspense(<BannerManagementPage />) },
+      { path: 'events', element: withSuspense(<EventsManagementPage />) },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
       { path: 'demand', element: <Navigate to="/demand-intelligence" replace /> },
       { path: 'demand/:section', element: <Navigate to="/demand-intelligence" replace /> },
