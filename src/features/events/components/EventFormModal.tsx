@@ -97,12 +97,12 @@ export function EventFormModal({
       form.setFieldsValue({
         eventName: '',
         description: '',
-        timezone: 'Asia/Dhaka',
+        timezone: 'America/Los_Angeles',
         dateRange: undefined,
         serviceAreaId: undefined,
         lat: DEFAULT_EVENT_CENTER.lat,
         lng: DEFAULT_EVENT_CENTER.lng,
-        coverageRadiusKm: 10,
+        coverageRadiusKm: 0,
         status: 'active',
       })
     }
