@@ -1,47 +1,21 @@
 import { useCallback, useState } from 'react'
-import { Table, Tag } from 'antd'
+import { Button, Table, Tag } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import {
-  AdminActionHost,
-  createActionsColumn,
-  createTableRowProps,
-  getTripActionItems,
-  handleTripAction,
-} from '@/components/admin'
+import { createTableRowProps } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
-import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   useGetLiveTripsQuery,
   type LiveTrip,
 } from '@/redux/api/liveTripApi'
 import { formatCurrency, formatDateTime } from '@/utils/format'
-import type { Trip } from '@/types'
-
-function toTripRecord(trip: LiveTrip): Trip {
-  return {
-    id: trip._id,
-    driverId: trip.driver?._id ?? '',
-    driverName: trip.driver?.name?.trim() || 'Unassigned',
-    passengerId: trip.passenger?._id ?? '',
-    passengerName: trip.passenger?.name ?? '—',
-    category: 'standard',
-    status: trip.status as Trip['status'],
-    pickup: trip.pickup,
-    dropoff: trip.dropoff,
-    fare: trip.fare,
-    startedAt: trip.createdAt,
-    city: trip.city?.trim() || '—',
-  }
-}
 
 export default function LiveTripsPage() {
   useDocumentTitle('Live Trips')
   const navigate = useNavigate()
-  const adminActions = useAdminActions()
 
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
@@ -140,13 +114,24 @@ export default function LiveTripsPage() {
               dataIndex: 'createdAt',
               render: (createdAt: string) => formatDateTime(createdAt),
             },
-            createActionsColumn<LiveTrip>(
-              () => getTripActionItems(),
-              (key, record) =>
-                handleTripAction(key, toTripRecord(record), adminActions, {
-                  onNavigate: navigate,
-                }),
-            ),
+            {
+              title: 'Action',
+              key: 'action',
+              fixed: 'right',
+              width: 110,
+              render: (_: unknown, record: LiveTrip) => (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goToTripDetails(record._id)
+                  }}
+                >
+                  Details
+                </Button>
+              ),
+            },
           ]}
         />
 
@@ -159,7 +144,6 @@ export default function LiveTripsPage() {
           onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
-      <AdminActionHost actions={adminActions} />
     </PageShell>
   )
 }

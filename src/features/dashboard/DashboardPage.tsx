@@ -11,10 +11,7 @@ import {
 } from '@/components/charts/AnalyticsCharts'
 import {
   AdminActionHost,
-  createActionsColumn,
   createTableRowProps,
-  getTripActionItems,
-  handleTripAction,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -33,24 +30,6 @@ import {
 import { useGetLiveTripsQuery, type LiveTrip } from '@/redux/api/liveTripApi'
 import { useAppSelector } from '@/store/hooks'
 import { formatCurrency } from '@/utils/format'
-import type { Trip } from '@/types'
-
-function toTripRecord(trip: LiveTrip): Trip {
-  return {
-    id: trip._id,
-    driverId: trip.driver?._id ?? '',
-    driverName: trip.driver?.name?.trim() || 'Unassigned',
-    passengerId: trip.passenger?._id ?? '',
-    passengerName: trip.passenger?.name ?? '—',
-    category: 'standard',
-    status: trip.status as Trip['status'],
-    pickup: trip.pickup,
-    dropoff: trip.dropoff,
-    fare: trip.fare,
-    startedAt: trip.createdAt,
-    city: trip.city?.trim() || '—',
-  }
-}
 
 export default function DashboardPage() {
   useDocumentTitle('Executive Dashboard')
@@ -207,13 +186,23 @@ export default function DashboardPage() {
               dataIndex: 'fare',
               render: (f: number) => formatCurrency(f),
             },
-            createActionsColumn<LiveTrip>(
-              () => getTripActionItems(),
-              (key, record) =>
-                handleTripAction(key, toTripRecord(record), adminActions, {
-                  onNavigate: navigate,
-                }),
-            ),
+            {
+              title: 'Action',
+              key: 'action',
+              width: 100,
+              render: (_: unknown, record: LiveTrip) => (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/operations/live-trips/${record._id}`)
+                  }}
+                >
+                  Details
+                </Button>
+              ),
+            },
           ]}
         />
       </div>
