@@ -57,6 +57,7 @@ export const baseApi = createApi({
     'RideCategories',
     'Banners',
     'Events',
+    'Holidays',
     'Communication',
     'Settings',
   ],

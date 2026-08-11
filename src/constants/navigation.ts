@@ -15,6 +15,7 @@ import {
   Map,
   MapPin,
   MessageSquare,
+  PartyPopper,
   Plane,
   Settings,
   Shield,
@@ -76,6 +77,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'Events Management',
     path: '/events',
     icon: CalendarDays,
+    permission: 'operations.view',
+  },
+  {
+    key: 'holidays',
+    label: 'Holiday Management',
+    path: '/holidays',
+    icon: PartyPopper,
     permission: 'operations.view',
   },
   {
