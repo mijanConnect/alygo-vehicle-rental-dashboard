@@ -51,8 +51,8 @@ export const NAVIGATION: NavItem[] = [
       { key: 'lost-found', label: 'Lost & Found', path: '/operations/lost-found' },
       { key: 'trip-completion-review', label: 'Trip Completion Review', path: '/operations/trip-completion-review' },
       { key: 'driving-hours', label: 'Driving Hours', path: '/operations/driving-hours' },
-      { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
-      { key: 'safety-incidents', label: 'Safety & Incident Management', path: '/operations/safety-incidents' },
+      // { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
+      // { key: 'safety-incidents', label: 'Safety & Incident Management', path: '/operations/safety-incidents' },
     ],
   },
   {
@@ -81,13 +81,13 @@ export const NAVIGATION: NavItem[] = [
     icon: Shield,
     permission: 'compliance.view',
   },
-  {
-    key: 'vehicle-eligibility',
-    label: 'Vehicle Eligibility Engine',
-    path: '/vehicle-eligibility',
-    icon: FileCheck,
-    permission: 'eligibility.view',
-  },
+  // {
+  //   key: 'vehicle-eligibility',
+  //   label: 'Vehicle Eligibility Engine',
+  //   path: '/vehicle-eligibility',
+  //   icon: FileCheck,
+  //   permission: 'eligibility.view',
+  // },
   {
     key: 'ride-categories',
     label: 'Ride Categories',
@@ -109,13 +109,13 @@ export const NAVIGATION: NavItem[] = [
     icon: Gauge,
     permission: 'pricing.view',
   },
-  {
-    key: 'driver-bonuses',
-    label: 'Driver Bonuses',
-    path: '/driver-bonuses',
-    icon: Gift,
-    permission: 'pricing.view',
-  },
+  // {
+  //   key: 'driver-bonuses',
+  //   label: 'Driver Bonuses',
+  //   path: '/driver-bonuses',
+  //   icon: Gift,
+  //   permission: 'pricing.view',
+  // },
   {
     key: 'reservations',
     label: 'Reservations',

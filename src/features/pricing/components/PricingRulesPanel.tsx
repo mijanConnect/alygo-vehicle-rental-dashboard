@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Form, Input, InputNumber, Modal, Select, Table } from 'antd'
-import { Pencil, Power, PowerOff, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-react'
 import {
   AdminActionHost,
   createActionsColumn,
@@ -8,77 +8,143 @@ import {
 } from '@/components/admin'
 import type { ActionMenuItem } from '@/components/admin/types'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import {
-  MOCK_PRICING_RULES,
-  PRICING_RULE_TYPE_LABELS,
-  type PricingRule,
-  type PricingRuleType,
-} from '@/features/pricing/pricingData'
+import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
+import { PRICING_RULE_TYPE_LABELS, type PricingRuleType } from '@/features/pricing/pricingData'
 import { useAdminActions } from '@/hooks/useAdminActions'
+import {
+  useCreateDynamicPricingMutation,
+  useDeleteDynamicPricingMutation,
+  useGetDynamicPricingListQuery,
+  useUpdateDynamicPricingMutation,
+  useUpdateDynamicPricingStatusMutation,
+} from '@/redux/api/dynamicPricingApi'
+import type {
+  SurgeRuleItem,
+  SurgeRuleStatus,
+  SurgeRuleWritePayload,
+} from '@/redux/api/dynamicPricingApi'
+import { formatDateTime } from '@/utils/format'
 
 const RULE_TYPE_OPTIONS = Object.entries(PRICING_RULE_TYPE_LABELS).map(([value, label]) => ({
   value,
   label,
 }))
 
+const STATUS_OPTIONS = [
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+]
+
+type SurgeRuleFormValues = SurgeRuleWritePayload
+
 export function PricingRulesPanel() {
   const adminActions = useAdminActions()
-  const [rules, setRules] = useState(MOCK_PRICING_RULES)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [status, setStatus] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
-  const [editRule, setEditRule] = useState<PricingRule | null>(null)
-  const [form] = Form.useForm()
+  const [editRule, setEditRule] = useState<SurgeRuleItem | null>(null)
+  const [form] = Form.useForm<SurgeRuleFormValues>()
+
+  const { data, isLoading, isFetching } = useGetDynamicPricingListQuery({
+    page,
+    limit,
+    searchTerm,
+    status: status || undefined,
+  })
+
+  const [createRule, { isLoading: creating }] = useCreateDynamicPricingMutation()
+  const [updateRule, { isLoading: updating }] = useUpdateDynamicPricingMutation()
+  const [updateStatus, { isLoading: updatingStatus }] = useUpdateDynamicPricingStatusMutation()
+  const [deleteRule, { isLoading: deleting }] = useDeleteDynamicPricingMutation()
+
+  const rows = data?.data ?? []
+  const meta = data?.meta
 
   const openCreate = () => {
     setEditRule(null)
     form.resetFields()
+    form.setFieldsValue({
+      ruleType: 'peak_hour_surge',
+      demandThreshold: 80,
+      supplyThreshold: 40,
+      minMultiplier: 1.2,
+      maxMultiplier: 3.5,
+    })
     setModalOpen(true)
   }
 
-  const openEdit = (rule: PricingRule) => {
+  const openEdit = (rule: SurgeRuleItem) => {
     setEditRule(rule)
-    form.setFieldsValue(rule)
+    form.setFieldsValue({
+      ruleName: rule.ruleName,
+      ruleType: rule.ruleType,
+      demandThreshold: rule.demandThreshold,
+      supplyThreshold: rule.supplyThreshold,
+      minMultiplier: rule.minMultiplier,
+      maxMultiplier: rule.maxMultiplier,
+    })
     setModalOpen(true)
   }
 
-  const handleSave = (values: Omit<PricingRule, 'id' | 'status'> & { status?: PricingRule['status'] }) => {
-    if (editRule) {
-      setRules((prev) =>
-        prev.map((r) => (r.id === editRule.id ? { ...r, ...values } : r)),
-      )
-      adminActions.notify(`${values.name} updated`)
-    } else {
-      const newRule: PricingRule = {
-        id: `PR-${Date.now()}`,
-        status: 'active',
-        ...values,
-      }
-      setRules((prev) => [...prev, newRule])
-      adminActions.notify(`${values.name} created`)
+  const handleSave = async (values: SurgeRuleFormValues) => {
+    const payload: SurgeRuleWritePayload = {
+      ruleName: values.ruleName.trim(),
+      ruleType: values.ruleType,
+      demandThreshold: values.demandThreshold,
+      supplyThreshold: values.supplyThreshold,
+      minMultiplier: values.minMultiplier,
+      maxMultiplier: values.maxMultiplier,
     }
-    setModalOpen(false)
-    setEditRule(null)
+
+    try {
+      if (editRule) {
+        await updateRule({ id: editRule._id, body: payload }).unwrap()
+        adminActions.notify('Rule updated', payload.ruleName)
+      } else {
+        await createRule(payload).unwrap()
+        adminActions.notify('Rule created', payload.ruleName)
+      }
+      setModalOpen(false)
+      setEditRule(null)
+    } catch (err) {
+      adminActions.notify('Unable to save rule', String(err))
+    }
   }
 
-  const toggleStatus = (rule: PricingRule) => {
-    const next = rule.status === 'active' ? 'inactive' : 'active'
-    setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, status: next } : r)))
-    adminActions.notify(`${rule.name} ${next === 'active' ? 'activated' : 'deactivated'}`)
+  const toggleStatus = async (rule: SurgeRuleItem) => {
+    const next: SurgeRuleStatus = rule.status === 'active' ? 'inactive' : 'active'
+    try {
+      await updateStatus({ id: rule._id, status: next }).unwrap()
+      adminActions.notify(
+        next === 'active' ? 'Rule activated' : 'Rule deactivated',
+        rule.ruleName,
+      )
+    } catch (err) {
+      adminActions.notify('Unable to update status', String(err))
+    }
   }
 
-  const deleteRule = (rule: PricingRule) => {
+  const confirmDelete = (rule: SurgeRuleItem) => {
     adminActions.openConfirm({
       title: 'Delete Pricing Rule',
-      description: `Delete rule "${rule.name}"?`,
+      description: `Delete rule "${rule.ruleName}"?`,
       confirmLabel: 'Delete',
       danger: true,
       onConfirm: async () => {
-        setRules((prev) => prev.filter((r) => r.id !== rule.id))
-        adminActions.notify(`${rule.name} deleted`)
+        try {
+          await deleteRule(rule._id).unwrap()
+          adminActions.notify('Rule deleted', rule.ruleName)
+        } catch (err) {
+          adminActions.notify('Unable to delete rule', String(err))
+        }
       },
     })
   }
 
-  const actionItems = (rule: PricingRule): ActionMenuItem[] => [
+  const actionItems = (rule: SurgeRuleItem): ActionMenuItem[] => [
     { key: 'edit', label: 'Edit Rule', icon: Pencil, group: 1 },
     {
       key: 'toggle',
@@ -91,26 +157,46 @@ export function PricingRulesPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-alygo-text-muted">
-          Configure demand/supply thresholds and multiplier bounds for surge pricing rules.
-        </p>
-        <Button type="primary" onClick={openCreate}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchingInput
+            value={searchTerm}
+            onChange={(value) => {
+              setSearchTerm(value)
+              setPage(1)
+            }}
+            placeholder="Search surge rules..."
+          />
+          <Select
+            allowClear
+            placeholder="Filter by status"
+            className="!min-w-[160px]"
+            value={status || undefined}
+            options={STATUS_OPTIONS}
+            onChange={(value) => {
+              setStatus(value ?? '')
+              setPage(1)
+            }}
+          />
+        </div>
+        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={openCreate}>
           Add Rule
         </Button>
       </div>
 
       <Table
-        rowKey="id"
-        dataSource={rules}
+        loading={isLoading || isFetching || creating || updating || updatingStatus || deleting}
+        rowKey="_id"
+        dataSource={rows}
+        pagination={false}
         scroll={{ x: 1100 }}
-        {...createTableRowProps<PricingRule>((record) => openEdit(record))}
+        {...createTableRowProps<SurgeRuleItem>((record) => openEdit(record))}
         columns={[
-          { title: 'Rule Name', dataIndex: 'name' },
+          { title: 'Rule Name', dataIndex: 'ruleName' },
           {
             title: 'Rule Type',
             dataIndex: 'ruleType',
-            render: (t: PricingRuleType) => PRICING_RULE_TYPE_LABELS[t],
+            render: (t: PricingRuleType) => PRICING_RULE_TYPE_LABELS[t] ?? t,
           },
           {
             title: 'Demand Threshold',
@@ -137,20 +223,38 @@ export function PricingRulesPanel() {
             dataIndex: 'status',
             render: (s: string) => <StatusBadge status={s} />,
           },
-          createActionsColumn<PricingRule>(
+          {
+            title: 'Updated',
+            dataIndex: 'updatedAt',
+            render: (d?: string) => (d ? formatDateTime(d) : '—'),
+          },
+          createActionsColumn<SurgeRuleItem>(
             (record) => actionItems(record),
             (key, record) => {
               if (key === 'edit') openEdit(record)
-              else if (key === 'toggle') toggleStatus(record)
-              else if (key === 'delete') deleteRule(record)
+              else if (key === 'toggle') void toggleStatus(record)
+              else if (key === 'delete') confirmDelete(record)
             },
           ),
         ]}
       />
 
+      <Pagination
+        currentPage={meta?.page ?? page}
+        totalPages={Math.max(meta?.totalPages ?? 1, 1)}
+        totalItems={meta?.totalItems ?? 0}
+        itemsPerPage={meta?.limit ?? limit}
+        onPageChange={setPage}
+        onItemsPerPageChange={(size) => {
+          setLimit(size)
+          setPage(1)
+        }}
+      />
+
       <Modal
-        title={editRule ? `Edit Rule — ${editRule.name}` : 'Add Pricing Rule'}
+        title={editRule ? `Edit Rule — ${editRule.ruleName}` : 'Add Pricing Rule'}
         open={modalOpen}
+        confirmLoading={creating || updating}
         onCancel={() => {
           setModalOpen(false)
           setEditRule(null)
@@ -159,16 +263,24 @@ export function PricingRulesPanel() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" className="mt-4" onFinish={handleSave}>
-          <Form.Item name="name" label="Rule Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. Default Surge" />
+          <Form.Item name="ruleName" label="Rule Name" rules={[{ required: true }]}>
+            <Input placeholder="e.g. Holiday Hour Surge" />
           </Form.Item>
           <Form.Item name="ruleType" label="Rule Type" rules={[{ required: true }]}>
             <Select options={RULE_TYPE_OPTIONS} />
           </Form.Item>
-          <Form.Item name="demandThreshold" label="Demand Threshold (%)" rules={[{ required: true }]}>
+          <Form.Item
+            name="demandThreshold"
+            label="Demand Threshold (%)"
+            rules={[{ required: true }]}
+          >
             <InputNumber min={0} max={100} className="w-full" />
           </Form.Item>
-          <Form.Item name="supplyThreshold" label="Supply Threshold (%)" rules={[{ required: true }]}>
+          <Form.Item
+            name="supplyThreshold"
+            label="Supply Threshold (%)"
+            rules={[{ required: true }]}
+          >
             <InputNumber min={0} max={100} className="w-full" />
           </Form.Item>
           <Form.Item name="minMultiplier" label="Min Multiplier" rules={[{ required: true }]}>
