@@ -33,6 +33,12 @@ export interface TripSafetyEvent {
   status: string
 }
 
+export interface TripLiveMapPoint {
+  lat: number
+  lng: number
+  label?: string
+}
+
 export interface TripLiveMapData {
   driverLocation: string
   pickupLabel: string
@@ -41,6 +47,11 @@ export interface TripLiveMapData {
   etaMinutes: number
   routeProgressPercent: number
   isLive: boolean
+  pickup?: TripLiveMapPoint | null
+  dropoff?: TripLiveMapPoint | null
+  driver?: TripLiveMapPoint | null
+  stops?: TripLiveMapPoint[]
+  polyline?: string
 }
 
 export interface TripDetail extends Trip {
