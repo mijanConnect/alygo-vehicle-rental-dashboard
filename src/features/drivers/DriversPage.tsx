@@ -18,7 +18,6 @@ import { ActiveDriversTab } from '@/features/drivers/components/ActiveDriversTab
 import { DriverVerificationDrawer } from '@/features/drivers/components/DriverVerificationDrawer'
 import { DriverVerificationOverviewCards } from '@/features/drivers/components/DriverVerificationOverviewCards'
 import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
-import { IdentityVerificationSettings } from '@/features/drivers/components/IdentityVerificationSettings'
 import type { DriverVerificationFocus } from '@/features/drivers/driverVerificationHelpers'
 import {
   DEFAULT_DRIVER_TAB,
@@ -69,7 +68,7 @@ export default function DriversPage() {
 
   const overviewQuery = useGetDriverManagementListQuery(
     { ...listParams, status: status || undefined, tier: tierFilter || undefined },
-    { skip: validTab !== 'overview' && validTab !== 'reverification' },
+    { skip: validTab !== 'overview' },
   )
   const pendingQuery = useGetAllPendingApprovalsQuery(listParams, {
     skip: validTab !== 'pending',
@@ -117,12 +116,8 @@ export default function DriversPage() {
     }
 
     const data = overviewQuery.data
-    let mapped = (data?.data ?? []).map(mapOverviewDriver)
-    if (validTab === 'reverification') {
-      mapped = mapped.filter((d) => d.identityVerificationStatus !== 'verified')
-    }
     return {
-      rows: mapped,
+      rows: (data?.data ?? []).map(mapOverviewDriver),
       isLoading: overviewQuery.isLoading,
       isFetching: overviewQuery.isFetching,
       totalItems: data?.meta.totalItems ?? 0,
@@ -372,19 +367,6 @@ export default function DriversPage() {
               key: 'compliance',
               label: DRIVER_TAB_LABELS.compliance,
               children: segmentTable,
-            },
-            {
-              key: 'reverification',
-              label: DRIVER_TAB_LABELS.reverification,
-              children: (
-                <div className="space-y-6">
-                  {segmentTable}
-                  <div className="border-t border-white/5 pt-6">
-                    <h3 className="mb-4 font-semibold text-white">Identity Verification Rules</h3>
-                    <IdentityVerificationSettings />
-                  </div>
-                </div>
-              ),
             },
           ]}
         />
