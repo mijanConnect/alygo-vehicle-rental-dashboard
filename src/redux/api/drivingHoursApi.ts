@@ -1,5 +1,5 @@
 import { baseApi } from '@/redux/baseApi'
-import type { ChartPoint } from '@/types'
+import { cleanObject } from '@/utils/cleanObject'
 
 interface ApiResponse<T> {
   success: boolean
@@ -7,104 +7,216 @@ interface ApiResponse<T> {
   data: T
 }
 
-export interface CancellationAnalyticsSummary {
-  totalCancellations: number
-  passengerCancellations: number
-  driverCancellations: number
-  feesCollected: number
-  totalDriverPaid: number
-}
-
-interface TrendPoint {
-  day: string
-  cancelledRides: number
-}
-
-interface ReasonPoint {
-  reason: string
-  count: number
-}
-
-interface CityPoint {
-  city: string
+interface PaginationMeta {
+  page: number
+  limit: number
   total: number
+  totalPage: number
 }
 
-interface CategoryPoint {
-  category: string
-  count: number
+interface PaginatedApiResponse<T> {
+  success: boolean
+  message: string
+  data: T[]
+  meta?: PaginationMeta
 }
 
-export const drivingHoursApi = baseApi.injectEndpoints({
+export type DutyPolicyScopeType = 'global' | 'state' | 'city' | 'zone' | 'airport'
+
+export type DutyPolicyStatus = 'active' | 'inactive'
+
+export interface DutyPolicyLocationRef {
+  _id: string
+  country?: string
+  state?: string
+  city?: string
+  zone?: string
+  airport?: string
+  type?: string
+  maxDrivers?: number
+}
+
+export type DutyPolicyLocationField = string | DutyPolicyLocationRef | null | undefined
+
+export interface DutyPolicyLimits {
+  maxDrivingHoursPerDay: number
+  maxContinuousDrivingHours: number
+  breakAfterHours: number
+  breakDurationMinutes: number
+  maxTripsPerDay: number
+  minimumRestHours: number
+}
+
+export interface DutyPolicyWritePayload extends DutyPolicyLimits {
+  name: string
+  scopeType: DutyPolicyScopeType
+  countryId?: string
+  stateId?: string
+  cityId?: string
+  zoneId?: string
+  airportId?: string
+}
+
+export interface DutyPolicyItem extends DutyPolicyLimits {
+  _id: string
+  name: string
+  scopeType: DutyPolicyScopeType
+  countryId?: DutyPolicyLocationField
+  stateId?: DutyPolicyLocationField
+  cityId?: DutyPolicyLocationField
+  zoneId?: DutyPolicyLocationField
+  airportId?: DutyPolicyLocationField
+  status: DutyPolicyStatus
+  isDeleted?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface DutyPolicyQueryParams {
+  page?: number
+  limit?: number
+  searchTerm?: string
+  status?: DutyPolicyStatus | string
+  scopeType?: DutyPolicyScopeType
+}
+
+export interface DutyPolicyListResult {
+  data: DutyPolicyItem[]
+  meta: {
+    page: number
+    limit: number
+    totalItems: number
+    totalPages: number
+  }
+}
+
+export interface UpdateDutyPolicyArgs {
+  id: string
+  body: DutyPolicyWritePayload
+}
+
+export interface UpdateDutyPolicyStatusArgs {
+  id: string
+  status: DutyPolicyStatus
+}
+
+function mapMeta(meta: PaginationMeta | undefined, count: number) {
+  return {
+    page: meta?.page ?? 1,
+    limit: meta?.limit ?? 10,
+    totalItems: meta?.total ?? count,
+    totalPages: meta?.totalPage ?? 1,
+  }
+}
+
+export const driverDutyPoliciesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getDrivingHoursSummary: builder.query<CancellationAnalyticsSummary, void>({
-      query: () => ({
-        url: '/admin/analytics/admin/analytics/cancellations/summary',
+    getDriverDutyPolicies: builder.query<
+      DutyPolicyListResult,
+      DutyPolicyQueryParams | void
+    >({
+      query: ({ page = 1, limit = 10, searchTerm, status, scopeType } = {}) => ({
+        url: '/driver-duty-policies',
         method: 'GET',
+        params: cleanObject({
+          page,
+          limit,
+          searchTerm: searchTerm?.trim(),
+          status,
+          scopeType,
+        }),
       }),
-      transformResponse: (response: ApiResponse<CancellationAnalyticsSummary>) =>
-        response.data,
-      providesTags: ['CancellationAnalytics'],
+      transformResponse: (response: PaginatedApiResponse<DutyPolicyItem>) => ({
+        data: response.data ?? [],
+        meta: mapMeta(response.meta, response.data?.length ?? 0),
+      }),
+      providesTags: (result, _err, arg) => {
+        const scope = arg?.scopeType ?? 'all'
+        return result
+          ? [
+              ...result.data.map(({ _id }) => ({ type: 'DrivingHours' as const, id: _id })),
+              { type: 'DrivingHours', id: `LIST-${scope}` },
+            ]
+          : [{ type: 'DrivingHours', id: `LIST-${scope}` }]
+      },
     }),
 
-    getDrivingHoursTrends: builder.query<ChartPoint[], void>({
-      query: () => ({
-        url: '/admin/analytics/admin/analytics/cancellations/trend',
+    getSingleDriverDutyPolicy: builder.query<DutyPolicyItem, string>({
+      query: (id) => ({
+        url: `/driver-duty-policies/${id}`,
         method: 'GET',
       }),
-      transformResponse: (response: ApiResponse<TrendPoint[]>) =>
-        (response.data ?? []).map((point) => ({
-          label: point.day,
-          value: point.cancelledRides,
-        })),
-      providesTags: ['CancellationAnalytics'],
+      transformResponse: (response: ApiResponse<DutyPolicyItem>) => response.data,
+      providesTags: (_res, _err, id) => [{ type: 'DrivingHours', id }],
     }),
 
-    getDrivingHoursReasonsStats: builder.query<ChartPoint[], void>({
-      query: () => ({
-        url: '/admin/analytics/admin/analytics/cancellations/reasons',
-        method: 'GET',
+    createDriverDutyPolicy: builder.mutation<DutyPolicyItem, DutyPolicyWritePayload>({
+      query: (body) => ({
+        url: '/driver-duty-policies',
+        method: 'POST',
+        body,
       }),
-      transformResponse: (response: ApiResponse<ReasonPoint[]>) =>
-        (response.data ?? []).map((point) => ({
-          label: point.reason,
-          value: point.count,
-        })),
-      providesTags: ['CancellationAnalytics'],
+      transformResponse: (response: ApiResponse<DutyPolicyItem>) => response.data,
+      invalidatesTags: (_res, _err, body) => [
+        { type: 'DrivingHours', id: `LIST-${body.scopeType}` },
+        { type: 'DrivingHours', id: 'LIST-all' },
+      ],
     }),
 
-    getDrivingHoursByCities: builder.query<ChartPoint[], void>({
-      query: () => ({
-        url: '/admin/analytics/admin/analytics/cancellations/cities',
-        method: 'GET',
+    updateDriverDutyPolicy: builder.mutation<DutyPolicyItem, UpdateDutyPolicyArgs>({
+      query: ({ id, body }) => ({
+        url: `/driver-duty-policies/${id}`,
+        method: 'PATCH',
+        body,
       }),
-      transformResponse: (response: ApiResponse<CityPoint[]>) =>
-        (response.data ?? []).map((point) => ({
-          label: point.city,
-          value: point.total,
-        })),
-      providesTags: ['CancellationAnalytics'],
+      transformResponse: (response: ApiResponse<DutyPolicyItem>) => response.data,
+      invalidatesTags: (_res, _err, { id, body }) => [
+        { type: 'DrivingHours', id },
+        { type: 'DrivingHours', id: `LIST-${body.scopeType}` },
+        { type: 'DrivingHours', id: 'LIST-all' },
+      ],
     }),
 
-    getDrivingHoursByCategories: builder.query<ChartPoint[], void>({
-      query: () => ({
-        url: '/admin/analytics/admin/analytics/cancellations/categories',
-        method: 'GET',
+    updateDriverDutyPolicyStatus: builder.mutation<
+      DutyPolicyItem,
+      UpdateDutyPolicyStatusArgs
+    >({
+      query: ({ id, status }) => ({
+        url: `/driver-duty-policies/status/${id}`,
+        method: 'PATCH',
+        body: { status },
       }),
-      transformResponse: (response: ApiResponse<CategoryPoint[]>) =>
-        (response.data ?? []).map((point) => ({
-          label: point.category,
-          value: point.count,
-        })),
-      providesTags: ['CancellationAnalytics'],
+      transformResponse: (response: ApiResponse<DutyPolicyItem>) => response.data,
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'DrivingHours', id },
+        { type: 'DrivingHours', id: 'LIST-all' },
+        { type: 'DrivingHours', id: 'LIST-global' },
+        { type: 'DrivingHours', id: 'LIST-state' },
+        { type: 'DrivingHours', id: 'LIST-city' },
+        { type: 'DrivingHours', id: 'LIST-zone' },
+        { type: 'DrivingHours', id: 'LIST-airport' },
+      ],
+    }),
+
+    deleteDriverDutyPolicy: builder.mutation<void, { id: string; scopeType?: DutyPolicyScopeType }>({
+      query: ({ id }) => ({
+        url: `/driver-duty-policies/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_res, _err, { id, scopeType }) => [
+        { type: 'DrivingHours', id },
+        { type: 'DrivingHours', id: `LIST-${scopeType ?? 'all'}` },
+        { type: 'DrivingHours', id: 'LIST-all' },
+      ],
     }),
   }),
 })
 
 export const {
-  useGetDrivingHoursSummaryQuery,
-  useGetDrivingHoursTrendsQuery,
-  useGetDrivingHoursReasonsStatsQuery,
-  useGetDrivingHoursByCitiesQuery,
-  useGetDrivingHoursByCategoriesQuery,
-} = drivingHoursApi
+  useGetDriverDutyPoliciesQuery,
+  useGetSingleDriverDutyPolicyQuery,
+  useCreateDriverDutyPolicyMutation,
+  useUpdateDriverDutyPolicyMutation,
+  useUpdateDriverDutyPolicyStatusMutation,
+  useDeleteDriverDutyPolicyMutation,
+} = driverDutyPoliciesApi

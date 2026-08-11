@@ -53,6 +53,7 @@ export const baseApi = createApi({
     'Reservations',
     'Locations',
     'Pricing',
+    'DrivingHours',
     'RideCategories',
     'Communication',
     'Settings',
