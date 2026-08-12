@@ -371,6 +371,51 @@ export const driverManagementApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Drivers'],
     }),
+
+    driverApproval: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/approve`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Drivers'],
+    }),
+    driverSuspension: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/suspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Drivers'],
+    }),
+    driverRejection: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/driver-management/drivers/${id}/reject`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Drivers'],
+    }),
+    driverUnsuspension: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/unsuspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Drivers'],
+    }),
   }),
 })
 
@@ -382,6 +427,10 @@ export const {
   useGetAllPendingApprovalsQuery,
   useGetAllSuspendedListQuery,
   useGetAllComplianceListQuery,
+  useDriverApprovalMutation,
+  useDriverSuspensionMutation,
+  useDriverRejectionMutation,
+  useDriverUnsuspensionMutation,
 } = driverManagementApi
 
 /** @deprecated Use useGetAllComplianceListQuery */

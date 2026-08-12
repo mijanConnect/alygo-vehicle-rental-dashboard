@@ -1,26 +1,19 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Table, Tabs, type TableProps } from 'antd'
 import { Link, useSearchParams } from 'react-router-dom'
-import {
-  AdminActionHost,
-  createActionsColumn,
-  createTableRowProps,
-  getPassengerActionItems,
-  handlePassengerAction,
-  openPassengerDetails,
-} from '@/components/admin'
+import { AdminActionHost, createTableRowProps } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { ActivePassengersTab } from '@/features/passengers/components/ActivePassengersTab'
+import { PassengerDetailsDrawer } from '@/features/passengers/components/PassengerDetailsDrawer'
+import { PassengerTableActions } from '@/features/passengers/components/PassengerTableActions'
 import {
   PassengerComplaintsTab,
   PassengerRefundsTab,
 } from '@/features/passengers/components/PassengerCaseTabs'
-import {
-  mapPassengerListItem,
-} from '@/features/passengers/mapPassengerManagement'
+import { mapPassengerListItem } from '@/features/passengers/mapPassengerManagement'
 import {
   DEFAULT_PASSENGER_TAB,
   PASSENGER_TAB_KEYS,
@@ -32,6 +25,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   useGetAllSuspendedPassengersQuery,
   useGetPassengersListQuery,
+  useSuspendPassengerMutation,
+  useUnsuspendPassengerMutation,
 } from '@/redux/api/passengersApi'
 import type { Passenger } from '@/types'
 import { formatCurrency } from '@/utils/format'
@@ -49,6 +44,7 @@ export default function PassengersPage() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedPassengerId, setSelectedPassengerId] = useState<string | null>(null)
 
   const listParams = { page, limit, searchTerm }
 
@@ -58,6 +54,9 @@ export default function PassengersPage() {
   const suspendedQuery = useGetAllSuspendedPassengersQuery(listParams, {
     skip: validTab !== 'suspended',
   })
+
+  const [suspendPassenger] = useSuspendPassengerMutation()
+  const [unsuspendPassenger] = useUnsuspendPassengerMutation()
 
   const { rows, isLoading, isFetching, totalItems, totalPages } = useMemo(() => {
     const query = validTab === 'suspended' ? suspendedQuery : overviewQuery
@@ -75,6 +74,45 @@ export default function PassengersPage() {
     setSearchTerm(value)
     setPage(1)
   }, [])
+
+  const openDetails = (passenger: Passenger) => {
+    setSelectedPassengerId(passenger.id)
+  }
+
+  const handleSuspend = (passenger: Passenger) => {
+    adminActions.openConfirm({
+      title: 'Suspend Passenger',
+      description: `Suspend ${passenger.name}?`,
+      confirmLabel: 'Suspend',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await suspendPassenger(passenger.id).unwrap()
+          adminActions.notify('Passenger suspended', passenger.name)
+        } catch {
+          adminActions.notify('Unable to suspend passenger', passenger.name)
+        }
+      },
+    })
+  }
+
+  const handleUnsuspend = (passenger: Passenger) => {
+    adminActions.openConfirm({
+      title: 'Unsuspend Passenger',
+      description: `Restore access for ${passenger.name}?`,
+      confirmLabel: 'Unsuspend',
+      onConfirm: async () => {
+        try {
+          await unsuspendPassenger(passenger.id).unwrap()
+          adminActions.notify('Passenger unsuspended', passenger.name)
+        } catch {
+          adminActions.notify('Unable to unsuspend passenger', passenger.name)
+        }
+      },
+    })
+  }
+
+  const actionMode = validTab === 'suspended' ? 'suspended' : 'default'
 
   const columns: TableProps<Passenger>['columns'] = [
     {
@@ -95,23 +133,36 @@ export default function PassengersPage() {
       ),
     },
     { title: 'Email', dataIndex: 'email', ellipsis: true },
-    { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
-    { title: 'Trips', dataIndex: 'completedTrips' },
+    { title: 'Rating', dataIndex: 'rating', width: 90, render: (r: number) => `${r} ★` },
+    { title: 'Trips', dataIndex: 'completedTrips', width: 80 },
     {
       title: 'Wallet',
       dataIndex: 'walletBalance',
+      width: 110,
       render: (v: number) => formatCurrency(v),
     },
     { title: 'City', dataIndex: 'city', ellipsis: true },
     {
       title: 'Status',
       dataIndex: 'status',
+      width: 120,
       render: (s: string) => <StatusBadge status={s} />,
     },
-    createActionsColumn(
-      () => getPassengerActionItems(),
-      (key, record) => handlePassengerAction(key, record, adminActions),
-    ),
+    {
+      title: 'Action',
+      key: 'action',
+      fixed: 'right',
+      width: 180,
+      render: (_: unknown, record: Passenger) => (
+        <PassengerTableActions
+          record={record}
+          mode={actionMode}
+          onDetails={openDetails}
+          onSuspend={handleSuspend}
+          onUnsuspend={handleUnsuspend}
+        />
+      ),
+    },
   ]
 
   const passengerTable = (
@@ -128,11 +179,9 @@ export default function PassengersPage() {
         columns={columns}
         dataSource={rows}
         rowKey="id"
-        scroll={{ x: 1100 }}
+        scroll={{ x: 1000 }}
         pagination={false}
-        {...createTableRowProps<Passenger>((record) =>
-          openPassengerDetails(record, adminActions),
-        )}
+        {...createTableRowProps<Passenger>(openDetails)}
       />
       <Pagination
         currentPage={page}
@@ -170,7 +219,12 @@ export default function PassengersPage() {
             {
               key: 'active',
               label: PASSENGER_TAB_LABELS.active,
-              children: <ActivePassengersTab adminActions={adminActions} />,
+              children: (
+                <ActivePassengersTab
+                  onOpenDetails={(id) => setSelectedPassengerId(id)}
+                  onSuspend={handleSuspend}
+                />
+              ),
             },
             {
               key: 'complaints',
@@ -190,6 +244,12 @@ export default function PassengersPage() {
           ]}
         />
       </div>
+
+      <PassengerDetailsDrawer
+        open={Boolean(selectedPassengerId)}
+        passengerId={selectedPassengerId}
+        onClose={() => setSelectedPassengerId(null)}
+      />
       <AdminActionHost actions={adminActions} />
     </PageShell>
   )

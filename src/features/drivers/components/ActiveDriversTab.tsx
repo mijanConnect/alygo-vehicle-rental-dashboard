@@ -1,25 +1,18 @@
 import { useCallback, useState } from 'react'
-import { Table, Tag } from 'antd'
+import { Button, Table, Tag } from 'antd'
 import { Link } from 'react-router-dom'
-import {
-  createActionsColumn,
-  createTableRowProps,
-  getActiveDriverActionItems,
-  handleDriverAction,
-  openDriverDetails,
-} from '@/components/admin'
+import { createTableRowProps } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { mapOnlineDriver, type DriverTableRow } from '@/features/drivers/mapDriverManagement'
-import type { useAdminActions } from '@/hooks/useAdminActions'
 import { useGetAllOnlineDriversQuery } from '@/redux/api/driverManagementApi'
 
 interface ActiveDriversTabProps {
-  adminActions: ReturnType<typeof useAdminActions>
+  onOpenDetails: (driverId: string) => void
 }
 
-export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
+export function ActiveDriversTab({ onOpenDetails }: ActiveDriversTabProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,6 +33,10 @@ export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
     setPage(1)
   }, [])
 
+  const openDetails = (record: DriverTableRow) => {
+    onOpenDetails(record.id)
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-alygo-text-muted">
@@ -56,9 +53,7 @@ export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
         dataSource={rows}
         pagination={false}
         scroll={{ x: 1200 }}
-        {...createTableRowProps<DriverTableRow>((record) =>
-          openDriverDetails(record, adminActions),
-        )}
+        {...createTableRowProps<DriverTableRow>(openDetails)}
         columns={[
           {
             title: 'Driver',
@@ -93,10 +88,24 @@ export function ActiveDriversTab({ adminActions }: ActiveDriversTabProps) {
             title: 'Availability',
             render: () => <Tag color="green">Available</Tag>,
           },
-          createActionsColumn<DriverTableRow>(
-            () => getActiveDriverActionItems(),
-            (key, record) => handleDriverAction(key, record, adminActions),
-          ),
+          {
+            title: 'Action',
+            key: 'action',
+            fixed: 'right',
+            width: 110,
+            render: (_: unknown, record: DriverTableRow) => (
+              <Button
+                type="link"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openDetails(record)
+                }}
+              >
+                Details
+              </Button>
+            ),
+          },
         ]}
       />
       <Pagination

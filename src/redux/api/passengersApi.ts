@@ -204,6 +204,29 @@ export const passengersApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Passengers'],
     }),
+
+    suspendPassenger: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/passenger-management/${id}/suspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Passengers'],
+    }),
+    unsuspendPassenger: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/passenger-management/${id}/unsuspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<unknown>) => ({
+        success: response.success,
+        message: response.message,
+      }),
+      invalidatesTags: ['Passengers'],
+    }),
   }),
 })
 
@@ -213,4 +236,6 @@ export const {
   useGetAllLiveActivityPassengersQuery,
   useGetSingleLiveActivityPassengerQuery,
   useGetAllSuspendedPassengersQuery,
+  useSuspendPassengerMutation,
+  useUnsuspendPassengerMutation,
 } = passengersApi

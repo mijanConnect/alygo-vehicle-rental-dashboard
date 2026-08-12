@@ -1,85 +1,30 @@
 import { useCallback, useState } from 'react'
-import { Form, Modal, Select, Table, Tag } from 'antd'
-import {
-  AdminActionHost,
-  createActionsColumn,
-  createTableRowProps,
-} from '@/components/admin'
+import { Button, Table, Tag } from 'antd'
+import { createTableRowProps } from '@/components/admin'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
-import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   useGetLostAndFoundReturnsQuery,
   type LostFoundReturnRow,
 } from '@/redux/api/lostandfound/lostAndFoundApi'
-import {
-  useCompleteReturnMutation,
-  useUpdateReturnStatusMutation,
-} from '@/services/lostFoundApi'
-import type { ReturnRecord, ReturnStatus } from '@/types/lostFound'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import {
-  getReturnActionItems,
-  openLostFoundDrawer,
   RETURN_METHOD_LABELS,
   RETURN_STATUS_LABELS,
 } from '@/features/lost-found/lostFoundHelpers'
-
-function toReturnRecord(row: LostFoundReturnRow): ReturnRecord {
-  return {
-    id: row.id,
-    reportId: row.reportId,
-    returnMethod: row.returnMethod as ReturnRecord['returnMethod'],
-    passengerName: row.passengerName,
-    driverName: row.driverName,
-    scheduledDate: row.scheduledDate,
-    returnStatus: row.returnStatus as ReturnStatus,
-    fee: row.fee,
-  }
-}
-
-function openReturnDetails(record: LostFoundReturnRow, adminActions: ReturnType<typeof useAdminActions>) {
-  openLostFoundDrawer(
-    `Return — ${record.reportId.slice(-8)}`,
-    [
-      { label: 'Report ID', value: record.reportId },
-      {
-        label: 'Return Method',
-        value: RETURN_METHOD_LABELS[record.returnMethod] ?? record.returnMethod,
-      },
-      { label: 'Passenger', value: record.passengerName },
-      { label: 'Passenger Email', value: record.passengerEmail },
-      { label: 'Passenger Phone', value: record.passengerPhone },
-      { label: 'Driver', value: record.driverName },
-      { label: 'Driver Email', value: record.driverEmail },
-      { label: 'Driver Phone', value: record.driverPhone },
-      { label: 'Scheduled Date', value: formatDateTime(record.scheduledDate) },
-      {
-        label: 'Return Status',
-        value: RETURN_STATUS_LABELS[record.returnStatus] ?? record.returnStatus.replace(/_/g, ' '),
-      },
-      { label: 'Fee', value: formatCurrency(record.fee) },
-    ],
-    adminActions,
-  )
-}
+import { ReturnDetailsDrawer } from '@/features/lost-found/components/ReturnDetailsDrawer'
 
 export function ReturnManagementTable() {
-  const adminActions = useAdminActions()
-
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusRecord, setStatusRecord] = useState<LostFoundReturnRow | null>(null)
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
 
   const { data, isLoading, isFetching } = useGetLostAndFoundReturnsQuery({
     page,
     limit,
     searchTerm,
   })
-
-  const [updateStatus, { isLoading: updating }] = useUpdateReturnStatusMutation()
-  const [completeReturn] = useCompleteReturnMutation()
 
   const rows = data?.data ?? []
   const meta = data?.meta
@@ -96,21 +41,8 @@ export function ReturnManagementTable() {
     setPage(1)
   }
 
-  const handleAction = (key: string, record: LostFoundReturnRow) => {
-    switch (key) {
-      case 'view':
-        openReturnDetails(record, adminActions)
-        break
-      case 'update-status':
-        setStatusRecord(record)
-        break
-      case 'complete':
-        completeReturn(record.id)
-          .unwrap()
-          .then(() => adminActions.notify(`Return ${record.id.slice(-8)} completed`))
-          .catch(() => adminActions.notify('Unable to complete return'))
-        break
-    }
+  const openDetails = (record: LostFoundReturnRow) => {
+    setSelectedReportId(record.reportId || record.id)
   }
 
   return (
@@ -129,9 +61,7 @@ export function ReturnManagementTable() {
         dataSource={rows}
         pagination={false}
         scroll={{ x: 1100 }}
-        {...createTableRowProps<LostFoundReturnRow>((record) =>
-          openReturnDetails(record, adminActions),
-        )}
+        {...createTableRowProps<LostFoundReturnRow>(openDetails)}
         columns={[
           {
             title: 'Report ID',
@@ -165,10 +95,24 @@ export function ReturnManagementTable() {
             dataIndex: 'fee',
             render: (f: number) => formatCurrency(f),
           },
-          createActionsColumn<LostFoundReturnRow>(
-            (record) => getReturnActionItems(toReturnRecord(record)),
-            (key, record) => handleAction(key, record),
-          ),
+          {
+            title: 'Action',
+            key: 'action',
+            fixed: 'right',
+            width: 110,
+            render: (_: unknown, record: LostFoundReturnRow) => (
+              <Button
+                type="link"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openDetails(record)
+                }}
+              >
+                Details
+              </Button>
+            ),
+          },
         ]}
       />
 
@@ -181,63 +125,11 @@ export function ReturnManagementTable() {
         onItemsPerPageChange={handleItemsPerPageChange}
       />
 
-      {statusRecord && (
-        <Modal
-          title={`Update Status — ${statusRecord.reportId.slice(-8)}`}
-          open
-          confirmLoading={updating}
-          onCancel={() => setStatusRecord(null)}
-          onOk={() => {
-            document.getElementById('return-status-form')?.dispatchEvent(
-              new Event('submit', { cancelable: true, bubbles: true }),
-            )
-          }}
-          destroyOnClose
-        >
-          <Form
-            id="return-status-form"
-            layout="vertical"
-            className="mt-4"
-            initialValues={{ returnStatus: statusRecord.returnStatus }}
-            onFinish={async (values: { returnStatus: string }) => {
-              try {
-                await updateStatus({
-                  id: statusRecord.id,
-                  returnStatus: values.returnStatus as ReturnStatus,
-                }).unwrap()
-                adminActions.notify('Return status updated')
-                setStatusRecord(null)
-              } catch {
-                adminActions.notify('Unable to update return status')
-              }
-            }}
-          >
-            <Form.Item name="returnStatus" label="Return Status" rules={[{ required: true }]}>
-              <Select
-                className="!h-[45px]"
-                options={[
-                  ...Object.entries(RETURN_STATUS_LABELS).map(([value, label]) => ({
-                    value,
-                    label,
-                  })),
-                  // Ensure current API status is selectable even if not in defaults
-                  ...(RETURN_STATUS_LABELS[statusRecord.returnStatus]
-                    ? []
-                    : [
-                        {
-                          value: statusRecord.returnStatus,
-                          label: statusRecord.returnStatus.replace(/_/g, ' '),
-                        },
-                      ]),
-                ]}
-              />
-            </Form.Item>
-            <button type="submit" className="hidden" />
-          </Form>
-        </Modal>
-      )}
-
-      <AdminActionHost actions={adminActions} />
+      <ReturnDetailsDrawer
+        open={Boolean(selectedReportId)}
+        reportId={selectedReportId}
+        onClose={() => setSelectedReportId(null)}
+      />
     </>
   )
 }

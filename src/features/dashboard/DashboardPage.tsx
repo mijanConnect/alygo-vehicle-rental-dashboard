@@ -11,10 +11,7 @@ import {
 } from '@/components/charts/AnalyticsCharts'
 import {
   AdminActionHost,
-  createActionsColumn,
   createTableRowProps,
-  getTripActionItems,
-  handleTripAction,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -30,10 +27,9 @@ import {
   useGetDashboardTopAirportsQuery,
   useGetDashboardTopCitiesQuery,
 } from '@/redux/api/dashboardOverviewApi'
-import { useGetTripsQuery } from '@/services/api'
+import { useGetLiveTripsQuery, type LiveTrip } from '@/redux/api/liveTripApi'
 import { useAppSelector } from '@/store/hooks'
 import { formatCurrency } from '@/utils/format'
-import type { Trip } from '@/types'
 
 export default function DashboardPage() {
   useDocumentTitle('Executive Dashboard')
@@ -49,7 +45,7 @@ export default function DashboardPage() {
   const categoryQuery = useGetDashboardCategoryUsageQuery()
   const citiesQuery = useGetDashboardTopCitiesQuery()
   const airportsQuery = useGetDashboardTopAirportsQuery()
-  const { data: liveTrips = [] } = useGetTripsQuery({ status: 'in_progress' })
+  const liveTripsQuery = useGetLiveTripsQuery({ page: 1, limit: 5 })
 
   const kpis = summaryQuery.data ?? []
   const revenueTrend = revenueQuery.data ?? []
@@ -59,6 +55,7 @@ export default function DashboardPage() {
   const categoryUsage = categoryQuery.data ?? []
   const topCities = citiesQuery.data ?? []
   const topAirports = airportsQuery.data ?? []
+  const liveTrips = liveTripsQuery.data?.data ?? []
 
   const isFetching =
     summaryQuery.isFetching ||
@@ -68,7 +65,8 @@ export default function DashboardPage() {
     passengerGrowthQuery.isFetching ||
     categoryQuery.isFetching ||
     citiesQuery.isFetching ||
-    airportsQuery.isFetching
+    airportsQuery.isFetching ||
+    liveTripsQuery.isFetching
 
   const refetchAll = () => {
     void summaryQuery.refetch()
@@ -79,6 +77,7 @@ export default function DashboardPage() {
     void categoryQuery.refetch()
     void citiesQuery.refetch()
     void airportsQuery.refetch()
+    void liveTripsQuery.refetch()
   }
 
   return (
@@ -144,29 +143,66 @@ export default function DashboardPage() {
         <h3 className="mb-4 text-base font-semibold text-white">Live Trip Overview</h3>
         <Table
           size="small"
+          loading={liveTripsQuery.isLoading || liveTripsQuery.isFetching}
           pagination={false}
-          dataSource={liveTrips.slice(0, 5)}
-          rowKey="id"
-          {...createTableRowProps<Trip>((record) => navigate(`/operations/live-trips/${record.id}`))}
+          dataSource={liveTrips}
+          rowKey="_id"
+          {...createTableRowProps<LiveTrip>((record) =>
+            navigate(`/operations/live-trips/${record._id}`),
+          )}
           columns={[
             {
               title: 'Trip',
-              dataIndex: 'id',
+              dataIndex: '_id',
               render: (id: string) => (
                 <Link to={`/operations/live-trips/${id}`} onClick={(e) => e.stopPropagation()}>
-                  {id}
+                  <span className="font-mono text-xs">{id.slice(-8)}</span>
                 </Link>
               ),
             },
-            { title: 'Driver', dataIndex: 'driverName' },
-            { title: 'City', dataIndex: 'city' },
-            { title: 'Category', dataIndex: 'category', render: (c: string) => <Tag>{c}</Tag> },
-            { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-            { title: 'Fare', dataIndex: 'fare', render: (f: number) => formatCurrency(f) },
-            createActionsColumn<Trip>(
-              () => getTripActionItems(),
-              (key, record) => handleTripAction(key, record, adminActions, { onNavigate: navigate }),
-            ),
+            {
+              title: 'Driver',
+              key: 'driver',
+              render: (_: unknown, record: LiveTrip) =>
+                record.driver?.name?.trim() || 'Unassigned',
+            },
+            {
+              title: 'City',
+              dataIndex: 'city',
+              render: (city: string) => city?.trim() || '—',
+            },
+            {
+              title: 'Category',
+              dataIndex: 'category',
+              render: (c: string) => <Tag>{c || '—'}</Tag>,
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              render: (s: string) => <StatusBadge status={s} />,
+            },
+            {
+              title: 'Fare',
+              dataIndex: 'fare',
+              render: (f: number) => formatCurrency(f),
+            },
+            {
+              title: 'Action',
+              key: 'action',
+              width: 100,
+              render: (_: unknown, record: LiveTrip) => (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/operations/live-trips/${record._id}`)
+                  }}
+                >
+                  Details
+                </Button>
+              ),
+            },
           ]}
         />
       </div>

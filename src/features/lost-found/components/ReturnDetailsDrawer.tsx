@@ -1,9 +1,10 @@
 import { Drawer, Empty, Image, Spin, Tag, Timeline } from 'antd'
 import { Star } from 'lucide-react'
+import { useGetSingleLostAndFoundReturnQuery } from '@/redux/api/lostandfound/lostAndFoundApi'
 import {
-  useGetSingleLostAndFoundReportQuery,
-} from '@/redux/api/lostandfound/lostAndFoundApi'
-import { REPORT_STATUS_LABELS } from '@/features/lost-found/lostFoundHelpers'
+  REPORT_STATUS_LABELS,
+  RETURN_METHOD_LABELS,
+} from '@/features/lost-found/lostFoundHelpers'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1\/?$/, '') ?? ''
 
@@ -13,7 +14,7 @@ function resolveAssetUrl(path?: string | null) {
   return `${API_BASE}${path}`
 }
 
-interface ReportDetailsDrawerProps {
+interface ReturnDetailsDrawerProps {
   open: boolean
   reportId: string | null
   onClose: () => void
@@ -33,21 +34,21 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <span className="min-w-[120px] text-alygo-text-muted">{label}</span>
+      <span className="min-w-[140px] text-alygo-text-muted">{label}</span>
       <span className="flex-1">{value || '—'}</span>
     </div>
   )
 }
 
-export function ReportDetailsDrawer({ open, reportId, onClose }: ReportDetailsDrawerProps) {
-  const { data, isLoading, isError, isFetching } = useGetSingleLostAndFoundReportQuery(
+export function ReturnDetailsDrawer({ open, reportId, onClose }: ReturnDetailsDrawerProps) {
+  const { data, isLoading, isError, isFetching } = useGetSingleLostAndFoundReturnQuery(
     reportId ?? '',
     { skip: !open || !reportId },
   )
 
   return (
     <Drawer
-      title={data ? `Report ${data.reportNumber}` : 'Report Details'}
+      title={data ? `Return — ${data.reportNumber}` : 'Return Details'}
       open={open}
       onClose={onClose}
       width={560}
@@ -58,7 +59,7 @@ export function ReportDetailsDrawer({ open, reportId, onClose }: ReportDetailsDr
           <Spin />
         </div>
       ) : isError || !data ? (
-        <Empty description="Unable to load report details" />
+        <Empty description="Unable to load return details" />
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -67,6 +68,35 @@ export function ReportDetailsDrawer({ open, reportId, onClose }: ReportDetailsDr
             </Tag>
             <span className="text-xs text-alygo-text-muted">{data.createdAt}</span>
           </div>
+
+          <Section title="Return Information">
+            {data.returnInformation ? (
+              <>
+                <Field
+                  label="Return Method"
+                  value={
+                    RETURN_METHOD_LABELS[data.returnInformation.returnMethod] ??
+                    data.returnInformation.returnMethod.replace(/_/g, ' ')
+                  }
+                />
+                <Field label="Return Location" value={data.returnInformation.returnLocation} />
+                <Field label="Scheduled At" value={data.returnInformation.scheduledAt} />
+                <Field label="Completed At" value={data.returnInformation.completedAt} />
+                <Field
+                  label="Received By"
+                  value={
+                    data.returnInformation.receivedBy
+                      ? data.returnInformation.receivedBy.replace(/_/g, ' ')
+                      : '—'
+                  }
+                />
+                <Field label="Receiver Name" value={data.returnInformation.receiverName} />
+                <Field label="Return Notes" value={data.returnInformation.returnNotes} />
+              </>
+            ) : (
+              <Empty description="Return information unavailable" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            )}
+          </Section>
 
           <Section title="Passenger Information">
             {data.passenger ? (
@@ -153,6 +183,18 @@ export function ReportDetailsDrawer({ open, reportId, onClose }: ReportDetailsDr
               </>
             ) : (
               <Empty description="Item details unavailable" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            )}
+          </Section>
+
+          <Section title="Assignment">
+            {data.assignment ? (
+              <>
+                <Field label="Assigned Admin" value={data.assignment.assignedAdmin} />
+                <Field label="Assigned At" value={data.assignment.assignedAt} />
+                <Field label="Notes" value={data.assignment.notes} />
+              </>
+            ) : (
+              <Empty description="No assignment" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             )}
           </Section>
 

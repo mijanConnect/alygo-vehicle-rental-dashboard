@@ -1,26 +1,94 @@
-import { Button, Descriptions, Empty, Table, Tag, Timeline } from 'antd'
+import { Button, Descriptions, Empty, Spin, Table, Tag, Timeline } from 'antd'
 import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { AdminActionHost } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { TripLiveMap } from '@/features/operations/components/TripLiveMap'
-import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useGetTripByIdQuery } from '@/services/api'
+import {
+  useGetSingleLiveTripQuery,
+  type LiveTripDetail,
+  type LiveTripStop,
+} from '@/redux/api/liveTripApi'
+import type { TripLiveMapData } from '@/types/tripOperations'
 import { formatCurrency, formatDateTime } from '@/utils/format'
+
+function formatCoordLocation(
+  point?: { latitude?: number; longitude?: number } | null,
+): string {
+  if (!point || typeof point.latitude !== 'number' || typeof point.longitude !== 'number') {
+    return 'Unavailable'
+  }
+  return `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`
+}
+
+function toPoint(
+  point?: { latitude?: number; longitude?: number; address?: string } | null,
+) {
+  if (!point || typeof point.latitude !== 'number' || typeof point.longitude !== 'number') {
+    return null
+  }
+  return {
+    lat: point.latitude,
+    lng: point.longitude,
+    label: point.address,
+  }
+}
+
+function toLiveMapData(detail: LiveTripDetail): TripLiveMapData {
+  const map = detail.mapInformation
+  const tracking = detail.liveTracking
+  const driverPoint =
+    toPoint(map?.driverLocation) ?? toPoint(tracking?.currentDriverLocation)
+  const hasDriver = Boolean(driverPoint)
+
+  return {
+    driverLocation: formatCoordLocation(
+      map?.driverLocation ?? tracking?.currentDriverLocation,
+    ),
+    pickupLabel: detail.pickup?.address || map?.pickup?.address || '—',
+    dropoffLabel: detail.dropoff?.address || map?.dropoff?.address || '—',
+    routeSummary: `${detail.pickup?.address || 'Pickup'} → ${detail.dropoff?.address || 'Dropoff'}`,
+    etaMinutes: map?.ETA ?? tracking?.ETA ?? 0,
+    routeProgressPercent: map?.routeProgress ?? tracking?.routeProgressPercentage ?? 0,
+    isLive: hasDriver && !detail.cancellation?.cancelled,
+    pickup: toPoint(detail.pickup) ?? toPoint(map?.pickup),
+    dropoff: toPoint(detail.dropoff) ?? toPoint(map?.dropoff),
+    driver: driverPoint,
+    stops: (detail.stops ?? []).map((stop) => ({
+      lat: stop.latitude,
+      lng: stop.longitude,
+      label: stop.address,
+    })),
+    polyline: map?.polyline || tracking?.routePolyline || undefined,
+  }
+}
 
 export default function TripDetailPage() {
   const { id = '' } = useParams()
   const adminActions = useAdminActions()
-  const { data: trip, isLoading } = useGetTripByIdQuery(id, { skip: !id })
+  const { data: trip, isLoading, isError } = useGetSingleLiveTripQuery(id, {
+    skip: !id,
+  })
 
-  useDocumentTitle(trip ? `Trip ${trip.id}` : 'Trip Details')
+  const ride = trip?.ride
+  const titleId = ride?.bookingReference || ride?.rideId || id
 
-  if (isLoading) return null
+  useDocumentTitle(ride ? `Trip ${titleId}` : 'Trip Details')
 
-  if (!trip) {
+  if (isLoading) {
+    return (
+      <PageShell title="Trip Details">
+        <div className="flex justify-center py-16">
+          <Spin size="large" />
+        </div>
+      </PageShell>
+    )
+  }
+
+  if (isError || !trip || !ride) {
     return (
       <PageShell title="Trip Not Found">
         <Link to="/operations/live-trips">
@@ -30,10 +98,31 @@ export default function TripDetailPage() {
     )
   }
 
+  const cancellationRows =
+    trip.cancellation?.cancelled
+      ? [
+          {
+            id: 'cancellation-1',
+            actor: trip.cancellation.cancelledBy || 'system',
+            reason: trip.cancellation.reason || '—',
+            description: trip.cancellation.description,
+            timestamp: trip.cancellation.cancelledAt,
+          },
+        ]
+      : []
+
+  const safetyRows = (trip.safetyEvents ?? []).map((event, index) => ({
+    id: event.id ?? `safety-${index}`,
+    type: event.type ?? 'alert',
+    description: event.description ?? '—',
+    status: event.status ?? 'open',
+    timestamp: event.timestamp ?? ride.createdAt,
+  }))
+
   return (
     <PageShell
-      title={`Trip ${trip.id}`}
-      description={`${trip.driverName} → ${trip.passengerName} · ${trip.city}`}
+      title={`Trip ${titleId}`}
+      description={`${trip.driver?.fullName?.trim() || 'Unassigned'} → ${trip.passenger?.fullName?.trim() || '—'} · ${ride.city?.trim() || '—'}`}
       actions={
         <div className="flex flex-wrap gap-2">
           <Link to="/operations/live-trips">
@@ -42,66 +131,104 @@ export default function TripDetailPage() {
         </div>
       }
     >
-      <TripLiveMap data={trip.liveMap} />
+      <TripLiveMap data={toLiveMapData(trip)} />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SectionCard title="Trip Information">
           <Descriptions column={1} size="small">
-            <Descriptions.Item label="Trip ID">{trip.id}</Descriptions.Item>
+            <Descriptions.Item label="Trip ID">{ride.rideId}</Descriptions.Item>
+            <Descriptions.Item label="Booking Ref">{ride.bookingReference}</Descriptions.Item>
             <Descriptions.Item label="Status">
-              <StatusBadge status={trip.status} />
+              <StatusBadge status={ride.status} />
             </Descriptions.Item>
             <Descriptions.Item label="Ride Category">
-              <Tag>{RIDE_CATEGORY_LABELS[trip.category]}</Tag>
+              <Tag>{ride.rideCategory || '—'}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="City">{trip.city}</Descriptions.Item>
-            <Descriptions.Item label="Distance">{trip.distanceMiles} mi</Descriptions.Item>
-            <Descriptions.Item label="Duration">{trip.durationMinutes} min</Descriptions.Item>
-            <Descriptions.Item label="Started">{formatDateTime(trip.startedAt)}</Descriptions.Item>
+            <Descriptions.Item label="City">{ride.city?.trim() || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Distance">
+              {ride.estimatedDistance != null ? `${ride.estimatedDistance} km` : '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Duration">
+              {ride.estimatedDuration != null ? `${ride.estimatedDuration} min` : '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Created">
+              {ride.createdAt ? formatDateTime(ride.createdAt) : '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Started">
+              {ride.startedAt ? formatDateTime(ride.startedAt) : '—'}
+            </Descriptions.Item>
           </Descriptions>
         </SectionCard>
 
         <SectionCard title="Fare Details">
           <Descriptions column={1} size="small">
-            <Descriptions.Item label="Base Fare">{formatCurrency(trip.fareBreakdown.baseFare)}</Descriptions.Item>
-            <Descriptions.Item label="Distance">{formatCurrency(trip.fareBreakdown.distanceFee)}</Descriptions.Item>
-            <Descriptions.Item label="Time">{formatCurrency(trip.fareBreakdown.timeFee)}</Descriptions.Item>
-            <Descriptions.Item label="Surge">{formatCurrency(trip.fareBreakdown.surgeFee)}</Descriptions.Item>
-            <Descriptions.Item label="Platform Fee">{formatCurrency(trip.fareBreakdown.platformFee)}</Descriptions.Item>
-            <Descriptions.Item label="Total">{formatCurrency(trip.fareBreakdown.total)}</Descriptions.Item>
-            <Descriptions.Item label="Payment">{trip.fareBreakdown.paymentMethod}</Descriptions.Item>
+            <Descriptions.Item label="Base Fare">
+              {formatCurrency(trip.fareSummary.baseFare)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Distance">
+              {formatCurrency(trip.fareSummary.distanceFare)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Time">
+              {formatCurrency(trip.fareSummary.durationFare)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Surge">
+              {formatCurrency(trip.fareSummary.surgeFare)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Waiting">
+              {formatCurrency(trip.fareSummary.waitingCharge)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Toll">
+              {formatCurrency(trip.fareSummary.tollCharge)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Platform Fee">
+              {formatCurrency(trip.fareSummary.platformFee)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Discount">
+              {formatCurrency(trip.fareSummary.discount)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Total">
+              {formatCurrency(trip.fareSummary.totalFare)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Payment">
+              {trip.fareSummary.paymentMethod || trip.fareSummary.paymentStatus || '—'}
+            </Descriptions.Item>
           </Descriptions>
         </SectionCard>
 
         <SectionCard title="Driver Information">
           {trip.driver ? (
             <Descriptions column={1} size="small">
-              <Descriptions.Item label="Name">{trip.driver.name}</Descriptions.Item>
+              <Descriptions.Item label="Name">{trip.driver.fullName}</Descriptions.Item>
               <Descriptions.Item label="Driver ID">{trip.driver.id}</Descriptions.Item>
-              <Descriptions.Item label="Phone">{trip.driver.phone}</Descriptions.Item>
-              <Descriptions.Item label="Email">{trip.driver.email}</Descriptions.Item>
-              <Descriptions.Item label="Vehicle">{trip.driver.vehicle}</Descriptions.Item>
-              <Descriptions.Item label="Rating">{trip.driver.rating} ★</Descriptions.Item>
+              <Descriptions.Item label="Phone">{trip.driver.phone || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Email">{trip.driver.email || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Vehicle">{trip.driver.vehicle || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Rating">
+                {trip.driver.overallRating != null ? `${trip.driver.overallRating} ★` : '—'}
+              </Descriptions.Item>
               <Descriptions.Item label="Status">
-                <StatusBadge status={trip.driver.status} />
+                <StatusBadge status={trip.driver.driverStatus || 'unknown'} />
               </Descriptions.Item>
             </Descriptions>
           ) : (
-            <Empty description="Driver record unavailable" />
+            <Empty description="Driver not assigned" />
           )}
         </SectionCard>
 
         <SectionCard title="Passenger Information">
           {trip.passenger ? (
             <Descriptions column={1} size="small">
-              <Descriptions.Item label="Name">{trip.passenger.name}</Descriptions.Item>
+              <Descriptions.Item label="Name">{trip.passenger.fullName}</Descriptions.Item>
               <Descriptions.Item label="Passenger ID">{trip.passenger.id}</Descriptions.Item>
-              <Descriptions.Item label="Phone">{trip.passenger.phone}</Descriptions.Item>
-              <Descriptions.Item label="Email">{trip.passenger.email}</Descriptions.Item>
-              <Descriptions.Item label="Rating">{trip.passenger.rating} ★</Descriptions.Item>
-              <Descriptions.Item label="Wallet">{formatCurrency(trip.passenger.walletBalance)}</Descriptions.Item>
+              <Descriptions.Item label="Phone">{trip.passenger.phone || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Email">{trip.passenger.email || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Rating">
+                {trip.passenger.overallRating != null
+                  ? `${trip.passenger.overallRating} ★`
+                  : '—'}
+              </Descriptions.Item>
               <Descriptions.Item label="Status">
-                <StatusBadge status={trip.passenger.status} />
+                <StatusBadge status={trip.passenger.passengerStatus || 'unknown'} />
               </Descriptions.Item>
             </Descriptions>
           ) : (
@@ -110,49 +237,76 @@ export default function TripDetailPage() {
         </SectionCard>
 
         <SectionCard title="Pickup Location">
-          <p className="text-sm text-white">{trip.pickup}</p>
+          <p className="text-sm text-white">{trip.pickup?.address || '—'}</p>
         </SectionCard>
 
         <SectionCard title="Dropoff Location">
-          <p className="text-sm text-white">{trip.dropoff}</p>
+          <p className="text-sm text-white">{trip.dropoff?.address || '—'}</p>
         </SectionCard>
       </div>
 
+      {trip.stops?.length ? (
+        <div className="mt-4">
+          <SectionCard title="Stops">
+            <Table
+              size="small"
+              pagination={false}
+              rowKey={(row: LiveTripStop) => `${row.sequence}-${row.address}`}
+              dataSource={[...trip.stops].sort((a, b) => a.sequence - b.sequence)}
+              columns={[
+                { title: '#', dataIndex: 'sequence', width: 60 },
+                { title: 'Address', dataIndex: 'address' },
+                {
+                  title: 'Coordinates',
+                  render: (_: unknown, row: LiveTripStop) =>
+                    `${row.latitude.toFixed(5)}, ${row.longitude.toFixed(5)}`,
+                },
+              ]}
+            />
+          </SectionCard>
+        </div>
+      ) : null}
+
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SectionCard title="Status Timeline">
-          <Timeline
-            items={trip.timeline.map((event) => ({
-              color:
-                event.status === 'completed'
-                  ? 'green'
-                  : event.status === 'current'
-                    ? 'blue'
-                    : 'gray',
-              children: (
-                <div>
-                  <p className="text-sm font-medium text-white">{event.label}</p>
-                  <p className="text-xs text-alygo-text-muted">{formatDateTime(event.timestamp)}</p>
-                </div>
-              ),
-            }))}
-          />
+          {trip.timeline?.length ? (
+            <Timeline
+              items={trip.timeline.map((event) => ({
+                color:
+                  event.status === 'completed'
+                    ? 'green'
+                    : event.status === 'cancelled'
+                      ? 'red'
+                      : 'blue',
+                children: (
+                  <div>
+                    <p className="text-sm font-medium text-white">{event.title}</p>
+                    <p className="text-xs text-alygo-text-muted">
+                      {formatDateTime(event.timestamp)}
+                    </p>
+                  </div>
+                ),
+              }))}
+            />
+          ) : (
+            <Empty description="No timeline events" />
+          )}
         </SectionCard>
 
         <SectionCard title="Cancellation History">
-          {trip.cancellationHistory.length > 0 ? (
+          {cancellationRows.length > 0 ? (
             <Table
               size="small"
               pagination={false}
               rowKey="id"
-              dataSource={trip.cancellationHistory}
+              dataSource={cancellationRows}
               columns={[
-                { title: 'Actor', dataIndex: 'actor', render: (v: string) => v.replace('_', ' ') },
-                { title: 'Reason', dataIndex: 'reason' },
                 {
-                  title: 'Fee',
-                  dataIndex: 'feeApplied',
-                  render: (fee?: number) => (fee != null ? formatCurrency(fee) : '—'),
+                  title: 'Actor',
+                  dataIndex: 'actor',
+                  render: (v: string) => v.replaceAll('_', ' '),
                 },
+                { title: 'Reason', dataIndex: 'reason' },
                 {
                   title: 'Time',
                   dataIndex: 'timestamp',
@@ -168,12 +322,12 @@ export default function TripDetailPage() {
 
       <div className="mt-4">
         <SectionCard title="Safety Events / SOS Logs">
-          {trip.safetyEvents.length > 0 ? (
+          {safetyRows.length > 0 ? (
             <Table
               size="small"
               pagination={false}
               rowKey="id"
-              dataSource={trip.safetyEvents}
+              dataSource={safetyRows}
               columns={[
                 {
                   title: 'Type',
@@ -181,7 +335,11 @@ export default function TripDetailPage() {
                   render: (type: string) => <Tag>{type.toUpperCase()}</Tag>,
                 },
                 { title: 'Description', dataIndex: 'description', ellipsis: true },
-                { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
+                {
+                  title: 'Status',
+                  dataIndex: 'status',
+                  render: (s: string) => <StatusBadge status={s} />,
+                },
                 {
                   title: 'Time',
                   dataIndex: 'timestamp',

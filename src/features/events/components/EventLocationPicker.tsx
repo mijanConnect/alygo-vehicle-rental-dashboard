@@ -2,6 +2,7 @@ import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 import { InputNumber, Spin } from 'antd'
 import { useCallback } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '@/constants'
+import { getGoogleMapsLoaderOptions } from '@/constants/googleMaps'
 import { DEFAULT_EVENT_CENTER } from '@/features/events/eventHelpers'
 
 const MAP_CONTAINER_STYLE = {
@@ -17,10 +18,7 @@ interface EventLocationPickerProps {
 }
 
 export function EventLocationPicker({ lat, lng, onChange }: EventLocationPickerProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'alygo-events-google-maps',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-  })
+  const { isLoaded, loadError } = useJsApiLoader(getGoogleMapsLoaderOptions())
 
   const position = {
     lat: typeof lat === 'number' ? lat : DEFAULT_EVENT_CENTER.lat,
