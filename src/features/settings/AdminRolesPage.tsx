@@ -8,6 +8,7 @@ import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { CreateControllerModal } from '@/features/settings/components/CreateControllerModal'
 import { CreateRoleModal } from '@/features/settings/components/CreateRoleModal'
+import { ControllerDetailsDrawer } from '@/features/settings/components/ControllerDetailsDrawer'
 import { getPermissionDisplayName } from '@/features/settings/rbacPermissionLabels'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -186,6 +187,7 @@ function ControllersTab() {
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
+  const [selectedController, setSelectedController] = useState<ControllerItem | null>(null)
 
   const { data, isLoading, isFetching } = useGetControllersListQuery({
     page,
@@ -231,7 +233,7 @@ function ControllersTab() {
         rowKey="id"
         dataSource={rows}
         pagination={false}
-        scroll={{ x: 800 }}
+        scroll={{ x: 900 }}
         locale={{ emptyText: 'No controllers yet' }}
         columns={[
           { title: 'Name', dataIndex: 'name', width: 180 },
@@ -249,13 +251,29 @@ function ControllersTab() {
             title: 'Role',
             dataIndex: 'roleName',
             width: 160,
-            render: (v?: string) => v || '—',
+            render: (v?: string) => v || 'No role',
           },
           {
             title: 'Status',
             dataIndex: 'status',
-            width: 120,
+            width: 110,
             render: (v?: string) => (v ? <Tag>{v}</Tag> : '—'),
+          },
+          {
+            title: 'Action',
+            key: 'action',
+            width: 100,
+            fixed: 'right',
+            render: (_: unknown, record: ControllerItem) => (
+              <Button
+                type="link"
+                size="small"
+                className="!px-1"
+                onClick={() => setSelectedController(record)}
+              >
+                Details
+              </Button>
+            ),
           },
         ]}
       />
@@ -277,6 +295,11 @@ function ControllersTab() {
         loading={creating}
         onCancel={() => setCreateOpen(false)}
         onSubmit={handleCreate}
+      />
+      <ControllerDetailsDrawer
+        open={Boolean(selectedController)}
+        controller={selectedController}
+        onClose={() => setSelectedController(null)}
       />
       <AdminActionHost actions={adminActions} />
     </>

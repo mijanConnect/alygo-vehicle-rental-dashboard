@@ -41,6 +41,15 @@ export interface RoleItem {
   updatedAt?: string
 }
 
+export interface ControllerPermission {
+  id: string
+  name: string
+  module: string
+  key?: string
+  description?: string
+  status?: string
+}
+
 export interface ControllerItem {
   id: string
   name: string
@@ -49,6 +58,8 @@ export interface ControllerItem {
   countryCode?: string
   roleId?: string
   roleName?: string
+  roleDescription?: string
+  permissions: ControllerPermission[]
   status?: string
   createdAt?: string
 }
@@ -121,15 +132,46 @@ function normalizeRole(raw: Record<string, unknown>): RoleItem {
 }
 
 function normalizeController(raw: Record<string, unknown>): ControllerItem {
-  const role = raw.role as { name?: string; id?: string; _id?: string } | undefined
+  const roleRaw = raw.roleId
+  const nestedRole =
+    roleRaw && typeof roleRaw === 'object'
+      ? (roleRaw as Record<string, unknown>)
+      : null
+
+  const permissionsRaw = nestedRole?.permissions
+  const permissions: ControllerPermission[] = Array.isArray(permissionsRaw)
+    ? permissionsRaw.map((p) => {
+        const item = p as Record<string, unknown>
+        return {
+          id: String(item.id ?? item._id ?? ''),
+          name: String(item.name ?? ''),
+          module: String(item.module ?? item.name ?? ''),
+          key: item.key ? String(item.key) : undefined,
+          description: item.description ? String(item.description) : undefined,
+          status: item.status ? String(item.status) : undefined,
+        }
+      })
+    : []
+
+  const roleIdValue =
+    nestedRole
+      ? String(nestedRole.id ?? nestedRole._id ?? '')
+      : typeof roleRaw === 'string'
+        ? roleRaw
+        : ''
+
   return {
     id: String(raw.id ?? raw._id ?? ''),
     name: String(raw.name ?? '—'),
     email: String(raw.email ?? '—'),
     phone: raw.phone ? String(raw.phone) : undefined,
     countryCode: raw.countryCode ? String(raw.countryCode) : undefined,
-    roleId: String(raw.roleId ?? role?.id ?? role?._id ?? ''),
-    roleName: role?.name ? String(role.name) : raw.roleName ? String(raw.roleName) : undefined,
+    roleId: roleIdValue || undefined,
+    roleName: nestedRole?.name ? String(nestedRole.name) : undefined,
+    roleDescription: nestedRole?.description
+      ? String(nestedRole.description)
+      : undefined,
+    permissions,
     status: raw.status ? String(raw.status) : undefined,
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
   }
