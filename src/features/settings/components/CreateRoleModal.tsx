@@ -91,14 +91,14 @@ export function CreateRoleModal({ open, loading, onCancel, onSubmit }: CreateRol
                   <Checkbox
                     key={option.value}
                     value={option.value}
-                    className="!m-0 !mr-0 items-start rounded-lg border border-white/10 px-3 py-2 hover:border-white/20 [&_.ant-checkbox]:mt-1"
+                    className="!m-0 !pl-1 !mr-0 items-start rounded-lg  px-3 py-2 hover:border-white/50 [&_.ant-checkbox]:mt-1"
                   >
                     <span className="block text-sm text-white">{option.label}</span>
-                    {option.description ? (
+                    {/* {option.description ? (
                       <span className="mt-0.5 block whitespace-normal text-xs text-alygo-text-muted">
                         {option.description}
                       </span>
-                    ) : null}
+                    ) : null} */}
                   </Checkbox>
                 ))}
               </div>
