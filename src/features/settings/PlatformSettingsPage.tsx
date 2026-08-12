@@ -10,10 +10,8 @@ import {
   openGenericDetails,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
-import { ROLE_LABELS, ROLE_PERMISSIONS } from '@/constants'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import type { AdminRole } from '@/types'
 
 export function PlatformSettingsPage() {
   useDocumentTitle('Platform Settings')
@@ -80,37 +78,6 @@ export function IntegrationsPage() {
             createActionsColumn<{ name: string; status: string; type: string }>(
               () => getGenericActionItems({ edit: true, export: true }),
               (key, record) => handleGenericAction(key, record as Record<string, unknown>, adminActions, record.name),
-            ),
-          ]}
-        />
-      </div>
-      <AdminActionHost actions={adminActions} />
-    </PageShell>
-  )
-}
-
-export function AdminRolesPage() {
-  useDocumentTitle('Admin Roles')
-  const adminActions = useAdminActions()
-  const roles = (Object.keys(ROLE_LABELS) as AdminRole[]).map((role) => ({
-    role,
-    label: ROLE_LABELS[role],
-    permissions: ROLE_PERMISSIONS[role].length,
-  }))
-
-  return (
-    <PageShell title="Admin Role Management" description="RBAC roles, permissions, and audit logs.">
-      <div className="glass-card p-4">
-        <Table
-          rowKey="role"
-          dataSource={roles}
-          {...createTableRowProps<{ role: AdminRole; label: string; permissions: number }>((record) => openGenericDetails(record as Record<string, unknown>, adminActions, record.label))}
-          columns={[
-            { title: 'Role', dataIndex: 'label' },
-            { title: 'Permissions', dataIndex: 'permissions' },
-            createActionsColumn<{ role: AdminRole; label: string; permissions: number }>(
-              () => getSettingsActionItems(),
-              (key, record) => handleGenericAction(key, record as Record<string, unknown>, adminActions, record.label),
             ),
           ]}
         />
