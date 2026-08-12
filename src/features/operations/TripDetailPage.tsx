@@ -10,6 +10,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   useGetSingleLiveTripQuery,
   type LiveTripDetail,
+  type LiveTripStop,
 } from '@/redux/api/liveTripApi'
 import type { TripLiveMapData } from '@/types/tripOperations'
 import { formatCurrency, formatDateTime } from '@/utils/format'
@@ -250,14 +251,14 @@ export default function TripDetailPage() {
             <Table
               size="small"
               pagination={false}
-              rowKey={(row) => `${row.sequence}-${row.address}`}
+              rowKey={(row: LiveTripStop) => `${row.sequence}-${row.address}`}
               dataSource={[...trip.stops].sort((a, b) => a.sequence - b.sequence)}
               columns={[
                 { title: '#', dataIndex: 'sequence', width: 60 },
                 { title: 'Address', dataIndex: 'address' },
                 {
                   title: 'Coordinates',
-                  render: (_: unknown, row: { latitude: number; longitude: number }) =>
+                  render: (_: unknown, row: LiveTripStop) =>
                     `${row.latitude.toFixed(5)}, ${row.longitude.toFixed(5)}`,
                 },
               ]}
