@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Select, Table, Tag, Tabs, type TableProps } from 'antd'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AdminActionHost, createTableRowProps } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -8,6 +8,7 @@ import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { ActiveDriversTab } from '@/features/drivers/components/ActiveDriversTab'
+import { DriverDetailsDrawer } from '@/features/drivers/components/DriverDetailsDrawer'
 import { DriverTableActions } from '@/features/drivers/components/DriverTableActions'
 import { DriverVerificationOverviewCards } from '@/features/drivers/components/DriverVerificationOverviewCards'
 import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
@@ -40,7 +41,6 @@ import type { IdentityVerificationStatus } from '@/types/driverVerification'
 
 export default function DriversPage() {
   useDocumentTitle('Driver Management')
-  const navigate = useNavigate()
   const adminActions = useAdminActions()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = (searchParams.get('tab') as DriverTabKey | null) ?? DEFAULT_DRIVER_TAB
@@ -51,6 +51,7 @@ export default function DriversPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [status, setStatus] = useState('')
   const [tierFilter, setTierFilter] = useState('')
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null)
 
   const listParams = { page, limit, searchTerm }
 
@@ -200,6 +201,10 @@ export default function DriversPage() {
     setPage(1)
   }, [])
 
+  const openDetails = (driver: DriverTableRow) => {
+    setSelectedDriverId(driver.id)
+  }
+
   const columns: TableProps<DriverTableRow>['columns'] = [
     {
       title: 'Driver Name',
@@ -275,6 +280,7 @@ export default function DriversPage() {
         <DriverTableActions
           record={record}
           tab={validTab}
+          onDetails={openDetails}
           onApprove={handleApprove}
           onReject={handleReject}
           onSuspend={handleSuspend}
@@ -336,9 +342,7 @@ export default function DriversPage() {
         rowKey="id"
         scroll={{ x: 1500 }}
         pagination={false}
-        {...createTableRowProps<DriverTableRow>((record) =>
-          navigate(`/drivers/${record.id}`),
-        )}
+        {...createTableRowProps<DriverTableRow>(openDetails)}
       />
 
       <Pagination
@@ -381,7 +385,9 @@ export default function DriversPage() {
             {
               key: 'active',
               label: DRIVER_TAB_LABELS.active,
-              children: <ActiveDriversTab />,
+              children: (
+                <ActiveDriversTab onOpenDetails={(id) => setSelectedDriverId(id)} />
+              ),
             },
             {
               key: 'pending',
@@ -402,6 +408,11 @@ export default function DriversPage() {
         />
       </div>
 
+      <DriverDetailsDrawer
+        open={Boolean(selectedDriverId)}
+        driverId={selectedDriverId}
+        onClose={() => setSelectedDriverId(null)}
+      />
       <AdminActionHost actions={adminActions} />
     </PageShell>
   )

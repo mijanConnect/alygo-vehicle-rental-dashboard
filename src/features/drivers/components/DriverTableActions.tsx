@@ -1,11 +1,11 @@
 import { Button, Space } from 'antd'
-import { useNavigate } from 'react-router-dom'
 import type { DriverTableRow } from '@/features/drivers/mapDriverManagement'
 import type { DriverTabKey } from '@/features/drivers/driversNavigation'
 
 interface DriverTableActionsProps {
   record: DriverTableRow
   tab: DriverTabKey
+  onDetails: (record: DriverTableRow) => void
   onApprove?: (record: DriverTableRow) => void
   onReject?: (record: DriverTableRow) => void
   onSuspend?: (record: DriverTableRow) => void
@@ -15,22 +15,21 @@ interface DriverTableActionsProps {
 export function DriverTableActions({
   record,
   tab,
+  onDetails,
   onApprove,
   onReject,
   onSuspend,
   onUnsuspend,
 }: DriverTableActionsProps) {
-  const navigate = useNavigate()
-
-  const goToDetails = (e?: React.MouseEvent) => {
+  const openDetails = (e?: React.MouseEvent) => {
     e?.stopPropagation()
-    navigate(`/drivers/${record.id}`)
+    onDetails(record)
   }
 
   if (tab === 'pending') {
     return (
       <Space size={0} wrap onClick={(e) => e.stopPropagation()}>
-        <Button type="link" size="small" onClick={goToDetails}>
+        <Button type="link" size="small" onClick={openDetails}>
           Details
         </Button>
         <Button type="link" size="small" onClick={() => onApprove?.(record)}>
@@ -49,7 +48,7 @@ export function DriverTableActions({
   if (tab === 'suspended') {
     return (
       <Space size={0} wrap onClick={(e) => e.stopPropagation()}>
-        <Button type="link" size="small" onClick={goToDetails}>
+        <Button type="link" size="small" onClick={openDetails}>
           Details
         </Button>
         <Button type="link" size="small" onClick={() => onUnsuspend?.(record)}>
@@ -60,7 +59,7 @@ export function DriverTableActions({
   }
 
   return (
-    <Button type="link" size="small" onClick={goToDetails}>
+    <Button type="link" size="small" onClick={openDetails}>
       Details
     </Button>
   )

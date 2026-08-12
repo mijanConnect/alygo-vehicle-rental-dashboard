@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Button, Table, Tag } from 'antd'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { createTableRowProps } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
@@ -8,8 +8,11 @@ import { SearchingInput } from '@/components/shared/SearchingInput'
 import { mapOnlineDriver, type DriverTableRow } from '@/features/drivers/mapDriverManagement'
 import { useGetAllOnlineDriversQuery } from '@/redux/api/driverManagementApi'
 
-export function ActiveDriversTab() {
-  const navigate = useNavigate()
+interface ActiveDriversTabProps {
+  onOpenDetails: (driverId: string) => void
+}
+
+export function ActiveDriversTab({ onOpenDetails }: ActiveDriversTabProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,8 +33,8 @@ export function ActiveDriversTab() {
     setPage(1)
   }, [])
 
-  const goToDetails = (record: DriverTableRow) => {
-    navigate(`/drivers/${record.id}`)
+  const openDetails = (record: DriverTableRow) => {
+    onOpenDetails(record.id)
   }
 
   return (
@@ -50,7 +53,7 @@ export function ActiveDriversTab() {
         dataSource={rows}
         pagination={false}
         scroll={{ x: 1200 }}
-        {...createTableRowProps<DriverTableRow>(goToDetails)}
+        {...createTableRowProps<DriverTableRow>(openDetails)}
         columns={[
           {
             title: 'Driver',
@@ -96,7 +99,7 @@ export function ActiveDriversTab() {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation()
-                  goToDetails(record)
+                  openDetails(record)
                 }}
               >
                 Details
