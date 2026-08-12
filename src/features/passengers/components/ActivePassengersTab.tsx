@@ -1,26 +1,21 @@
 import { useCallback, useState } from 'react'
 import { Table } from 'antd'
 import { Link } from 'react-router-dom'
-import {
-  createActionsColumn,
-  createTableRowProps,
-  getPassengerActionItems,
-  handlePassengerAction,
-  openPassengerDetails,
-} from '@/components/admin'
+import { createTableRowProps } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
+import { PassengerTableActions } from '@/features/passengers/components/PassengerTableActions'
 import { mapLivePassengerItem } from '@/features/passengers/mapPassengerManagement'
-import type { useAdminActions } from '@/hooks/useAdminActions'
 import { useGetAllLiveActivityPassengersQuery } from '@/redux/api/passengersApi'
 import type { Passenger } from '@/types'
 
 interface ActivePassengersTabProps {
-  adminActions: ReturnType<typeof useAdminActions>
+  onOpenDetails: (passengerId: string) => void
+  onSuspend: (passenger: Passenger) => void
 }
 
-export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) {
+export function ActivePassengersTab({ onOpenDetails, onSuspend }: ActivePassengersTabProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
@@ -41,6 +36,10 @@ export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) 
     setPage(1)
   }, [])
 
+  const openDetails = (record: Passenger) => {
+    onOpenDetails(record.id)
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-alygo-text-muted">
@@ -59,9 +58,7 @@ export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) 
         pagination={false}
         scroll={{ x: 900 }}
         locale={{ emptyText: 'No live passengers right now' }}
-        {...createTableRowProps<Passenger>((record) =>
-          openPassengerDetails(record, adminActions),
-        )}
+        {...createTableRowProps<Passenger>(openDetails)}
         columns={[
           {
             title: 'Passenger',
@@ -83,15 +80,31 @@ export function ActivePassengersTab({ adminActions }: ActivePassengersTabProps) 
           {
             title: 'Status',
             dataIndex: 'status',
+            width: 120,
             render: (s: string) => <StatusBadge status={s} />,
           },
-          { title: 'Trips', dataIndex: 'completedTrips' },
-          { title: 'Rating', dataIndex: 'rating', render: (r: number) => `${r} ★` },
+          { title: 'Trips', dataIndex: 'completedTrips', width: 80 },
+          {
+            title: 'Rating',
+            dataIndex: 'rating',
+            width: 90,
+            render: (r: number) => `${r} ★`,
+          },
           { title: 'City', dataIndex: 'city', ellipsis: true },
-          createActionsColumn<Passenger>(
-            () => getPassengerActionItems(),
-            (key, record) => handlePassengerAction(key, record, adminActions),
-          ),
+          {
+            title: 'Action',
+            key: 'action',
+            fixed: 'right',
+            width: 180,
+            render: (_: unknown, record: Passenger) => (
+              <PassengerTableActions
+                record={record}
+                mode="default"
+                onDetails={openDetails}
+                onSuspend={onSuspend}
+              />
+            ),
+          },
         ]}
       />
       <Pagination
