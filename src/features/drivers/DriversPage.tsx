@@ -11,7 +11,6 @@ import { ActiveDriversTab } from '@/features/drivers/components/ActiveDriversTab
 import { DriverDetailsDrawer } from '@/features/drivers/components/DriverDetailsDrawer'
 import { DriverTableActions } from '@/features/drivers/components/DriverTableActions'
 import { DriverVerificationOverviewCards } from '@/features/drivers/components/DriverVerificationOverviewCards'
-import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
 import {
   DEFAULT_DRIVER_TAB,
   DRIVER_TAB_KEYS,
@@ -37,7 +36,6 @@ import {
   useGetAllSuspendedListQuery,
   useGetDriverManagementListQuery,
 } from '@/redux/api/driverManagementApi'
-import type { IdentityVerificationStatus } from '@/types/driverVerification'
 
 export default function DriversPage() {
   useDocumentTitle('Driver Management')
@@ -256,26 +254,16 @@ export default function DriversPage() {
           : '—',
     },
     {
-      title: 'Compliance',
-      dataIndex: 'complianceStatus',
-      render: (s: string) => <StatusBadge status={s} />,
-    },
-    {
       title: 'Background Check',
       dataIndex: 'backgroundCheckStatus',
       render: (s: string) => <StatusBadge status={s} />,
-    },
-    {
-      title: 'Identity Verification',
-      dataIndex: 'identityVerificationStatus',
-      render: (s: IdentityVerificationStatus) => <IdentityVerificationBadge status={s} />,
     },
     { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
     {
       title: 'Action',
       key: 'action',
       fixed: 'right',
-      width: validTab === 'pending' ? 260 : validTab === 'suspended' ? 180 : 110,
+      width: validTab === 'pending' ? 300 : validTab === 'suspended' ? 180 : 100,
       render: (_: unknown, record: DriverTableRow) => (
         <DriverTableActions
           record={record}

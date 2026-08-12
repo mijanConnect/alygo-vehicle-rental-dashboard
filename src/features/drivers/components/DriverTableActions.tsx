@@ -28,17 +28,17 @@ export function DriverTableActions({
 
   if (tab === 'pending') {
     return (
-      <Space size={0} wrap onClick={(e) => e.stopPropagation()}>
-        <Button type="link" size="small" onClick={openDetails}>
+      <Space size="small" wrap={false} className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <Button type="link" size="small" className="!px-1" onClick={openDetails}>
           Details
         </Button>
-        <Button type="link" size="small" onClick={() => onApprove?.(record)}>
+        <Button type="link" size="small" className="!px-1" onClick={() => onApprove?.(record)}>
           Approve
         </Button>
-        <Button type="link" size="small" danger onClick={() => onReject?.(record)}>
+        <Button type="link" size="small" danger className="!px-1" onClick={() => onReject?.(record)}>
           Reject
         </Button>
-        <Button type="link" size="small" danger onClick={() => onSuspend?.(record)}>
+        <Button type="link" size="small" danger className="!px-1" onClick={() => onSuspend?.(record)}>
           Suspend
         </Button>
       </Space>
@@ -47,11 +47,11 @@ export function DriverTableActions({
 
   if (tab === 'suspended') {
     return (
-      <Space size={0} wrap onClick={(e) => e.stopPropagation()}>
-        <Button type="link" size="small" onClick={openDetails}>
+      <Space size="small" wrap={false} className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <Button type="link" size="small" className="!px-1" onClick={openDetails}>
           Details
         </Button>
-        <Button type="link" size="small" onClick={() => onUnsuspend?.(record)}>
+        <Button type="link" size="small" className="!px-1" onClick={() => onUnsuspend?.(record)}>
           Unsuspend
         </Button>
       </Space>
@@ -59,7 +59,7 @@ export function DriverTableActions({
   }
 
   return (
-    <Button type="link" size="small" onClick={openDetails}>
+    <Button type="link" size="small" className="!px-1" onClick={openDetails}>
       Details
     </Button>
   )
