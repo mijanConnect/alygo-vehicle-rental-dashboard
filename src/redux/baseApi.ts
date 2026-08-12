@@ -60,6 +60,9 @@ export const baseApi = createApi({
     'Holidays',
     'Communication',
     'Settings',
+    'Permissions',
+    'Roles',
+    'Controllers',
   ],
   endpoints: () => ({}),
 })
