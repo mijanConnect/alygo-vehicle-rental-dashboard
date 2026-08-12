@@ -1,24 +1,16 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Select, Table, Tag, Tabs, type TableProps } from 'antd'
-import { Link, useSearchParams } from 'react-router-dom'
-import {
-  AdminActionHost,
-  createActionsColumn,
-  createTableRowProps,
-  getDriverManagementActionItems,
-  handleDriverAction,
-  type DriverActionHandlers,
-} from '@/components/admin'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AdminActionHost, createTableRowProps } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { ActiveDriversTab } from '@/features/drivers/components/ActiveDriversTab'
-import { DriverVerificationDrawer } from '@/features/drivers/components/DriverVerificationDrawer'
+import { DriverTableActions } from '@/features/drivers/components/DriverTableActions'
 import { DriverVerificationOverviewCards } from '@/features/drivers/components/DriverVerificationOverviewCards'
 import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
-import type { DriverVerificationFocus } from '@/features/drivers/driverVerificationHelpers'
 import {
   DEFAULT_DRIVER_TAB,
   DRIVER_TAB_KEYS,
@@ -34,23 +26,21 @@ import {
 } from '@/features/drivers/mapDriverManagement'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { baseApi } from '@/redux/baseApi'
 import {
+  useDriverApprovalMutation,
+  useDriverRejectionMutation,
+  useDriverSuspensionMutation,
+  useDriverUnsuspensionMutation,
   useGetAllComplianceListQuery,
   useGetAllPendingApprovalsQuery,
   useGetAllSuspendedListQuery,
   useGetDriverManagementListQuery,
 } from '@/redux/api/driverManagementApi'
-import {
-  useApproveVerificationMutation,
-  useRejectVerificationMutation,
-} from '@/services/driverVerificationApi'
 import type { IdentityVerificationStatus } from '@/types/driverVerification'
-import { useAppDispatch } from '@/store/hooks'
 
 export default function DriversPage() {
   useDocumentTitle('Driver Management')
-  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const adminActions = useAdminActions()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = (searchParams.get('tab') as DriverTabKey | null) ?? DEFAULT_DRIVER_TAB
@@ -61,8 +51,6 @@ export default function DriversPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [status, setStatus] = useState('')
   const [tierFilter, setTierFilter] = useState('')
-  const [drawerDriver, setDrawerDriver] = useState<DriverTableRow | null>(null)
-  const [drawerFocus, setDrawerFocus] = useState<DriverVerificationFocus>('default')
 
   const listParams = { page, limit, searchTerm }
 
@@ -80,8 +68,10 @@ export default function DriversPage() {
     skip: validTab !== 'compliance',
   })
 
-  const [approveVerification] = useApproveVerificationMutation()
-  const [rejectVerification] = useRejectVerificationMutation()
+  const [approveDriver] = useDriverApprovalMutation()
+  const [rejectDriver] = useDriverRejectionMutation()
+  const [suspendDriver] = useDriverSuspensionMutation()
+  const [unsuspendDriver] = useDriverUnsuspensionMutation()
 
   const { rows, isLoading, isFetching, totalItems, totalPages } = useMemo(() => {
     if (validTab === 'pending') {
@@ -139,44 +129,70 @@ export default function DriversPage() {
     complianceQuery.isFetching,
   ])
 
-  const openDrawer = (driver: DriverTableRow, focus: DriverVerificationFocus = 'default') => {
-    setDrawerDriver(driver)
-    setDrawerFocus(focus)
+  const handleApprove = (driver: DriverTableRow) => {
+    adminActions.openConfirm({
+      title: 'Approve Driver',
+      description: `Approve driver application for ${driver.name}?`,
+      confirmLabel: 'Approve',
+      onConfirm: async () => {
+        try {
+          await approveDriver(driver.id).unwrap()
+          adminActions.notify('Driver approved', driver.name)
+        } catch {
+          adminActions.notify('Unable to approve driver', driver.name)
+        }
+      },
+    })
   }
 
-  const invalidateDrivers = () => {
-    dispatch(baseApi.util.invalidateTags(['Drivers']))
+  const handleReject = (driver: DriverTableRow) => {
+    adminActions.openConfirm({
+      title: 'Reject Driver',
+      description: `Reject driver application for ${driver.name}?`,
+      confirmLabel: 'Reject',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await rejectDriver(driver.id).unwrap()
+          adminActions.notify('Driver rejected', driver.name)
+        } catch {
+          adminActions.notify('Unable to reject driver', driver.name)
+        }
+      },
+    })
   }
 
-  const verificationHandlers: DriverActionHandlers = {
-    onOpenVerificationDrawer: openDrawer,
-    onApproveVerification: (driver) => {
-      adminActions.openConfirm({
-        title: 'Approve Verification',
-        description: `Approve identity verification for ${driver.name}?`,
-        confirmLabel: 'Approve',
-        onConfirm: async () => {
-          await approveVerification(driver.id).unwrap()
-          adminActions.notify('Verification approved', driver.name)
-          invalidateDrivers()
-          openDrawer(driver as DriverTableRow, 'default')
-        },
-      })
-    },
-    onRejectVerification: (driver) => {
-      adminActions.openConfirm({
-        title: 'Reject Verification',
-        description: `Reject identity verification for ${driver.name}?`,
-        confirmLabel: 'Reject',
-        danger: true,
-        onConfirm: async () => {
-          await rejectVerification({ driverId: driver.id }).unwrap()
-          adminActions.notify('Verification rejected', driver.name)
-          invalidateDrivers()
-          openDrawer(driver as DriverTableRow, 'default')
-        },
-      })
-    },
+  const handleSuspend = (driver: DriverTableRow) => {
+    adminActions.openConfirm({
+      title: 'Suspend Driver',
+      description: `Suspend ${driver.name}?`,
+      confirmLabel: 'Suspend',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await suspendDriver(driver.id).unwrap()
+          adminActions.notify('Driver suspended', driver.name)
+        } catch {
+          adminActions.notify('Unable to suspend driver', driver.name)
+        }
+      },
+    })
+  }
+
+  const handleUnsuspend = (driver: DriverTableRow) => {
+    adminActions.openConfirm({
+      title: 'Unsuspend Driver',
+      description: `Restore access for ${driver.name}?`,
+      confirmLabel: 'Unsuspend',
+      onConfirm: async () => {
+        try {
+          await unsuspendDriver(driver.id).unwrap()
+          adminActions.notify('Driver unsuspended', driver.name)
+        } catch {
+          adminActions.notify('Unable to unsuspend driver', driver.name)
+        }
+      },
+    })
   }
 
   const handleSearchChange = useCallback((value: string) => {
@@ -250,10 +266,22 @@ export default function DriversPage() {
       render: (s: IdentityVerificationStatus) => <IdentityVerificationBadge status={s} />,
     },
     { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-    createActionsColumn<DriverTableRow>(
-      () => getDriverManagementActionItems(),
-      (key, record) => handleDriverAction(key, record, adminActions, verificationHandlers),
-    ),
+    {
+      title: 'Action',
+      key: 'action',
+      fixed: 'right',
+      width: validTab === 'pending' ? 260 : validTab === 'suspended' ? 180 : 110,
+      render: (_: unknown, record: DriverTableRow) => (
+        <DriverTableActions
+          record={record}
+          tab={validTab}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onSuspend={handleSuspend}
+          onUnsuspend={handleUnsuspend}
+        />
+      ),
+    },
   ]
 
   const segmentTable = (
@@ -308,7 +336,9 @@ export default function DriversPage() {
         rowKey="id"
         scroll={{ x: 1500 }}
         pagination={false}
-        {...createTableRowProps<DriverTableRow>((record) => openDrawer(record))}
+        {...createTableRowProps<DriverTableRow>((record) =>
+          navigate(`/drivers/${record.id}`),
+        )}
       />
 
       <Pagination
@@ -351,7 +381,7 @@ export default function DriversPage() {
             {
               key: 'active',
               label: DRIVER_TAB_LABELS.active,
-              children: <ActiveDriversTab adminActions={adminActions} />,
+              children: <ActiveDriversTab />,
             },
             {
               key: 'pending',
@@ -372,12 +402,6 @@ export default function DriversPage() {
         />
       </div>
 
-      <DriverVerificationDrawer
-        open={!!drawerDriver}
-        driver={drawerDriver}
-        focus={drawerFocus}
-        onClose={() => setDrawerDriver(null)}
-      />
       <AdminActionHost actions={adminActions} />
     </PageShell>
   )

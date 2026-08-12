@@ -371,6 +371,41 @@ export const driverManagementApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Drivers'],
     }),
+
+    driverApproval: builder.mutation<ApiResponse<DriverDetailsData>, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/approve`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<void>) => response.data,
+      invalidatesTags: ['Drivers'],
+    }),
+    driverSuspension: builder.mutation<ApiResponse<void>, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/suspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<DriverDetailsData>) =>
+        response.data,
+      invalidatesTags: ['Drivers'],
+    }),
+    driverRejection: builder.mutation<ApiResponse<DriverDetailsData>, string>({
+      query: (id) => ({
+        url: `/driver-management/drivers/${id}/reject`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<DriverDetailsData>) =>
+        response.data,
+      invalidatesTags: ['Drivers'],
+    }),
+    driverUnsuspension: builder.mutation<ApiResponse<void>, string>({
+      query: (driverId) => ({
+        url: `/driver-management/drivers/${driverId}/unsuspend`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<void>) => response.data,
+      invalidatesTags: ['Drivers'],
+    }),
   }),
 })
 
@@ -382,6 +417,10 @@ export const {
   useGetAllPendingApprovalsQuery,
   useGetAllSuspendedListQuery,
   useGetAllComplianceListQuery,
+  useDriverApprovalMutation,
+  useDriverSuspensionMutation,
+  useDriverRejectionMutation,
+  useDriverUnsuspensionMutation,
 } = driverManagementApi
 
 /** @deprecated Use useGetAllComplianceListQuery */
