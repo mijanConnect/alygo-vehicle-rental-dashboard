@@ -68,6 +68,7 @@ export const baseApi = createApi({
     'Cms',
     'SystemConfiguration',
     'FareConfigurations',
+    'PlatformSettings',
   ],
   endpoints: () => ({}),
 })

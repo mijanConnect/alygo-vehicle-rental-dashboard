@@ -53,7 +53,6 @@ const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBon
 const ReservationCenterPage = lazy(() => import('@/features/reservations/ReservationCenterPage'))
 const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashboardPage'))
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
-const PlatformSettingsPage = lazy(() => import('@/features/settings/PlatformSettingsPage'))
 const ProfileSettingsPage = lazy(() => import('@/features/settings/ProfileSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
@@ -206,7 +205,7 @@ export const router = createBrowserRouter([
           { path: 'compliance', element: <Navigate to="/analytics?tab=compliance" replace /> },
         ],
       },
-      { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },
+      { path: 'settings/platform', element: <Navigate to="/settings/profile?tab=platform" replace /> },
       { path: 'settings/profile', element: withSuspense(<ProfileSettingsPage />) },
       { path: 'settings/system-configuration', element: withSuspense(<SystemConfigurationPage />) },
       {
