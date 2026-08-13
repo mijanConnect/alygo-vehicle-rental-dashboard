@@ -16,6 +16,7 @@ import {
   MapPin,
   MessageSquare,
   PartyPopper,
+  Clock,
   Plane,
   Settings,
   Shield,
@@ -84,6 +85,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'Holiday Management',
     path: '/holidays',
     icon: PartyPopper,
+    permission: 'operations.view',
+  },
+  {
+    key: 'peak-hours',
+    label: 'Peak Hours Management',
+    path: '/peak-hours',
+    icon: Clock,
     permission: 'operations.view',
   },
   {

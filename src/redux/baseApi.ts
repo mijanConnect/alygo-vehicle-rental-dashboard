@@ -58,6 +58,7 @@ export const baseApi = createApi({
     'Banners',
     'Events',
     'Holidays',
+    'PeakHours',
     'Communication',
     'Settings',
     'Permissions',
