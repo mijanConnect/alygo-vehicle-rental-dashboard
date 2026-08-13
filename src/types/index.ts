@@ -128,6 +128,7 @@ export interface ChartPoint {
   label: string
   value: number
   secondary?: number
+  period?: string
 }
 
 export interface ActivityItem {

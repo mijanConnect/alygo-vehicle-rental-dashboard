@@ -194,7 +194,6 @@ export const router = createBrowserRouter([
           { path: 'passengers', element: <Navigate to="/analytics?tab=passengers" replace /> },
           { path: 'revenue', element: <Navigate to="/analytics?tab=revenue" replace /> },
           { path: 'demand', element: <Navigate to="/analytics?tab=demand" replace /> },
-          { path: 'compliance', element: <Navigate to="/analytics?tab=compliance" replace /> },
         ],
       },
       { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },

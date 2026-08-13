@@ -1,34 +1,104 @@
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { ChartCard, LineTrendChart, RevenueTrendChart } from '@/components/charts/AnalyticsCharts'
-import { useGetDashboardKpisQuery, useGetDemandTrendQuery, useGetRevenueTrendQuery } from '@/services/api'
+import { useGetOverviewAnalyticsQuery } from '@/redux/api/analyticsApi'
 import { useAppSelector } from '@/store/hooks'
-
-const OVERVIEW_KPI_KEYS = [
-  'revenueMonth',
-  'activeTrips',
-  'totalDrivers',
-  'totalPassengers',
-  'scheduledRides',
-] as const
+import { formatNumber } from '@/utils/format'
 
 export function AnalyticsOverviewPanel() {
   const liveKpis = useAppSelector((state) => state.auth.liveKpis)
-  const { data: kpis = [] } = useGetDashboardKpisQuery()
-  const { data: revenueTrend = [] } = useGetRevenueTrendQuery()
-  const { data: demandTrend = [] } = useGetDemandTrendQuery()
+  const { data, isLoading, error } = useGetOverviewAnalyticsQuery()
 
-  const primaryKpis = kpis.filter((k) =>
-    OVERVIEW_KPI_KEYS.includes(k.key as (typeof OVERVIEW_KPI_KEYS)[number]),
-  )
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="glass-card h-32 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="glass-card h-24 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="glass-card h-80 animate-pulse" />
+          <div className="glass-card h-80 animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="glass-card p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">Failed to load overview analytics data</p>
+        <p className="text-sm mt-1">Please try again later or contact support if the issue persists.</p>
+      </div>
+    )
+  }
+
+  const primaryKpis = [
+    {
+      key: 'totalDrivers',
+      label: 'Total Drivers',
+      value: data.totalDrivers,
+      change: 0,
+      format: 'number' as const,
+      icon: 'users',
+    },
+    {
+      key: 'totalPassengers',
+      label: 'Total Passengers',
+      value: data.totalPassengers,
+      change: 0,
+      format: 'number' as const,
+      icon: 'user-check',
+    },
+    {
+      key: 'activeTrips',
+      label: 'Active Trips',
+      value: data.activeTrips,
+      change: 0,
+      format: 'number' as const,
+      icon: 'car',
+    },
+    {
+      key: 'revenueMonth',
+      label: 'Revenue This Month',
+      value: data.revenueThisMonth,
+      change: 0,
+      format: 'currency' as const,
+      icon: 'trending-up',
+    },
+    {
+      key: 'scheduledRides',
+      label: 'Scheduled Rides',
+      value: data.scheduledRides,
+      change: 0,
+      format: 'number' as const,
+      icon: 'calendar',
+    },
+  ]
 
   const operationalMetrics = [
-    { label: 'Completed Trips (Today)', value: '4,218', change: '+6.2%' },
-    { label: 'Acceptance Rate', value: '87.4%', change: '+1.1%' },
-    { label: 'Completion Rate', value: '94.8%', change: '+0.4%' },
-    { label: 'Cancellation Rate', value: '5.2%', change: '-0.3%' },
-    { label: 'SOS Incidents (7d)', value: '3', change: '-2' },
-    { label: 'Reservations (Active)', value: '156', change: '+9.1%' },
+    { label: 'Completed Trips (Today)', value: formatNumber(data.completedTripsToday), change: '+0.0%' },
+    { label: 'Acceptance Rate', value: `${data.acceptanceRate.toFixed(1)}%`, change: '+0.0%' },
+    { label: 'Completion Rate', value: `${data.completionRate.toFixed(1)}%`, change: '+0.0%' },
+    { label: 'Cancellation Rate', value: `${data.cancellationRate.toFixed(1)}%`, change: '+0.0%' },
+    { label: 'SOS Incidents (7d)', value: '0', change: '+0.0%' },
+    { label: 'Reservations (Active)', value: formatNumber(data.activeReservations), change: '+0.0%' },
   ]
+
+  const revenueTrendData = (data.revenueTrend ?? []).map((point) => ({
+    label: point.day,
+    value: point.revenue,
+  }))
+
+  const demandTrendData = (data.demandTrend ?? []).map((point) => ({
+    label: point.time,
+    value: point.demand,
+  }))
 
   return (
     <div className="space-y-6">
@@ -50,12 +120,13 @@ export function AnalyticsOverviewPanel() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Revenue Trend" subtitle="Platform revenue over time">
-          <RevenueTrendChart data={revenueTrend} />
+          <RevenueTrendChart data={revenueTrendData} />
         </ChartCard>
         <ChartCard title="Demand Trend" subtitle="Trip demand by hour">
-          <LineTrendChart data={demandTrend} color="#22d3ee" />
+          <LineTrendChart data={demandTrendData} color="#22d3ee" />
         </ChartCard>
       </div>
     </div>
   )
 }
+

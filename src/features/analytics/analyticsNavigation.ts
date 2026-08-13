@@ -4,7 +4,6 @@ export const ANALYTICS_TAB_KEYS = [
   'passengers',
   'revenue',
   'demand',
-  'compliance',
 ] as const
 
 export type AnalyticsTabKey = (typeof ANALYTICS_TAB_KEYS)[number]
@@ -15,7 +14,6 @@ export const ANALYTICS_TAB_LABELS: Record<AnalyticsTabKey, string> = {
   passengers: 'Passenger Analytics',
   revenue: 'Revenue Analytics',
   demand: 'Demand Analytics',
-  compliance: 'Compliance Analytics',
 }
 
 export const DEFAULT_ANALYTICS_TAB: AnalyticsTabKey = 'overview'
@@ -30,5 +28,4 @@ export const LEGACY_ANALYTICS_PATHS: Record<string, AnalyticsTabKey> = {
   '/analytics/passengers': 'passengers',
   '/analytics/revenue': 'revenue',
   '/analytics/demand': 'demand',
-  '/analytics/compliance': 'compliance',
 }

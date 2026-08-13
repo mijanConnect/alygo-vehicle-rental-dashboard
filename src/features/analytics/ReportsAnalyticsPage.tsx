@@ -1,11 +1,9 @@
-import { Button, Tabs } from 'antd'
-import { Download } from 'lucide-react'
+import { Tabs } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { AdminActionHost } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { AnalyticsOverviewPanel } from '@/features/analytics/components/AnalyticsOverviewPanel'
 import {
-  ComplianceAnalyticsPanel,
   DemandAnalyticsPanel,
   DriverAnalyticsPanel,
   PassengerAnalyticsPanel,
@@ -26,7 +24,6 @@ const ANALYTICS_TABS = [
   { key: 'passengers', label: ANALYTICS_TAB_LABELS.passengers, children: <PassengerAnalyticsPanel /> },
   { key: 'revenue', label: ANALYTICS_TAB_LABELS.revenue, children: <RevenueAnalyticsPanel /> },
   { key: 'demand', label: ANALYTICS_TAB_LABELS.demand, children: <DemandAnalyticsPanel /> },
-  { key: 'compliance', label: ANALYTICS_TAB_LABELS.compliance, children: <ComplianceAnalyticsPanel /> },
 ] as const
 
 export default function ReportsAnalyticsPage() {
@@ -40,19 +37,6 @@ export default function ReportsAnalyticsPage() {
     <PageShell
       title="Analytics Center"
       description="Unified reporting hub for platform KPIs, driver and passenger metrics, revenue, demand, and compliance."
-      actions={
-        <>
-          <Button icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Report exported as CSV')}>
-            Export CSV
-          </Button>
-          <Button icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Report exported as PDF')}>
-            Export PDF
-          </Button>
-          <Button type="primary" icon={<Download className="h-4 w-4" />} onClick={() => adminActions.notify('Report exported as Excel')}>
-            Export Excel
-          </Button>
-        </>
-      }
     >
       <div className="glass-card p-4">
         <Tabs

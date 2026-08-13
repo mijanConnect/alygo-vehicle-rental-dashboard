@@ -55,7 +55,6 @@ export const LEGACY_ROUTE_REDIRECTS: Record<string, string> = {
   '/analytics/passengers': '/analytics?tab=passengers',
   '/analytics/revenue': '/analytics?tab=revenue',
   '/analytics/demand': '/analytics?tab=demand',
-  '/analytics/compliance': '/analytics?tab=compliance',
 }
 
 /** Prefix matches for removed module trees; first match wins. */

@@ -1,6 +1,7 @@
 import { baseApi } from '@/redux/baseApi'
 import '@/redux/api/authApi' // injectEndpoints — must load before store boots
 import '@/redux/api/dashboardOverviewApi'
+import '@/redux/api/analyticsApi'
 import '@/redux/api/liveTripApi'
 import '@/redux/api/cancellationApiReason'
 import '@/redux/api/cancellationAnalyticsApi'

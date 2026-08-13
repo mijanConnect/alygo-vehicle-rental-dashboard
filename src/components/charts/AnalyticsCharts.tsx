@@ -81,15 +81,48 @@ export function RevenueTrendChart({ data }: { data: ChartPoint[] }) {
   )
 }
 
-export function LineTrendChart({ data, color = '#6366f1' }: { data: ChartPoint[]; color?: string }) {
+export function LineTrendChart({
+  data,
+  color = '#6366f1',
+  name,
+  secondaryColor,
+  secondaryName,
+}: {
+  data: ChartPoint[]
+  color?: string
+  name?: string
+  secondaryColor?: string
+  secondaryName?: string
+}) {
+  const hasSecondary = data.some((d) => d.secondary !== undefined)
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="label" stroke="#64748b" fontSize={12} />
         <YAxis stroke="#64748b" fontSize={12} />
-        <Tooltip {...tooltipStyle} />
-        <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+        <Tooltip
+          {...tooltipStyle}
+          labelFormatter={(label, items) => {
+            if (items && items.length > 0 && items[0].payload && items[0].payload.period) {
+              return items[0].payload.period
+            }
+            return label
+          }}
+        />
+        <Line name={name} type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+        {hasSecondary && (
+          <Line
+            name={secondaryName}
+            type="monotone"
+            dataKey="secondary"
+            stroke={secondaryColor ?? '#10b981'}
+            strokeWidth={2}
+            strokeDasharray="4 4"
+            dot={false}
+          />
+        )}
+        {hasSecondary && <Legend />}
       </LineChart>
     </ResponsiveContainer>
   )
