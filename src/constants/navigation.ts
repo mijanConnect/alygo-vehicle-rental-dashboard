@@ -192,6 +192,7 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: 'platform-settings', label: 'Platform Settings', path: '/settings/platform' },
       { key: 'system-configuration', label: 'System Configuration', path: '/settings/system-configuration' },
+      { key: 'fare-configuration', label: 'Fare Configuration', path: '/settings/fare-configurations' },
       { key: 'safety-settings', label: 'Safety Configuration', path: '/settings/safety' },
       { key: 'notifications', label: 'Notifications', path: '/settings/notifications' },
       { key: 'legal', label: 'Legal & Policies', path: '/settings/legal' },

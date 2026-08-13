@@ -67,6 +67,7 @@ export const baseApi = createApi({
     'Controllers',
     'Cms',
     'SystemConfiguration',
+    'FareConfigurations',
   ],
   endpoints: () => ({}),
 })
