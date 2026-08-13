@@ -66,6 +66,7 @@ export const baseApi = createApi({
     'Roles',
     'Controllers',
     'Cms',
+    'SystemConfiguration',
   ],
   endpoints: () => ({}),
 })
