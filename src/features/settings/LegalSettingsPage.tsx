@@ -1,92 +1,106 @@
-import { useState } from 'react'
-import { Button, Tabs } from 'antd'
+import { useEffect, useState } from 'react'
+import { Button, Spin, Tabs } from 'antd'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
-import { PageShell } from '@/components/common/PageShell'
+import { useSearchParams } from 'react-router-dom'
 import { AdminActionHost } from '@/components/admin'
+import { PageShell } from '@/components/common/PageShell'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import {
+  useCreateCmsMutation,
+  useGetCmsByTypeQuery,
+  type CmsRuleType,
+} from '@/redux/api/cmsManageApi'
 
-const defaultTerms = `
-  <h1>Terms and Conditions</h1>
-  <p>Welcome to Alygo. By using our services, you agree to these terms.</p>
-`
+const LEGAL_TABS: { key: CmsRuleType; label: string }[] = [
+  { key: 'terms', label: 'Terms and Conditions' },
+  { key: 'privacy', label: 'Privacy Policy' },
+  { key: 'about', label: 'About Us' },
+]
 
-const defaultPrivacy = `
-  <h1>Privacy Policy</h1>
-  <p>We take your privacy seriously. This document outlines how we collect and use your data.</p>
-`
+function resolveLegalTab(tab: string | null): CmsRuleType {
+  if (tab === 'privacy' || tab === 'about' || tab === 'terms') return tab
+  return 'terms'
+}
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link', 'clean'],
+  ],
+}
+
+const quillClassName =
+  'mb-12 h-[400px] bg-transparent text-white [&_.ql-container]:border-none [&_.ql-fill]:fill-white [&_.ql-picker]:text-white [&_.ql-stroke]:stroke-white [&_.ql-toolbar]:border-none'
 
 export default function LegalSettingsPage() {
   useDocumentTitle('Legal & Policies')
   const adminActions = useAdminActions()
-  const [loading, setLoading] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = resolveLegalTab(searchParams.get('tab'))
 
-  const [terms, setTerms] = useState(defaultTerms)
-  const [privacy, setPrivacy] = useState(defaultPrivacy)
+  const [content, setContent] = useState('')
+  const { data, isLoading, isFetching, isError } = useGetCmsByTypeQuery(activeTab)
+  const [createCms, { isLoading: saving }] = useCreateCmsMutation()
+
+  useEffect(() => {
+    if (data?.content != null) {
+      setContent(data.content)
+      return
+    }
+    if (isError) {
+      setContent('')
+    }
+  }, [data, isError, activeTab])
 
   const handleSave = async () => {
-    setLoading(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      adminActions.notify('Legal settings updated successfully', 'The policies have been saved.')
-    } catch (err) {
-      adminActions.notify('Error saving legal settings', String(err))
-    } finally {
-      setLoading(false)
+      await createCms({
+        type: activeTab,
+        content,
+      }).unwrap()
+      adminActions.notify('Legal content saved', LEGAL_TABS.find((t) => t.key === activeTab)?.label)
+    } catch {
+      adminActions.notify('Unable to save legal content')
     }
   }
 
-  const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'clean'],
-    ],
-  }
-
   return (
-    <PageShell title="Legal & Policies" description="Manage the platform's Terms and Conditions and Privacy Policy.">
+    <PageShell
+      title="Legal & Policies"
+      description="Manage Terms, Privacy Policy, and About Us content."
+    >
       <div className="glass-card p-6">
         <Tabs
-          defaultActiveKey="terms"
-          items={[
-            {
-              key: 'terms',
-              label: 'Terms and Conditions',
-              children: (
-                <div className="mt-4">
+          activeKey={activeTab}
+          onChange={(key) => setSearchParams({ tab: key })}
+          items={LEGAL_TABS.map((tab) => ({
+            key: tab.key,
+            label: tab.label,
+            children: (
+              <div className="mt-4">
+                {isLoading || isFetching ? (
+                  <div className="flex h-[400px] items-center justify-center">
+                    <Spin />
+                  </div>
+                ) : (
                   <ReactQuill
                     theme="snow"
-                    value={terms}
-                    onChange={setTerms}
+                    value={content}
+                    onChange={setContent}
                     modules={quillModules}
-                    className="text-white h-[400px] mb-12 [&_.ql-toolbar]:border-none [&_.ql-container]:border-none bg-transparent [&_.ql-stroke]:stroke-white [&_.ql-fill]:fill-white [&_.ql-picker]:text-white"
+                    className={quillClassName}
                   />
-                </div>
-              ),
-            },
-            {
-              key: 'privacy',
-              label: 'Privacy Policy',
-              children: (
-                <div className="mt-4">
-                  <ReactQuill
-                    theme="snow"
-                    value={privacy}
-                    onChange={setPrivacy}
-                    modules={quillModules}
-                    className="text-white h-[400px] mb-12 [&_.ql-toolbar]:border-none [&_.ql-container]:border-none bg-transparent [&_.ql-stroke]:stroke-white [&_.ql-fill]:fill-white [&_.ql-picker]:text-white"
-                  />
-                </div>
-              ),
-            },
-          ]}
+                )}
+              </div>
+            ),
+          }))}
         />
         <div className="mt-6 flex justify-end">
-          <Button type="primary" onClick={handleSave} loading={loading}>
+          <Button type="primary" onClick={handleSave} loading={saving} disabled={isLoading || isFetching}>
             Save Changes
           </Button>
         </div>
