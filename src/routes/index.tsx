@@ -45,19 +45,25 @@ const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCat
 const BannerManagementPage = lazy(() => import('@/features/banners/BannerManagementPage'))
 const EventsManagementPage = lazy(() => import('@/features/events/EventsManagementPage'))
 const HolidayManagementPage = lazy(() => import('@/features/holidays/HolidayManagementPage'))
+const PeakHoursManagementPage = lazy(() => import('@/features/pick-hours/PeakHoursManagementPage'))
+const HelpSupportsPage = lazy(() => import('@/features/help-supports/HelpSupportsPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
 const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBonusesPage'))
 const ReservationCenterPage = lazy(() => import('@/features/reservations/ReservationCenterPage'))
 const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashboardPage'))
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
-const PlatformSettingsPage = lazy(() => import('@/features/settings/PlatformSettingsPage'))
+const ProfileSettingsPage = lazy(() => import('@/features/settings/ProfileSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
 const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
 const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
 const LegalSettingsPage = lazy(() => import('@/features/settings/LegalSettingsPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
+const SystemConfigurationPage = lazy(() => import('@/features/settings/SystemConfigurationPage'))
+const FareConfigurationsPage = lazy(
+  () => import('@/features/settings/fare-configurations/FareConfigurationsPage'),
+)
 
 function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<LazyPageFallback />}>{element}</Suspense>
@@ -142,6 +148,8 @@ export const router = createBrowserRouter([
       { path: 'banners', element: withSuspense(<BannerManagementPage />) },
       { path: 'events', element: withSuspense(<EventsManagementPage />) },
       { path: 'holidays', element: withSuspense(<HolidayManagementPage />) },
+      { path: 'peak-hours', element: withSuspense(<PeakHoursManagementPage />) },
+      { path: 'help-supports', element: withSuspense(<HelpSupportsPage />) },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
       { path: 'demand', element: <Navigate to="/demand-intelligence" replace /> },
       { path: 'demand/:section', element: <Navigate to="/demand-intelligence" replace /> },
@@ -196,7 +204,13 @@ export const router = createBrowserRouter([
           { path: 'demand', element: <Navigate to="/analytics?tab=demand" replace /> },
         ],
       },
-      { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },
+      { path: 'settings/platform', element: <Navigate to="/settings/profile?tab=platform" replace /> },
+      { path: 'settings/profile', element: withSuspense(<ProfileSettingsPage />) },
+      { path: 'settings/system-configuration', element: withSuspense(<SystemConfigurationPage />) },
+      {
+        path: 'settings/fare-configurations',
+        element: withSuspense(<FareConfigurationsPage />),
+      },
       { path: 'settings/safety', element: withSuspense(<SafetyConfigurationPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
       { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
