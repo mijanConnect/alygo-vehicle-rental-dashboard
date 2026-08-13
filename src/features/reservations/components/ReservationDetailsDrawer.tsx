@@ -2,6 +2,7 @@ import { Drawer, Tabs, Descriptions, Form, Select, Button, Timeline } from 'antd
 import { UserPlus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
+import { StatusBadge } from '@/components/common/StatusBadge'
 import {
   reservationActivityLog,
   RESERVATION_TYPE_LABELS,
@@ -56,7 +57,7 @@ export function ReservationDetailsDrawer({ reservation, open, onClose }: Reserva
                 <Descriptions.Item label="Dropoff">{reservation.dropoff}</Descriptions.Item>
                 <Descriptions.Item label="Scheduled Time">{formatDateTime(reservation.scheduledAt)}</Descriptions.Item>
                 <Descriptions.Item label="Category">{RIDE_CATEGORY_LABELS[reservation.category]}</Descriptions.Item>
-                <Descriptions.Item label="Status">{reservation.status}</Descriptions.Item>
+                <Descriptions.Item label="Status"><StatusBadge status={reservation.status} /></Descriptions.Item>
                 <Descriptions.Item label="Created">{formatDateTime(reservation.createdAt)}</Descriptions.Item>
                 <Descriptions.Item label="City">{reservation.city ?? '—'}</Descriptions.Item>
                 {reservation.type === 'airport' && (

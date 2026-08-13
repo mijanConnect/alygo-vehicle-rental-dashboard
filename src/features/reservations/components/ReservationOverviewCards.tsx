@@ -1,20 +1,22 @@
-import type { Reservation } from '@/types'
-import { computeReservationOverview } from '@/features/reservations/reservationData'
-
 interface ReservationOverviewCardsProps {
-  reservations: Reservation[]
+  statistics?: {
+    totalReservations: number
+    scheduledReservations: number
+    airportReservations: number
+    eventReservations: number
+    pendingAssignments: number
+    completedReservations: number
+  }
 }
 
-export function ReservationOverviewCards({ reservations }: ReservationOverviewCardsProps) {
-  const overview = computeReservationOverview(reservations)
-
+export function ReservationOverviewCards({ statistics }: ReservationOverviewCardsProps) {
   const metrics = [
-    { label: 'Total Reservations', value: overview.total },
-    { label: 'Scheduled Reservations', value: overview.scheduled },
-    { label: 'Airport Reservations', value: overview.airport },
-    { label: 'Event Reservations', value: overview.event },
-    { label: 'Pending Assignments', value: overview.pendingAssignments },
-    { label: 'Completed Reservations', value: overview.completed },
+    { label: 'Total Reservations', value: statistics?.totalReservations ?? 0 },
+    { label: 'Scheduled Reservations', value: statistics?.scheduledReservations ?? 0 },
+    { label: 'Airport Reservations', value: statistics?.airportReservations ?? 0 },
+    { label: 'Event Reservations', value: statistics?.eventReservations ?? 0 },
+    { label: 'Pending Assignments', value: statistics?.pendingAssignments ?? 0 },
+    { label: 'Completed Reservations', value: statistics?.completedReservations ?? 0 },
   ]
 
   return (
