@@ -33,7 +33,7 @@ export function Header() {
         dispatch(logout())
         navigate('/login')
       } else if (key === 'settings') {
-        navigate('/settings/platform')
+        navigate('/settings/profile')
       }
     },
   }
