@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Avatar, Button, Form, Input, Select, Spin, Tag, Upload } from 'antd'
-import type { UploadFile } from 'antd/es/upload/interface'
-import { ImagePlus } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { AdminActionHost } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { useAdminActions } from '@/hooks/useAdminActions'
@@ -49,7 +48,7 @@ export default function ProfileSettingsPage() {
   const { data: profile, isLoading, isFetching } = useGetProfileQuery()
   const [updateProfile, { isLoading: saving }] = useUpdateProfileMutation()
 
-  const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [imageFile, setImageFile] = useState<File | undefined>()
   const [previewUrl, setPreviewUrl] = useState<string | undefined>()
 
   useEffect(() => {
@@ -61,26 +60,13 @@ export default function ProfileSettingsPage() {
       countryCode: profile.countryCode ?? '+1',
       gender: profile.gender,
     })
-    const existing = resolveAssetUrl(profile.profileImage)
-    setPreviewUrl(existing)
-    setFileList(
-      existing
-        ? [
-            {
-              uid: '-1',
-              name: 'profile-image',
-              status: 'done',
-              url: existing,
-            },
-          ]
-        : [],
-    )
+    setPreviewUrl(resolveAssetUrl(profile.profileImage))
+    setImageFile(undefined)
   }, [profile, form])
 
   const handleSave = async () => {
     try {
       const values = await form.validateFields()
-      const imageFile = fileList[0]?.originFileObj as File | undefined
       const payload: UpdateProfileRequest = {
         name: values.name.trim(),
         email: values.email.trim(),
@@ -119,9 +105,28 @@ export default function ProfileSettingsPage() {
         ) : (
           <>
             <div className="mb-6 flex flex-wrap items-center gap-4">
-              <Avatar size={72} src={previewUrl}>
-                {profile.name?.charAt(0) || 'U'}
-              </Avatar>
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  setImageFile(file)
+                  setPreviewUrl(URL.createObjectURL(file))
+                  return false
+                }}
+              >
+                <button
+                  type="button"
+                  className="group relative cursor-pointer rounded-full border-0 bg-transparent p-0"
+                  title="Change profile image"
+                >
+                  <Avatar size={80} src={previewUrl}>
+                    {profile.name?.charAt(0) || 'U'}
+                  </Avatar>
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Camera className="h-5 w-5 text-white" />
+                  </span>
+                </button>
+              </Upload>
               <div>
                 <h3 className="text-lg font-semibold text-white">{profile.name}</h3>
                 <div className="mt-1 flex flex-wrap gap-2">
@@ -134,39 +139,13 @@ export default function ProfileSettingsPage() {
                 <p className="mt-1 text-sm text-alygo-text-muted">
                   Joined {profile.createdAt ? formatDateTime(profile.createdAt) : '—'}
                 </p>
+                <p className="mt-1 text-xs text-alygo-text-muted">
+                  Click the avatar to update profile image
+                </p>
               </div>
             </div>
 
             <Form form={form} layout="vertical">
-              <Form.Item label="Profile Image">
-                <Upload
-                  listType="picture-card"
-                  accept="image/*"
-                  maxCount={1}
-                  fileList={fileList}
-                  beforeUpload={() => false}
-                  onChange={({ fileList: next }) => {
-                    const latest = next.slice(-1)
-                    setFileList(latest)
-                    const file = latest[0]?.originFileObj
-                    if (file) {
-                      setPreviewUrl(URL.createObjectURL(file))
-                    } else if (latest[0]?.url) {
-                      setPreviewUrl(latest[0].url)
-                    } else {
-                      setPreviewUrl(resolveAssetUrl(profile.profileImage))
-                    }
-                  }}
-                >
-                  {fileList.length >= 1 ? null : (
-                    <div className="flex flex-col items-center gap-1 text-alygo-text-muted">
-                      <ImagePlus className="h-5 w-5" />
-                      <span className="text-xs">Upload</span>
-                    </div>
-                  )}
-                </Upload>
-              </Form.Item>
-
               <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                 <Form.Item
                   name="name"
@@ -188,12 +167,14 @@ export default function ProfileSettingsPage() {
                 <Form.Item name="gender" label="Gender">
                   <Select allowClear options={GENDER_OPTIONS} placeholder="Select gender" />
                 </Form.Item>
-                <Form.Item name="countryCode" label="Country Code">
-                  <Select options={COUNTRY_CODE_OPTIONS} />
-                </Form.Item>
-                <Form.Item name="phone" label="Phone" className="sm:col-span-2">
-                  <Input placeholder="Phone number" />
-                </Form.Item>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[120px_1fr]">
+                  <Form.Item name="countryCode" label="Code">
+                    <Select options={COUNTRY_CODE_OPTIONS} />
+                  </Form.Item>
+                  <Form.Item name="phone" label="Phone">
+                    <Input placeholder="Phone number" />
+                  </Form.Item>
+                </div>
               </div>
             </Form>
           </>
