@@ -54,6 +54,7 @@ const ReservationCenterPage = lazy(() => import('@/features/reservations/Reserva
 const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashboardPage'))
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
 const PlatformSettingsPage = lazy(() => import('@/features/settings/PlatformSettingsPage'))
+const ProfileSettingsPage = lazy(() => import('@/features/settings/ProfileSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
 const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
@@ -206,6 +207,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },
+      { path: 'settings/profile', element: withSuspense(<ProfileSettingsPage />) },
       { path: 'settings/system-configuration', element: withSuspense(<SystemConfigurationPage />) },
       {
         path: 'settings/fare-configurations',

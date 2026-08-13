@@ -191,6 +191,7 @@ export const NAVIGATION: NavItem[] = [
     permission: 'settings.view',
     children: [
       { key: 'platform-settings', label: 'Platform Settings', path: '/settings/platform' },
+      { key: 'profile-settings', label: 'Profile', path: '/settings/profile' },
       { key: 'system-configuration', label: 'System Configuration', path: '/settings/system-configuration' },
       { key: 'fare-configuration', label: 'Fare Configuration', path: '/settings/fare-configurations' },
       { key: 'safety-settings', label: 'Safety Configuration', path: '/settings/safety' },

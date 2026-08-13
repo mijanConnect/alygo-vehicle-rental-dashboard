@@ -43,26 +43,41 @@ export interface UserProfile {
   name: string
   email: string
   role: string
-  image: string
-  contact: string | null
-  location: string | null
+  profileImage?: string
+  coverImage?: string
+  gender?: string
   status: string
   verified: boolean
-  subscription: ProfileSubscription | null
-  isSuspended: boolean
-  suspendedAt: string | null
-  suspendedReason: string | null
-  suspendedDays: number | null
-  suspendedUntil: string | null
-  createdAt: string
-  updatedAt: string
+  phone?: string
+  countryCode?: string
+  averageRating?: number
+  totalRatings?: number
+  totalReviews?: number
+  isStripeOnboarded?: boolean
+  isDeleted?: boolean
+  createdAt?: string
+  updatedAt?: string
+  location?: {
+    type?: string
+    coordinates?: [number, number]
+    address?: string
+  }
+  suspension?: {
+    isSuspended?: boolean
+    suspendedBy?: string | null
+    suspendedAt?: string | null
+    reason?: string
+    note?: string
+  }
 }
 
 export interface UpdateProfileRequest {
   name?: string
-  contact?: string
-  image?: File
   email?: string
+  phone?: string
+  countryCode?: string
+  gender?: string
+  profileImage?: File
 }
 
 export interface ChangePasswordRequest {
@@ -246,7 +261,7 @@ export const authApi = baseApi.injectEndpoints({
     }),
     getProfile: builder.query<UserProfile, void>({
       query: () => ({
-        url: '/user/profile',
+        url: '/users/profile',
         method: 'GET',
       }),
       transformResponse: (response: ApiResponse<UserProfile>) => response.data,
@@ -256,15 +271,18 @@ export const authApi = baseApi.injectEndpoints({
       { success: boolean; message: string; data: UserProfile },
       UpdateProfileRequest
     >({
-      query: ({ name, contact, image, email }) => {
+      query: ({ profileImage, ...fields }) => {
         const formData = new FormData()
-        if (name !== undefined) formData.append('name', name)
-        if (contact !== undefined) formData.append('contact', contact)
-        if (image) formData.append('image', image)
-        if (email !== undefined) formData.append('email', email)
+        const dataPayload = Object.fromEntries(
+          Object.entries(fields).filter(([, value]) => value !== undefined && value !== ''),
+        )
+        formData.append('data', JSON.stringify(dataPayload))
+        if (profileImage) {
+          formData.append('profileImage', profileImage)
+        }
 
         return {
-          url: '/user/profile',
+          url: '/users',
           method: 'PATCH',
           body: formData,
         }
