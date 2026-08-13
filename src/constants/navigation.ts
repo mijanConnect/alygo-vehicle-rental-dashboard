@@ -17,6 +17,7 @@ import {
   MessageSquare,
   PartyPopper,
   Clock,
+  LifeBuoy,
   Plane,
   Settings,
   Shield,
@@ -92,6 +93,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'Peak Hours Management',
     path: '/peak-hours',
     icon: Clock,
+    permission: 'operations.view',
+  },
+  {
+    key: 'help-supports',
+    label: 'Help & Supports',
+    path: '/help-supports',
+    icon: LifeBuoy,
     permission: 'operations.view',
   },
   {
