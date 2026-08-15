@@ -83,33 +83,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[rgba(15,17,23,0.85)] backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between gap-4 px-4 lg:px-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded-lg p-2 text-alygo-text-muted hover:bg-white/5 lg:hidden"
-            onClick={() => dispatch(setMobileSidebarOpen(true))}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="hidden sm:flex sm:items-center sm:gap-3">
-            <BrandLogo size="xs" imageClassName="!rounded-md lg:hidden" />
-            <div className="hidden lg:block">
-              <p className="text-xs uppercase tracking-wider text-[#94A3B8]">Alygo Operations</p>
-              <p className="text-sm text-[#64748B]">Command Center</p>
-            </div>
-          </div>
-        </div>
+      <div className="flex h-16 items-center justify-end gap-4 px-4 lg:px-6">
+       
 
-        <div className="hidden max-w-md flex-1 md:block">
-          <Input
-            prefix={<Search className="h-4 w-4 text-alygo-text-muted" />}
-            placeholder="Search drivers, passengers, trips..."
-            value={globalSearch}
-            onChange={(e) => dispatch(setGlobalSearch(e.target.value))}
-            className="!rounded-xl !border-white/10 !bg-white/5"
-          />
-        </div>
+ 
 
         <div className="flex items-center gap-2">
           <Dropdown popupRender={() => notificationContent} trigger={['click']} placement="bottomRight">
