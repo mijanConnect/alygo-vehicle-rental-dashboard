@@ -25,8 +25,27 @@ interface FilteringProps {
   variant?: 'standalone' | 'inline'
 }
 
-const selectClassName =
-  '[&_.ant-select-selector]:!h-[45px] [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-white/10 [&_.ant-select-selector]:!bg-white/5 [&_.ant-select-selection-item]:!leading-[43px] [&_.ant-select-selection-placeholder]:!leading-[43px]'
+/** Keep in sync with SearchingInput (`!h-[45px]`). */
+const selectClassName = cn(
+  '!h-[45px]',
+  '[&_.ant-select-selector]:!h-[45px]',
+  '[&_.ant-select-selector]:!min-h-[45px]',
+  '[&_.ant-select-selector]:!rounded-xl',
+  '[&_.ant-select-selector]:!border-white/10',
+  '[&_.ant-select-selector]:!bg-white/5',
+  '[&_.ant-select-selector]:!px-3',
+  '[&_.ant-select-selector]:!py-0',
+  '[&_.ant-select-selector]:!flex',
+  '[&_.ant-select-selector]:!items-center',
+  '[&_.ant-select-selection-wrap]:!h-full',
+  '[&_.ant-select-selection-wrap]:!flex',
+  '[&_.ant-select-selection-wrap]:!items-center',
+  '[&_.ant-select-selection-item]:!leading-none',
+  '[&_.ant-select-selection-placeholder]:!leading-none',
+  '[&_.ant-select-selection-search]:!flex',
+  '[&_.ant-select-selection-search]:!items-center',
+  '[&_.ant-select-selection-search-input]:!h-[43px]',
+)
 
 export function Filtering({
   fields,
@@ -51,7 +70,7 @@ export function Filtering({
           onChange={(next) => field.onChange(next ?? '')}
           options={field.options}
           className={cn(selectClassName, field.className)}
-          style={{ minWidth: field.minWidth ?? 180 }}
+          style={{ minWidth: field.minWidth ?? 180, height: 45 }}
           popupMatchSelectWidth={false}
         />
       ))}

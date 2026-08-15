@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Form, Input, Modal, Select, Table } from 'antd'
+import { Form, Input, Modal, Table } from 'antd'
 import { Download, Plus, Upload } from 'lucide-react'
 import {
   AdminActionHost,
@@ -7,6 +7,8 @@ import {
   createTableRowProps,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Filtering } from '@/components/shared/Filtering'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   useBulkImportStateRulesMutation,
@@ -39,7 +41,7 @@ export function StateRulesTable() {
   const [importOpen, setImportOpen] = useState(false)
   const [importJson, setImportJson] = useState('')
   const [stateFilter, setStateFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const [createRule, { isLoading: creating }] = useCreateStateDrivingRuleMutation()
   const [updateRule, { isLoading: updating }] = useUpdateStateDrivingRuleMutation()
@@ -50,7 +52,7 @@ export function StateRulesTable() {
   const filtered = useMemo(() => {
     return data.filter((r) => {
       if (stateFilter && !r.state.toLowerCase().includes(stateFilter.toLowerCase())) return false
-      if (statusFilter !== 'all' && r.status !== statusFilter) return false
+      if (statusFilter && r.status !== statusFilter) return false
       return true
     })
   }, [data, stateFilter, statusFilter])
@@ -105,15 +107,26 @@ export function StateRulesTable() {
         <button type="button" onClick={() => exportRulesJson('state-driving-rules.json', data)} className="flex items-center gap-1.5 rounded-lg border border-white/10 px-4 py-2 text-sm text-white hover:bg-white/5">
           <Download className="h-4 w-4" /> Export Rules
         </button>
-        <Input placeholder="Search state..." value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="max-w-[180px]" allowClear />
-        <Select
-          value={statusFilter}
-          onChange={setStatusFilter}
-          className="min-w-[130px]"
-          options={[
-            { value: 'all', label: 'All Statuses' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
+        <SearchingInput
+          value={stateFilter}
+          onChange={setStateFilter}
+          placeholder="Search state..."
+          className="!max-w-[180px]"
+        />
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: [
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ],
+              value: statusFilter,
+              minWidth: 140,
+              onChange: setStatusFilter,
+            },
           ]}
         />
       </div>
