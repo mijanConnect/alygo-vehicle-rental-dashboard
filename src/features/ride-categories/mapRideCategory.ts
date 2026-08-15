@@ -3,7 +3,9 @@ import type {
   RideCategoryStatus,
   RideCategoryVehicleRequirements,
   RideCategoryWritePayload,
+  VehicleType,
 } from '@/redux/api/rideCategoriesApi'
+import { VEHICLE_TYPE } from '@/redux/api/rideCategoriesApi'
 
 export interface RideCategoryRow {
   id: string
@@ -30,12 +32,29 @@ export interface RideCategoryFormValues {
   serviceCategoryId?: string
 }
 
+const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
+  [VEHICLE_TYPE.CAR]: 'Car',
+  [VEHICLE_TYPE.BIKE]: 'Bike',
+  [VEHICLE_TYPE.CNG]: 'CNG',
+  [VEHICLE_TYPE.AMBULANCE]: 'Ambulance',
+  [VEHICLE_TYPE.TRUCK]: 'Truck',
+}
+
 export const VEHICLE_TYPE_OPTIONS = [
-  { label: 'Car', value: 'Car' },
-  { label: 'Bike', value: 'Bike' },
-  { label: 'SUV', value: 'SUV' },
-  { label: 'Van', value: 'Van' },
+  { label: VEHICLE_TYPE_LABELS.car, value: VEHICLE_TYPE.CAR },
+  { label: VEHICLE_TYPE_LABELS.bike, value: VEHICLE_TYPE.BIKE },
+  { label: VEHICLE_TYPE_LABELS.cng, value: VEHICLE_TYPE.CNG },
+  { label: VEHICLE_TYPE_LABELS.ambulance, value: VEHICLE_TYPE.AMBULANCE },
+  { label: VEHICLE_TYPE_LABELS.truck, value: VEHICLE_TYPE.TRUCK },
 ]
+
+function isVehicleType(value: string): value is VehicleType {
+  return Object.values(VEHICLE_TYPE).includes(value as VehicleType)
+}
+
+function normalizeVehicleTypes(types: string[] | undefined): VehicleType[] {
+  return (types ?? []).filter(isVehicleType)
+}
 
 export function defaultRideCategoryFormValues(): RideCategoryFormValues {
   return {
@@ -44,7 +63,7 @@ export function defaultRideCategoryFormValues(): RideCategoryFormValues {
     commissionRate: 20,
     minimumDriverRating: 0,
     vehicleRequirements: {
-      vehicleTypes: ['Car'],
+      vehicleTypes: [VEHICLE_TYPE.CAR],
       minimumSeats: 1,
       luggageCapacity: 0,
     },
@@ -71,7 +90,7 @@ export function mapRideCategoryItem(item: RideCategoryItem): RideCategoryRow {
     commissionRate: item.commissionRate,
     minimumDriverRating: item.minimumDriverRating,
     vehicleRequirements: {
-      vehicleTypes: [...(item.vehicleRequirements?.vehicleTypes ?? [])],
+      vehicleTypes: normalizeVehicleTypes(item.vehicleRequirements?.vehicleTypes),
       minimumSeats: item.vehicleRequirements?.minimumSeats ?? 1,
       luggageCapacity: item.vehicleRequirements?.luggageCapacity ?? 0,
     },
@@ -125,6 +144,7 @@ export function buildRideCategoryWritePayload(
 }
 
 export function formatVehicleRequirements(requirements: RideCategoryVehicleRequirements): string {
-  const types = requirements.vehicleTypes.join(', ') || '—'
+  const types =
+    requirements.vehicleTypes.map((type) => VEHICLE_TYPE_LABELS[type] ?? type).join(', ') || '—'
   return `${types} · ${requirements.minimumSeats} seats`
 }

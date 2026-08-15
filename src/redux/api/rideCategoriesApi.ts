@@ -23,8 +23,18 @@ interface PaginatedApiResponse<T> {
 
 export type RideCategoryStatus = 'active' | 'inactive'
 
+export type VehicleType = 'car' | 'bike' | 'cng' | 'ambulance' | 'truck'
+
+export const VEHICLE_TYPE = {
+  CAR: 'car',
+  BIKE: 'bike',
+  CNG: 'cng',
+  AMBULANCE: 'ambulance',
+  TRUCK: 'truck',
+} as const satisfies Record<string, VehicleType>
+
 export interface RideCategoryVehicleRequirements {
-  vehicleTypes: string[]
+  vehicleTypes: VehicleType[]
   minimumSeats: number
   luggageCapacity?: number
 }
