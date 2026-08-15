@@ -2,19 +2,35 @@ import { Avatar, Badge, Dropdown, Input, List, Tag } from 'antd'
 import { Bell, ChevronDown, LogOut, Menu, Search, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { BrandLogo } from '@/components/shared/BrandLogo'
+import { useGetProfileQuery } from '@/redux/api/authApi'
 import { useGetNotificationsQuery } from '@/services/api'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { logout } from '@/store/slices/authSlice'
 import { setGlobalSearch, setMobileSidebarOpen } from '@/store/slices/uiSlice'
 import { formatDateTime } from '@/utils/format'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1\/?$/, '') ?? ''
+
+function resolveAssetUrl(path?: string | null) {
+  if (!path) return undefined
+  if (path.startsWith('http') || path.startsWith('blob:')) return path
+  return `${API_BASE}${path}`
+}
+
 export function Header() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const user = useAppSelector((state) => state.auth.user)
+  const authUser = useAppSelector((state) => state.auth.user)
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const globalSearch = useAppSelector((state) => state.ui.globalSearch)
+  const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated })
   const { data: notifications = [] } = useGetNotificationsQuery()
   const unreadCount = notifications.filter((n) => !n.read).length
+
+  const displayName = profile?.name || authUser?.name || 'Admin'
+  const displayRole = (profile?.role || authUser?.role || 'admin').replace(/_/g, ' ')
+  const avatarUrl =
+    resolveAssetUrl(profile?.profileImage) || resolveAssetUrl(authUser?.avatar)
 
   const userMenu = {
     items: [
@@ -32,7 +48,7 @@ export function Header() {
       if (key === 'logout') {
         dispatch(logout())
         navigate('/login')
-      } else if (key === 'settings') {
+      } else if (key === 'profile' || key === 'settings') {
         navigate('/settings/profile')
       }
     },
@@ -106,12 +122,12 @@ export function Header() {
 
           <Dropdown menu={userMenu} trigger={['click']} placement="bottomRight">
             <button type="button" className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/5">
-              <Avatar size={32} className="!bg-indigo-500">
-                {user?.name?.charAt(0) ?? 'A'}
+              <Avatar size={32} src={avatarUrl} className="!bg-indigo-500">
+                {displayName.charAt(0).toUpperCase()}
               </Avatar>
               <div className="hidden text-left md:block">
-                <p className="text-sm font-medium text-white">{user?.name}</p>
-                <p className="text-xs text-alygo-text-muted">{user?.role.replace(/_/g, ' ')}</p>
+                <p className="text-sm font-medium text-white">{displayName}</p>
+                <p className="text-xs capitalize text-alygo-text-muted">{displayRole}</p>
               </div>
               <ChevronDown className="hidden h-4 w-4 text-alygo-text-muted md:block" />
             </button>
