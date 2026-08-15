@@ -1,12 +1,10 @@
 import { Tabs } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/common/PageShell'
-import { ComplianceOverviewCards } from '@/features/compliance/components/ComplianceOverviewCards'
 import {
   BackgroundCheckFeesTab,
   BackgroundChecksTab,
   DocumentMonitoringTab,
-  DriverRestrictionsTab,
 } from '@/features/compliance/components/ComplianceTabPanels'
 import {
   COMPLIANCE_TAB_KEYS,
@@ -17,7 +15,6 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const COMPLIANCE_TABS = [
-  { key: 'overview', label: COMPLIANCE_TAB_LABELS.overview, children: <ComplianceOverviewCards /> },
   {
     key: 'background-checks',
     label: COMPLIANCE_TAB_LABELS['background-checks'],
@@ -25,11 +22,6 @@ const COMPLIANCE_TABS = [
   },
   { key: 'fees', label: COMPLIANCE_TAB_LABELS.fees, children: <BackgroundCheckFeesTab /> },
   { key: 'documents', label: COMPLIANCE_TAB_LABELS.documents, children: <DocumentMonitoringTab /> },
-  {
-    key: 'restrictions',
-    label: COMPLIANCE_TAB_LABELS.restrictions,
-    children: <DriverRestrictionsTab />,
-  },
 ] as const
 
 export default function ComplianceCenterPage() {

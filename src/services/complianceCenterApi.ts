@@ -1,6 +1,5 @@
-import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
+import { baseApi } from '@/redux/baseApi'
 import {
-  buildDocumentMonitorRecords,
   computeComplianceOverview,
   mockBackgroundCheckRecords,
   mockDriverRestrictions,
@@ -16,32 +15,21 @@ import type {
   DriverRestrictionFormValues,
   DriverRestrictionRecord,
 } from '@/types/complianceCenter'
+import { cleanObject } from '@/utils/cleanObject'
 
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
-
-export const complianceCenterApi = createApi({
-  reducerPath: 'complianceCenterApi',
-  baseQuery: fakeBaseQuery(),
-  tagTypes: [
-    'ComplianceOverview',
-    'BackgroundChecks',
-    'DocumentMonitoring',
-    'DriverRestrictions',
-  ],
+export const complianceCenterApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getComplianceOverview: builder.query<ComplianceOverview, void>({
-      queryFn: async () => {
-        await delay()
+      queryFn: () => {
         return { data: computeComplianceOverview() }
       },
-      providesTags: ['ComplianceOverview'],
     }),
+
     getBackgroundChecks: builder.query<
       ComplianceListResponse<BackgroundCheckRecord>,
       ComplianceListParams | void
     >({
-      queryFn: async (params) => {
-        await delay()
+      queryFn: (params) => {
         return {
           data: paginateComplianceList(mockBackgroundCheckRecords, params ?? {}, [
             'driverName',
@@ -50,14 +38,13 @@ export const complianceCenterApi = createApi({
           ]),
         }
       },
-      providesTags: ['BackgroundChecks'],
     }),
+
     updateBackgroundCheckStatus: builder.mutation<
       BackgroundCheckRecord,
       { id: string; status: BackgroundCheckStatus }
     >({
-      queryFn: async ({ id, status }) => {
-        await delay()
+      queryFn: ({ id, status }) => {
         const index = mockBackgroundCheckRecords.findIndex((b) => b.id === id)
         if (index === -1) return { error: { status: 404, data: 'Background check not found' } }
 
@@ -71,31 +58,48 @@ export const complianceCenterApi = createApi({
         }
         return { data: mockBackgroundCheckRecords[index] }
       },
-      invalidatesTags: ['BackgroundChecks', 'ComplianceOverview'],
     }),
+
     getDocumentMonitoring: builder.query<
       ComplianceListResponse<DocumentMonitorRecord>,
       ComplianceListParams | void
     >({
-      queryFn: async (params) => {
-        await delay()
-        const records = buildDocumentMonitorRecords()
+      query: (params) => ({
+        url: '/compliance-center/document-monitoring',
+        method: 'GET',
+        params: cleanObject({
+          page: params?.page ?? 1,
+          limit: params?.pageSize ?? 10,
+          search: params?.search?.trim() || undefined,
+        }),
+      }),
+      transformResponse: (response: any) => {
+        const flatDocuments: DocumentMonitorRecord[] = (response.data ?? []).flatMap((driver: any) =>
+          (driver.documents ?? []).map((doc: any) => ({
+            id: doc.id,
+            driverId: driver.driverId,
+            driverName: driver.driverName,
+            documentType: doc.documentType,
+            expiryDate: doc.expirationDate,
+            daysRemaining: doc.daysRemaining,
+            status: doc.status,
+          }))
+        )
         return {
-          data: paginateComplianceList(records, params ?? {}, [
-            'driverName',
-            'documentType',
-            'status',
-          ]),
+          data: flatDocuments,
+          total: response.meta?.total ?? flatDocuments.length,
+          page: response.meta?.page ?? 1,
+          pageSize: response.meta?.limit ?? 10,
         }
       },
-      providesTags: ['DocumentMonitoring'],
+      providesTags: ['Compliance'],
     }),
+
     getDriverRestrictions: builder.query<
       ComplianceListResponse<DriverRestrictionRecord>,
       ComplianceListParams | void
     >({
-      queryFn: async (params) => {
-        await delay()
+      queryFn: (params) => {
         return {
           data: paginateComplianceList(mockDriverRestrictions, params ?? {}, [
             'driverName',
@@ -104,14 +108,13 @@ export const complianceCenterApi = createApi({
           ]),
         }
       },
-      providesTags: ['DriverRestrictions'],
     }),
+
     createDriverRestriction: builder.mutation<
       DriverRestrictionRecord,
       DriverRestrictionFormValues
     >({
-      queryFn: async (values) => {
-        await delay()
+      queryFn: (values) => {
         const restriction: DriverRestrictionRecord = {
           id: `DR-${Date.now()}`,
           driverId: `DR-TEMP-${Date.now()}`,
@@ -120,14 +123,13 @@ export const complianceCenterApi = createApi({
         mockDriverRestrictions.unshift(restriction)
         return { data: restriction }
       },
-      invalidatesTags: ['DriverRestrictions', 'ComplianceOverview'],
     }),
+
     updateDriverRestriction: builder.mutation<
       DriverRestrictionRecord,
       { id: string } & DriverRestrictionFormValues
     >({
-      queryFn: async ({ id, ...values }) => {
-        await delay()
+      queryFn: ({ id, ...values }) => {
         const index = mockDriverRestrictions.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Restriction not found' } }
 
@@ -137,17 +139,15 @@ export const complianceCenterApi = createApi({
         }
         return { data: mockDriverRestrictions[index] }
       },
-      invalidatesTags: ['DriverRestrictions', 'ComplianceOverview'],
     }),
+
     removeDriverRestriction: builder.mutation<void, string>({
-      queryFn: async (id) => {
-        await delay()
+      queryFn: (id) => {
         const index = mockDriverRestrictions.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Restriction not found' } }
         mockDriverRestrictions.splice(index, 1)
         return { data: undefined }
       },
-      invalidatesTags: ['DriverRestrictions', 'ComplianceOverview'],
     }),
   }),
 })

@@ -1,9 +1,9 @@
 import { Form, Input, InputNumber, Modal, Select } from 'antd'
 import { useEffect } from 'react'
-import { CATEGORY_OPTIONS, STATE_OPTIONS } from '@/services/mock/backgroundCheckFeeData'
+import { useGetServiceAreaCitiesQuery } from '@/redux/api/areaServiceApi'
 import type { BackgroundCheckFeeConfig } from '@/types/backgroundCheckFee'
 
-export type BackgroundCheckFeeFormValues = Omit<BackgroundCheckFeeConfig, 'id'>
+export type BackgroundCheckFeeFormValues = Omit<BackgroundCheckFeeConfig, 'id' | 'cityName'>
 
 interface BackgroundCheckFeeFormModalProps {
   open: boolean
@@ -17,9 +17,8 @@ interface BackgroundCheckFeeFormModalProps {
 const defaultValues: BackgroundCheckFeeFormValues = {
   feeName: '',
   amount: 0,
-  state: 'California',
-  category: 'standard',
-  refundable: true,
+  serviceAreaId: '',
+  description: '',
   status: 'active',
 }
 
@@ -32,11 +31,18 @@ export function BackgroundCheckFeeFormModal({
   onSubmit,
 }: BackgroundCheckFeeFormModalProps) {
   const [form] = Form.useForm<BackgroundCheckFeeFormValues>()
+  const { data: citiesData, isLoading: loadingCities } = useGetServiceAreaCitiesQuery({ limit: 100 })
 
   useEffect(() => {
     if (!open) return
     if (mode === 'edit' && fee) {
-      form.setFieldsValue(fee)
+      form.setFieldsValue({
+        feeName: fee.feeName,
+        amount: fee.amount,
+        serviceAreaId: fee.serviceAreaId,
+        description: fee.description,
+        status: fee.status,
+      })
     } else {
       form.setFieldsValue(defaultValues)
     }
@@ -63,11 +69,20 @@ export function BackgroundCheckFeeFormModal({
         <Form.Item name="amount" label="Amount" rules={[{ required: true }]}>
           <InputNumber min={0} prefix="$" className="w-full" />
         </Form.Item>
-        <Form.Item name="state" label="Applicable State" rules={[{ required: true }]}>
-          <Select options={STATE_OPTIONS} />
+        <Form.Item name="serviceAreaId" label="Service Area" rules={[{ required: true, message: 'Please select a service area' }]}>
+          <Select
+            showSearch
+            loading={loadingCities}
+            placeholder="Select Service Area"
+            optionFilterProp="children"
+            options={citiesData?.data?.map((c) => ({
+              value: c.id,
+              label: c.name,
+            }))}
+          />
         </Form.Item>
-        <Form.Item name="category" label="Category" rules={[{ required: true }]}>
-          <Select options={CATEGORY_OPTIONS} />
+        <Form.Item name="description" label="Description" rules={[{ required: true }]}>
+          <Input.TextArea rows={3} placeholder="Enter fee description..." />
         </Form.Item>
         <Form.Item name="status" label="Status" rules={[{ required: true }]}>
           <Select

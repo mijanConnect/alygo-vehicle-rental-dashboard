@@ -36,12 +36,10 @@ import { operationsPolicyApi } from '@/services/operationsPolicyApi'
 import { stateActivationApi } from '@/services/stateActivationApi'
 import { airportQueueApi } from '@/services/airportQueueApi'
 import { safetyIncidentApi } from '@/services/safetyIncidentApi'
-import { backgroundCheckFeeApi } from '@/services/backgroundCheckFeeApi'
 import { communicationApi } from '@/services/communicationApi'
 import { driverVerificationApi } from '@/services/driverVerificationApi'
 import { rideCategoryApi } from '@/services/rideCategoryApi'
 import { vehicleEligibilityApi } from '@/services/vehicleEligibilityApi'
-import { complianceCenterApi } from '@/services/complianceCenterApi'
 import { driverBonusApi } from '@/services/driverBonusApi'
 
 /**
@@ -63,11 +61,9 @@ export const apis = [
   stateActivationApi,
   airportQueueApi,
   safetyIncidentApi,
-  backgroundCheckFeeApi,
   communicationApi,
   driverVerificationApi,
   rideCategoryApi,
   vehicleEligibilityApi,
-  complianceCenterApi,
   driverBonusApi,
 ] as const

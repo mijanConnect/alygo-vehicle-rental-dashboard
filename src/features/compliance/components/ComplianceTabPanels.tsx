@@ -189,7 +189,7 @@ export function BackgroundCheckFeesTab() {
         adminActions.notify('Fee updated', editRecord.feeName)
         setEditRecord(null)
       } else {
-        await createFee({ ...values, refundable: true }).unwrap()
+        await createFee(values).unwrap()
         adminActions.notify('Fee created', values.feeName)
         setFormOpen(false)
       }
@@ -229,7 +229,7 @@ export function BackgroundCheckFeesTab() {
         columns={[
           { title: 'Fee Name', dataIndex: 'feeName' },
           { title: 'Amount', dataIndex: 'amount', render: (a: number) => formatCurrency(a) },
-          { title: 'Applicable State', dataIndex: 'state' },
+          { title: 'Service Area', dataIndex: 'cityName' },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
           createActionsColumn<BackgroundCheckFeeConfig>(
             (record) => getComplianceFeeActionItems(record),

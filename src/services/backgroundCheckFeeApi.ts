@@ -1,111 +1,148 @@
-import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
+import { baseApi } from '@/redux/baseApi'
 import type {
   BackgroundCheckFeeAuditLog,
   BackgroundCheckFeeConfig,
   BackgroundCheckFeeOverview,
   BackgroundCheckPaymentRules,
 } from '@/types/backgroundCheckFee'
-import {
-  computeBackgroundCheckFeeOverview,
-  logFeeConfigChanges,
-  logPaymentRulesChanges,
-  mockBackgroundCheckFeeAuditLogs,
-  mockBackgroundCheckFees,
-  mockBackgroundCheckPaymentRules,
-} from '@/services/mock/backgroundCheckFeeData'
+import { cleanObject } from '@/utils/cleanObject'
 
-import type { ComplianceListParams, ComplianceListResponse } from '@/types/complianceCenter'
-
-const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
-
-export const backgroundCheckFeeApi = createApi({
-  reducerPath: 'backgroundCheckFeeApi',
-  baseQuery: fakeBaseQuery(),
-  tagTypes: ['BackgroundCheckFeeOverview', 'BackgroundCheckFees', 'BackgroundCheckPaymentRules', 'BackgroundCheckFeeAuditLogs'],
+export const backgroundCheckFeeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getBackgroundCheckFeeOverview: builder.query<BackgroundCheckFeeOverview, void>({
-      queryFn: async () => {
-        await delay()
-        return { data: computeBackgroundCheckFeeOverview() }
-      },
-      providesTags: ['BackgroundCheckFeeOverview'],
-    }),
-    getBackgroundCheckFees: builder.query<
-      ComplianceListResponse<BackgroundCheckFeeConfig>,
-      ComplianceListParams | void
-    >({
-      queryFn: async (params) => {
-        await delay()
-        const search = (params?.search ?? '').trim().toLowerCase()
-        let filtered = [...mockBackgroundCheckFees]
-        if (search) {
-          filtered = filtered.filter(
-            (f) =>
-              f.feeName.toLowerCase().includes(search) ||
-              f.state.toLowerCase().includes(search),
-          )
-        }
-        const page = params?.page ?? 1
-        const pageSize = params?.pageSize ?? 10
-        const start = (page - 1) * pageSize
+      queryFn: () => {
         return {
           data: {
-            data: filtered.slice(start, start + pageSize),
-            total: filtered.length,
-            page,
-            pageSize,
+            totalFeesCollected: 284750,
+            pendingPayments: 142,
+            failedPayments: 28,
+            refundRequests: 19,
           },
         }
       },
-      providesTags: ['BackgroundCheckFees'],
     }),
+
+    getBackgroundCheckFees: builder.query<
+      { data: BackgroundCheckFeeConfig[]; total: number; page: number; pageSize: number },
+      { page?: number; pageSize?: number; search?: string } | void
+    >({
+      query: (params) => ({
+        url: '/compliance-center/fees',
+        method: 'GET',
+        params: cleanObject({
+          page: params?.page ?? 1,
+          limit: params?.pageSize ?? 10,
+          search: params?.search?.trim() || undefined,
+        }),
+      }),
+      transformResponse: (response: any) => {
+        const mapped = (response.data ?? []).map((item: any) => {
+          const serviceArea = item.serviceAreaId
+          const cityName = typeof serviceArea === 'object' ? (serviceArea?.city || serviceArea?.state || serviceArea?.country || item.applicableState || '—') : (item.applicableState || '—')
+          return {
+            id: item._id ?? item.id,
+            feeName: item.feeName,
+            amount: item.amount,
+            serviceAreaId: typeof serviceArea === 'object' ? serviceArea?._id : serviceArea,
+            cityName,
+            description: item.description,
+            status: item.status,
+          }
+        })
+        return {
+          data: mapped,
+          total: response.meta?.total ?? mapped.length,
+          page: response.meta?.page ?? 1,
+          pageSize: response.meta?.limit ?? 10,
+        }
+      },
+      providesTags: ['Compliance'],
+    }),
+
     createBackgroundCheckFee: builder.mutation<
       BackgroundCheckFeeConfig,
-      Omit<BackgroundCheckFeeConfig, 'id'>
+      any
     >({
-      queryFn: async (values) => {
-        await delay()
-        const fee: BackgroundCheckFeeConfig = { id: `bcf-${Date.now()}`, ...values }
-        mockBackgroundCheckFees.unshift(fee)
-        return { data: fee }
-      },
-      invalidatesTags: ['BackgroundCheckFees', 'BackgroundCheckFeeAuditLogs'],
+      query: (values) => ({
+        url: '/compliance-center/fees',
+        method: 'POST',
+        body: {
+          feeName: values.feeName,
+          amount: values.amount,
+          serviceAreaId: values.serviceAreaId,
+          description: values.description,
+        },
+      }),
+      invalidatesTags: ['Compliance'],
     }),
+
     updateBackgroundCheckFee: builder.mutation<
       BackgroundCheckFeeConfig,
-      Partial<BackgroundCheckFeeConfig> & { id: string; changedBy?: string }
+      { id: string; status?: 'active' | 'inactive'; feeName?: string; amount?: number; serviceAreaId?: string; description?: string }
     >({
-      queryFn: async ({ id, changedBy = 'Admin', ...updates }) => {
-        await delay()
-        const index = mockBackgroundCheckFees.findIndex((f) => f.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Fee configuration not found' } }
-        const before = { ...mockBackgroundCheckFees[index] }
-        mockBackgroundCheckFees[index] = { ...mockBackgroundCheckFees[index], ...updates }
-        logFeeConfigChanges(mockBackgroundCheckFees[index], before, updates, changedBy)
-        return { data: mockBackgroundCheckFees[index] }
+      query: ({ id, ...updates }) => {
+        const keys = Object.keys(updates)
+        if (keys.length === 1 && keys[0] === 'status') {
+          return {
+            url: `/compliance-center/fees/status/${id}`,
+            method: 'PATCH',
+            body: { status: updates.status },
+          }
+        }
+        return {
+          url: `/compliance-center/fees/${id}`,
+          method: 'PATCH',
+          body: {
+            feeName: updates.feeName,
+            amount: updates.amount,
+            serviceAreaId: updates.serviceAreaId,
+            description: updates.description,
+          },
+        }
       },
-      invalidatesTags: ['BackgroundCheckFees', 'BackgroundCheckFeeAuditLogs'],
+      invalidatesTags: ['Compliance'],
     }),
+
     getBackgroundCheckPaymentRules: builder.query<BackgroundCheckPaymentRules, void>({
-      queryFn: async () => ({ data: { ...mockBackgroundCheckPaymentRules } }),
-      providesTags: ['BackgroundCheckPaymentRules'],
+      queryFn: () => ({
+        data: {
+          defaultPaymentMode: 'driver_pays',
+          driverPaysEnabled: true,
+          companyPaysEnabled: true,
+          splitPaymentEnabled: true,
+          driverPaysPercent: 60,
+          companyPaysPercent: 40,
+          automaticRefundEnabled: true,
+          refundOnRejection: true,
+          refundOnWithdrawal: true,
+          refundOnDuplicateCharge: true,
+          partialRefundOnAppeal: false,
+          refundProcessingDays: 5,
+        },
+      }),
     }),
-    updateBackgroundCheckPaymentRules: builder.mutation<
-      BackgroundCheckPaymentRules,
-      Partial<BackgroundCheckPaymentRules> & { changedBy?: string }
-    >({
-      queryFn: async ({ changedBy = 'Admin', ...updates }) => {
-        await delay()
-        const before = { ...mockBackgroundCheckPaymentRules }
-        Object.assign(mockBackgroundCheckPaymentRules, updates)
-        logPaymentRulesChanges(before, { ...mockBackgroundCheckPaymentRules }, changedBy)
-        return { data: { ...mockBackgroundCheckPaymentRules } }
-      },
-      invalidatesTags: ['BackgroundCheckPaymentRules', 'BackgroundCheckFeeAuditLogs'],
+
+    updateBackgroundCheckPaymentRules: builder.mutation<BackgroundCheckPaymentRules, any>({
+      queryFn: () => ({
+        data: {
+          defaultPaymentMode: 'driver_pays',
+          driverPaysEnabled: true,
+          companyPaysEnabled: true,
+          splitPaymentEnabled: true,
+          driverPaysPercent: 60,
+          companyPaysPercent: 40,
+          automaticRefundEnabled: true,
+          refundOnRejection: true,
+          refundOnWithdrawal: true,
+          refundOnDuplicateCharge: true,
+          partialRefundOnAppeal: false,
+          refundProcessingDays: 5,
+        },
+      }),
     }),
+
     getBackgroundCheckFeeAuditLogs: builder.query<BackgroundCheckFeeAuditLog[], void>({
-      queryFn: async () => ({ data: [...mockBackgroundCheckFeeAuditLogs] }),
-      providesTags: ['BackgroundCheckFeeAuditLogs'],
+      queryFn: () => ({ data: [] }),
     }),
   }),
 })
@@ -120,4 +157,15 @@ export const {
   useGetBackgroundCheckFeeAuditLogsQuery,
 } = backgroundCheckFeeApi
 
-export { CATEGORY_LABELS, PAYMENT_MODE_LABELS } from '@/services/mock/backgroundCheckFeeData'
+export const CATEGORY_LABELS: Record<string, string> = {
+  standard: 'Standard',
+  premium: 'Premium',
+  commercial: 'Commercial',
+  renewal: 'Renewal',
+}
+
+export const PAYMENT_MODE_LABELS: Record<string, string> = {
+  driver_pays: 'Driver Pays',
+  company_pays: 'Company Pays',
+  split_payment: 'Split Payment',
+}

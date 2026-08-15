@@ -9,13 +9,11 @@ export interface BackgroundCheckFeeConfig {
   id: string
   feeName: string
   amount: number
-  state: string
-  category: BackgroundCheckFeeCategory
-  refundable: boolean
+  serviceAreaId: string
+  cityName?: string
+  description: string
   status: 'active' | 'inactive'
 }
-
-export type BackgroundCheckFeeCategory = 'standard' | 'premium' | 'commercial' | 'renewal'
 
 export type PaymentResponsible = 'driver_pays' | 'company_pays' | 'split_payment'
 

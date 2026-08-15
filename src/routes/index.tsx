@@ -137,7 +137,6 @@ export const router = createBrowserRouter([
       { path: 'compliance/background-checks', element: <Navigate to="/compliance?tab=background-checks" replace /> },
       { path: 'compliance/background-check-fees', element: <Navigate to="/compliance?tab=fees" replace /> },
       { path: 'compliance/documents', element: <Navigate to="/compliance?tab=documents" replace /> },
-      { path: 'compliance/restrictions', element: <Navigate to="/compliance?tab=restrictions" replace /> },
       { path: 'vehicle-eligibility', element: withSuspense(<VehicleEligibilityPage />) },
       { path: 'eligibility/rules', element: <Navigate to="/vehicle-eligibility" replace /> },
       { path: 'eligibility/categories', element: <Navigate to="/vehicle-eligibility" replace /> },
