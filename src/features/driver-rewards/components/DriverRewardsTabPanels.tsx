@@ -7,6 +7,7 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { getRewardsConfigActionItems } from '@/features/driver-rewards/driverRewardsConfigHelpers'
@@ -63,13 +64,18 @@ function ConfigTableHeader({
           onChange={onSearchChange}
           placeholder={searchPlaceholder}
         />
-        <Select
-          placeholder="Filter by status"
-          value={status || undefined}
-          onChange={onStatusChange}
-          allowClear
-          options={REWARDS_STATUS_OPTIONS}
-          className="!min-w-[180px]"
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: REWARDS_STATUS_OPTIONS,
+              value: status,
+              minWidth: 180,
+              onChange: onStatusChange,
+            },
+          ]}
         />
       </div>
       <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={onAdd}>
