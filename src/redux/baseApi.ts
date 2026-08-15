@@ -15,11 +15,10 @@ export const baseApi = createApi({
           ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
           : null
 
-      const token =
-        endpoint === 'resetPassword' && resetToken ? resetToken : authToken
-
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
+      if (endpoint === 'resetPassword' && resetToken) {
+        headers.set('resettoken', resetToken)
+      } else if (authToken) {
+        headers.set('authorization', `Bearer ${authToken}`)
       }
       return headers
     },

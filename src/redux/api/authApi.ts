@@ -237,11 +237,19 @@ export const authApi = baseApi.injectEndpoints({
       { success: boolean; message: string },
       ResetPasswordRequest
     >({
-      query: (body) => ({
-        url: '/auth/reset-password',
-        method: 'POST',
-        body,
-      }),
+      query: (body) => {
+        const resetToken =
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
+            : null
+
+        return {
+          url: '/auth/reset-password',
+          method: 'POST',
+          body,
+          headers: resetToken ? { resettoken: resetToken } : undefined,
+        }
+      },
       transformErrorResponse: (response: { data?: unknown }) => {
         const data = response.data as { message?: string } | string | undefined
         if (typeof data === 'string') return data
