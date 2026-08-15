@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { Select, Table, Tag } from 'antd'
+import { Table, Tag } from 'antd'
 import {
   AdminActionHost,
   ConfirmationModal,
   createActionsColumn,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import { SupportDetailsDrawer } from '@/features/help-supports/components/SupportDetailsDrawer'
 import {
   SUPPORT_PRIORITY_OPTIONS,
@@ -91,32 +92,41 @@ export default function HelpSupportsPage() {
       title="Help & Supports"
       description="Review user support requests and mark tickets as resolved."
     >
-      <div className="glass-card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-        <TableFilters
-          variant="inline"
-          search={searchTerm}
-          onSearchChange={(value) => {
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
             setSearchTerm(value)
             setPage(1)
           }}
-          searchPlaceholder="Search by name, email, or subject..."
-          statusOptions={SUPPORT_STATUS_OPTIONS}
-          status={status}
-          onStatusChange={(value) => {
-            setStatus(value ?? '')
-            setPage(1)
-          }}
+          placeholder="Search by name, email, or subject..."
         />
-        <Select
-          placeholder="Filter by priority"
-          value={priority || undefined}
-          onChange={(value) => {
-            setPriority(value ?? '')
-            setPage(1)
-          }}
-          allowClear
-          options={SUPPORT_PRIORITY_OPTIONS}
-          className="!min-w-[180px]"
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: SUPPORT_STATUS_OPTIONS,
+              value: status,
+              minWidth: 160,
+              onChange: (value) => {
+                setStatus(value)
+                setPage(1)
+              },
+            },
+            {
+              key: 'priority',
+              placeholder: 'Filter by priority',
+              options: SUPPORT_PRIORITY_OPTIONS,
+              value: priority,
+              minWidth: 180,
+              onChange: (value) => {
+                setPriority(value)
+                setPage(1)
+              },
+            },
+          ]}
         />
       </div>
 

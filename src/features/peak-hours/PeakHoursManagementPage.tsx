@@ -10,14 +10,14 @@ import { PageShell } from '@/components/common/PageShell'
 import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
-import { PeakHourFormModal } from '@/features/pick-hours/components/PeakHourFormModal'
+import { PeakHourFormModal } from '@/features/peak-hours/components/PeakHourFormModal'
 import {
   PEAK_HOUR_STATUS_OPTIONS,
   formatApplicableDays,
   getPeakHourActionItems,
   getPeakHourStatusColor,
   getPeakHourStatusLabel,
-} from '@/features/pick-hours/peakHourHelpers'
+} from '@/features/peak-hours/peakHourHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {

@@ -36,6 +36,8 @@ const MODULE_LABELS: Record<string, string> = {
   communication: 'Communication Center',
   events: 'Events Management',
   holidays: 'Holiday Management',
+  peakhours: 'Peak Hours Management',
+  peakHours: 'Peak Hours Management',
   compliance: 'Compliance',
   pricing: 'Dynamic Pricing',
   reservations: 'Reservations',

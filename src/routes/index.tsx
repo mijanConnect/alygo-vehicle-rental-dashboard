@@ -45,7 +45,7 @@ const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCat
 const BannerManagementPage = lazy(() => import('@/features/banners/BannerManagementPage'))
 const EventsManagementPage = lazy(() => import('@/features/events/EventsManagementPage'))
 const HolidayManagementPage = lazy(() => import('@/features/holidays/HolidayManagementPage'))
-const PeakHoursManagementPage = lazy(() => import('@/features/pick-hours/PeakHoursManagementPage'))
+const PeakHoursManagementPage = lazy(() => import('@/features/peak-hours/PeakHoursManagementPage'))
 const HelpSupportsPage = lazy(() => import('@/features/help-supports/HelpSupportsPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
