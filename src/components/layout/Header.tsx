@@ -1,4 +1,4 @@
-import { Avatar, Badge, Dropdown, List, Tag } from 'antd'
+import { Avatar, Badge, Button, Dropdown, List, Tag } from 'antd'
 import { Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useGetProfileQuery } from '@/redux/api/authApi'
@@ -8,6 +8,7 @@ import { logout } from '@/store/slices/authSlice'
 import { formatDateTime } from '@/utils/format'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1\/?$/, '') ?? ''
+const HEADER_NOTIFICATION_LIMIT = 5
 
 function resolveAssetUrl(path?: string | null) {
   if (!path) return undefined
@@ -21,10 +22,11 @@ export function Header() {
   const authUser = useAppSelector((state) => state.auth.user)
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated })
-  const { data: notificationsData } = useGetNotificationsListQuery(undefined, {
-    skip: !isAuthenticated,
-  })
-  const notifications = notificationsData?.data ?? []
+  const { data: notificationsData } = useGetNotificationsListQuery(
+    { page: 1, limit: HEADER_NOTIFICATION_LIMIT },
+    { skip: !isAuthenticated },
+  )
+  const notifications = (notificationsData?.data ?? []).slice(0, HEADER_NOTIFICATION_LIMIT)
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const displayName = profile?.name || authUser?.name || 'Admin'
@@ -54,11 +56,16 @@ export function Header() {
     },
   }
 
+  const goToNotifications = () => {
+    navigate('/notifications')
+  }
+
   const notificationContent = (
     <div className="w-80 p-2">
       <List
         size="small"
         dataSource={notifications}
+        locale={{ emptyText: 'No notifications' }}
         renderItem={(item) => (
           <List.Item className="!border-white/5">
             <List.Item.Meta
@@ -78,6 +85,11 @@ export function Header() {
           </List.Item>
         )}
       />
+      <div className="border-t border-white/10 pt-2">
+        <Button type="link" className="!w-full !text-indigo-400" onClick={goToNotifications}>
+          See more
+        </Button>
+      </div>
     </div>
   )
 

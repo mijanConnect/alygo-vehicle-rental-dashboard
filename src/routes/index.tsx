@@ -48,6 +48,7 @@ const HolidayManagementPage = lazy(() => import('@/features/holidays/HolidayMana
 const PeakHoursManagementPage = lazy(() => import('@/features/peak-hours/PeakHoursManagementPage'))
 const HelpSupportsPage = lazy(() => import('@/features/help-supports/HelpSupportsPage'))
 const AiSupportPage = lazy(() => import('@/features/ai-support/AiSupportPage'))
+const NotificationsPage = lazy(() => import('@/features/notifications/NotificationsPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
 const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBonusesPage'))
@@ -151,6 +152,7 @@ export const router = createBrowserRouter([
       { path: 'peak-hours', element: withSuspense(<PeakHoursManagementPage />) },
       { path: 'help-supports', element: withSuspense(<HelpSupportsPage />) },
       { path: 'ai-support', element: withSuspense(<AiSupportPage />) },
+      { path: 'notifications', element: withSuspense(<NotificationsPage />) },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
       { path: 'demand', element: <Navigate to="/demand-intelligence" replace /> },
       { path: 'demand/:section', element: <Navigate to="/demand-intelligence" replace /> },
