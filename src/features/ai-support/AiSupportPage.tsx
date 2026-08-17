@@ -100,23 +100,21 @@ export default function AiSupportPage() {
     <PageShell
       title="AI Support"
       description="Manage knowledge base articles used by AI support for drivers and passengers."
-      actions={
-        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setFormOpen(true)}>
-          Create Article
-        </Button>
-      }
     >
       <AiSupportOverviewCards />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <SearchingInput
           value={searchTerm}
           onChange={(value) => {
             setSearchTerm(value)
             setPage(1)
           }}
-          placeholder="Search articles..."
+          placeholder="Search AI Knowledge..."
         />
+        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setFormOpen(true)}>
+         Add AI Knowledge 
+        </Button>
       </div>
 
       <div className="glass-card p-4">
