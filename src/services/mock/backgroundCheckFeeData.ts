@@ -5,53 +5,7 @@ import type {
   BackgroundCheckPaymentRules,
 } from '@/types/backgroundCheckFee'
 
-export let mockBackgroundCheckFees: BackgroundCheckFeeConfig[] = [
-  {
-    id: 'bcf-1',
-    feeName: 'Standard Background Check',
-    amount: 35,
-    state: 'California',
-    category: 'standard',
-    refundable: true,
-    status: 'active',
-  },
-  {
-    id: 'bcf-2',
-    feeName: 'Premium Background Check',
-    amount: 55,
-    state: 'California',
-    category: 'premium',
-    refundable: true,
-    status: 'active',
-  },
-  {
-    id: 'bcf-3',
-    feeName: 'Standard Background Check',
-    amount: 32,
-    state: 'New York',
-    category: 'standard',
-    refundable: true,
-    status: 'active',
-  },
-  {
-    id: 'bcf-4',
-    feeName: 'Commercial Driver Check',
-    amount: 75,
-    state: 'Texas',
-    category: 'commercial',
-    refundable: false,
-    status: 'active',
-  },
-  {
-    id: 'bcf-5',
-    feeName: 'Annual Renewal Check',
-    amount: 25,
-    state: 'Florida',
-    category: 'renewal',
-    refundable: true,
-    status: 'inactive',
-  },
-]
+
 
 export let mockBackgroundCheckPaymentRules: BackgroundCheckPaymentRules = {
   defaultPaymentMode: 'driver_pays',
@@ -176,11 +130,9 @@ export function logFeeConfigChanges(
   updates: Partial<BackgroundCheckFeeConfig>,
   changedBy = 'Admin',
 ) {
-  const entityName = `${fee.feeName} (${fee.state})`
+  const entityName = `${fee.feeName} (${fee.cityName ?? ''})`
   const formatVal = (key: keyof BackgroundCheckFeeConfig, val: unknown) => {
     if (key === 'amount') return `$${Number(val).toFixed(2)}`
-    if (key === 'refundable') return val ? 'Yes' : 'No'
-    if (key === 'category') return CATEGORY_LABELS[String(val)] ?? String(val)
     if (key === 'status') return String(val) === 'active' ? 'Active' : 'Inactive'
     return String(val)
   }

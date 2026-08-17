@@ -2,52 +2,31 @@ import { useMemo } from 'react'
 import { Table, Tag } from 'antd'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import {
-  computeAverageEta,
   DEMAND_ZONE_STATUS_COLORS,
   DEMAND_ZONE_STATUS_LABELS,
   formatAverageEta,
 } from '@/features/demand-intelligence/demandIntelligenceData'
 import {
-  useGetDemandZonesQuery,
-  useGetOperationalEventsQuery,
-  useGetReservationsQuery,
-  useGetSurgeZonesQuery,
-} from '@/services/api'
-import type { OperationalEvent, Reservation } from '@/types'
+  useGetDemandSummaryQuery,
+  useGetDemandZonesListQuery,
+  useGetUpcomingEventsListQuery,
+} from '@/redux/api/demandIntelligenceApi'
 import { formatDateTime } from '@/utils/format'
 
-function countRelatedReservations(event: OperationalEvent, reservations: Reservation[]): number {
-  return reservations.filter(
-    (r) =>
-      r.type === 'event' &&
-      (r.eventName === event.eventName ||
-        r.venue === event.location ||
-        r.pickup.includes(event.location) ||
-        r.dropoff.includes(event.location)),
-  ).length
-}
-
 export function DemandKpiOverview() {
-  const { data: zones = [] } = useGetDemandZonesQuery()
-  const { data: surgeZones = [] } = useGetSurgeZonesQuery()
-  const { data: events = [] } = useGetOperationalEventsQuery()
+  const { data: summary } = useGetDemandSummaryQuery()
 
   const metrics = useMemo(() => {
-    const activeRequests = zones.reduce((sum, z) => sum + z.activeRequests, 0)
-    const availableDrivers = zones.reduce((sum, z) => sum + z.availableDrivers, 0)
-    const highDemandZones = zones.filter((z) => z.status === 'high_demand').length
-    const activeSurgeCount = surgeZones.filter((z) => z.active).length
-    const upcomingEvents = events.filter((e) => e.status === 'upcoming').length
-
+    if (!summary) return []
     return [
-      { label: 'Active Requests', value: activeRequests.toLocaleString() },
-      { label: 'Available Drivers', value: availableDrivers.toLocaleString() },
-      { label: 'High Demand Zones', value: highDemandZones.toLocaleString() },
-      { label: 'Active Surge Zones', value: activeSurgeCount.toLocaleString() },
-      { label: 'Upcoming Events', value: upcomingEvents.toLocaleString() },
-      { label: 'Average ETA', value: computeAverageEta(zones) },
+      { label: 'Active Requests', value: (summary.activeRequests ?? 0).toLocaleString() },
+      { label: 'Available Drivers', value: (summary.availableDrivers ?? 0).toLocaleString() },
+      { label: 'High Demand Zones', value: (summary.highDemandZones ?? 0).toLocaleString() },
+      { label: 'Active Surge Zones', value: (summary.activeSurgeZones ?? 0).toLocaleString() },
+      { label: 'Upcoming Events', value: (summary.upcomingEvents ?? 0).toLocaleString() },
+      { label: 'Average ETA', value: formatAverageEta(summary.averageEtaMinutes ?? 0) },
     ]
-  }, [zones, surgeZones, events])
+  }, [summary])
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -62,7 +41,7 @@ export function DemandKpiOverview() {
 }
 
 export function DemandZonesTable() {
-  const { data: zones = [], isLoading } = useGetDemandZonesQuery()
+  const { data: zones = [], isLoading } = useGetDemandZonesListQuery()
 
   return (
     <div className="glass-card p-5">
@@ -116,17 +95,7 @@ export function DemandZonesTable() {
 }
 
 export function UpcomingEventsTable() {
-  const { data: events = [], isLoading } = useGetOperationalEventsQuery()
-  const { data: reservations = [] } = useGetReservationsQuery()
-
-  const dataSource = useMemo(
-    () =>
-      events.map((event) => ({
-        ...event,
-        relatedReservations: countRelatedReservations(event, reservations),
-      })),
-    [events, reservations],
-  )
+  const { data: events = [], isLoading } = useGetUpcomingEventsListQuery()
 
   return (
     <div className="glass-card p-5">
@@ -137,7 +106,7 @@ export function UpcomingEventsTable() {
       <Table
         rowKey="id"
         loading={isLoading}
-        dataSource={dataSource}
+        dataSource={events}
         pagination={false}
         scroll={{ x: 800 }}
         columns={[

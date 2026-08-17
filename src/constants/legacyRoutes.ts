@@ -29,7 +29,6 @@ export const LEGACY_ROUTE_REDIRECTS: Record<string, string> = {
   '/compliance/background-checks': '/compliance?tab=background-checks',
   '/compliance/background-check-fees': '/compliance?tab=fees',
   '/compliance/documents': '/compliance?tab=documents',
-  '/compliance/restrictions': '/compliance?tab=restrictions',
   '/eligibility/rules': '/vehicle-eligibility',
   '/eligibility/categories': '/vehicle-eligibility',
   '/eligibility/assignments': '/vehicle-eligibility',
