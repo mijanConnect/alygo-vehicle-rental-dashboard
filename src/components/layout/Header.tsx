@@ -2,7 +2,7 @@ import { Avatar, Badge, Dropdown, List, Tag } from 'antd'
 import { Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useGetProfileQuery } from '@/redux/api/authApi'
-import { useGetNotificationsQuery } from '@/services/api'
+import { useGetNotificationsListQuery } from '@/redux/api/notificationApi'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { logout } from '@/store/slices/authSlice'
 import { formatDateTime } from '@/utils/format'
@@ -21,7 +21,10 @@ export function Header() {
   const authUser = useAppSelector((state) => state.auth.user)
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated })
-  const { data: notifications = [] } = useGetNotificationsQuery()
+  const { data: notificationsData } = useGetNotificationsListQuery(undefined, {
+    skip: !isAuthenticated,
+  })
+  const notifications = notificationsData?.data ?? []
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const displayName = profile?.name || authUser?.name || 'Admin'

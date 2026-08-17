@@ -6,7 +6,12 @@ export {
   type Timezone,
 } from '@/constants/timezones'
 
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:4000'
+export const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ??
+  (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api/v1').replace(
+    /\/api\/v1\/?$/,
+    '',
+  )
 export const GOOGLE_MAPS_API_KEY =
   import.meta.env.VITE_GOOGLE_MAPS_API_KEY ??
   import.meta.env.VITE_API_GOOGLE_MAPS_URL ??

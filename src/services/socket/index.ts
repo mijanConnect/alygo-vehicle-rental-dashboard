@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client'
 import { SOCKET_URL } from '@/constants'
+import type { AdminNotificationPayload } from '@/redux/api/notificationApi'
 import type { ActivityItem, KpiMetric } from '@/types'
 
 export type SocketEvents = {
@@ -8,6 +9,7 @@ export type SocketEvents = {
   'trips:update': unknown
   'drivers:status': unknown
   'notifications:new': unknown
+  'send-notification::admin': AdminNotificationPayload
   'cancellation:stats-update': void
   'lost-found:new-report': void
   'lost-found:driver-response': void
@@ -62,10 +64,12 @@ class SocketService {
   connect(token?: string) {
     if (this.socket?.connected) return this.socket
 
+    // Backend expects JWT as query `token` (same as Postman Socket.IO client).
     this.socket = io(SOCKET_URL, {
       autoConnect: true,
       transports: ['websocket'],
       auth: token ? { token } : undefined,
+      query: token ? { token } : undefined,
     })
 
     return this.socket

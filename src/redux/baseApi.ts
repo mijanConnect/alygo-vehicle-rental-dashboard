@@ -62,6 +62,7 @@ export const baseApi = createApi({
     'HelpAndSupports',
     'Broadcasts',
     'AiSupport',
+    'Notifications',
     'Communication',
     'Settings',
     'Permissions',
