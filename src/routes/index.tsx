@@ -57,9 +57,6 @@ const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashbo
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
 const ProfileSettingsPage = lazy(() => import('@/features/settings/ProfileSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
-const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
-const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
-const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
 const LegalSettingsPage = lazy(() => import('@/features/settings/LegalSettingsPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
 const SystemConfigurationPage = lazy(() => import('@/features/settings/SystemConfigurationPage'))
@@ -110,8 +107,8 @@ export const router = createBrowserRouter([
       { path: 'operations/driver-capacity-management', element: <Navigate to="/drivers" replace /> },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
-      { path: 'operations/safety-incidents/settings', element: <Navigate to="/settings/safety" replace /> },
-      { path: 'operations/safety-incidents/categories', element: <Navigate to="/settings/safety" replace /> },
+      { path: 'operations/safety-incidents/settings', element: <Navigate to="/operations/safety-incidents" replace /> },
+      { path: 'operations/safety-incidents/categories', element: <Navigate to="/operations/safety-incidents" replace /> },
       { path: 'communication', element: withSuspense(<CommunicationCenterPage />) },
       { path: 'communication/conversations', element: withSuspense(<LegacyCommunicationRedirect />) },
       { path: 'communication/active-trip-chats', element: withSuspense(<LegacyCommunicationRedirect />) },
@@ -214,11 +211,8 @@ export const router = createBrowserRouter([
         path: 'settings/fare-configurations',
         element: withSuspense(<FareConfigurationsPage />),
       },
-      { path: 'settings/safety', element: withSuspense(<SafetyConfigurationPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
-      { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
       { path: 'settings/legal', element: withSuspense(<LegalSettingsPage />) },
-      { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },
       { path: 'settings/admin-roles', element: withSuspense(<AdminRolesPage />) },
       { path: '*', element: withSuspense(<LegacyRouteFallback />) },
     ],
