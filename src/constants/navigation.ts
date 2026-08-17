@@ -62,7 +62,7 @@ export const NAVIGATION: NavItem[] = [
   },
   {
     key: 'communication',
-    label: 'Communication Center',
+    label: 'Broadcasts',
     path: '/communication',
     icon: MessageSquare,
     permission: 'communication.view',
