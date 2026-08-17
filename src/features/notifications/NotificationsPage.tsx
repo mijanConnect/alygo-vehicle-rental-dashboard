@@ -23,7 +23,7 @@ export default function NotificationsPage() {
   const { data, isLoading, isFetching } = useGetNotificationsListQuery({
     page,
     limit,
-    searchTerm,
+    ...(searchTerm.trim() ? { searchTerm: searchTerm.trim() } : {}),
   })
   const [markRead] = useMarkNotificationReadMutation()
   const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation()

@@ -77,33 +77,57 @@ export function mapAdminNotification(
   const record = asRecord(payload)
   if (!record) return null
 
-  const id = pickString(record._id, record.id)
-  const title = pickString(record.title, record.type, 'Notification')
+  // Some APIs nest the actual notification under `notification` / `data`
+  const nested =
+    asRecord(record.notification) ??
+    asRecord(record.payload) ??
+    asRecord(record.data)
+  const source = nested ?? record
+
+  const id = pickString(source._id, source.id, record._id, record.id)
+  const title = pickString(
+    source.title,
+    source.subject,
+    source.name,
+    source.type,
+    record.title,
+    record.subject,
+    'Notification',
+  )
   const message = pickString(
+    source.message,
+    source.body,
+    source.content,
+    source.description,
     record.message,
     record.body,
     record.content,
     record.description,
   )
   const createdAt =
-    pickString(record.createdAt, record.updatedAt) || new Date().toISOString()
-  const read =
-    typeof record.read === 'boolean'
-      ? record.read
-      : typeof record.isRead === 'boolean'
-        ? record.isRead
-        : false
+    pickString(source.createdAt, source.updatedAt, record.createdAt, record.updatedAt) ||
+    new Date().toISOString()
 
-  if (!id && !title && !message) return null
+  const statusValue = pickString(source.status, record.status).toLowerCase()
+  const read =
+    typeof source.read === 'boolean'
+      ? source.read
+      : typeof source.isRead === 'boolean'
+        ? source.isRead
+        : typeof record.read === 'boolean'
+          ? record.read
+          : typeof record.isRead === 'boolean'
+            ? record.isRead
+            : statusValue === 'read' || statusValue === 'seen'
 
   return {
     id: id || crypto.randomUUID(),
-    title,
-    message: message || title,
+    title: title || 'Notification',
+    message: message || title || 'Notification',
     read,
     createdAt,
-    category: pickString(record.category) || undefined,
-    type: pickString(record.type) || undefined,
+    category: pickString(source.category, record.category) || undefined,
+    type: pickString(source.type, record.type) || undefined,
     raw: record,
   }
 }
@@ -115,10 +139,18 @@ function unwrapNotificationList(response: unknown): AdminNotificationPayload[] {
   if (!root) return []
 
   if (Array.isArray(root.data)) return root.data as AdminNotificationPayload[]
+  if (Array.isArray(root.notifications)) {
+    return root.notifications as AdminNotificationPayload[]
+  }
+  if (Array.isArray(root.results)) return root.results as AdminNotificationPayload[]
 
   const nested = asRecord(root.data)
-  if (nested && Array.isArray(nested.data)) {
-    return nested.data as AdminNotificationPayload[]
+  if (nested) {
+    if (Array.isArray(nested.data)) return nested.data as AdminNotificationPayload[]
+    if (Array.isArray(nested.notifications)) {
+      return nested.notifications as AdminNotificationPayload[]
+    }
+    if (Array.isArray(nested.results)) return nested.results as AdminNotificationPayload[]
   }
 
   return []
