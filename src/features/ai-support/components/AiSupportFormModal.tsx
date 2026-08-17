@@ -14,6 +14,7 @@ import {
   type AiKnowledgeModule,
   type AiKnowledgeTag,
   type AiSupportItem,
+  type AiSupportVisibility,
   type AiSupportWritePayload,
 } from '@/redux/api/aiSupportApi'
 
@@ -26,7 +27,7 @@ export interface AiSupportFormValues {
   keywords: string[]
   priority: number
   aiEnabled: boolean
-  visibility: string
+  visibility: AiSupportVisibility
   allowedRoles: string[]
   changeLog: string
 }

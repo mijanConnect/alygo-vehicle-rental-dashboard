@@ -1,12 +1,10 @@
-import { Avatar, Badge, Dropdown, Input, List, Tag } from 'antd'
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings, User } from 'lucide-react'
+import { Avatar, Badge, Dropdown, List, Tag } from 'antd'
+import { Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { BrandLogo } from '@/components/shared/BrandLogo'
 import { useGetProfileQuery } from '@/redux/api/authApi'
 import { useGetNotificationsQuery } from '@/services/api'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { logout } from '@/store/slices/authSlice'
-import { setGlobalSearch, setMobileSidebarOpen } from '@/store/slices/uiSlice'
 import { formatDateTime } from '@/utils/format'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1\/?$/, '') ?? ''
@@ -22,7 +20,6 @@ export function Header() {
   const navigate = useNavigate()
   const authUser = useAppSelector((state) => state.auth.user)
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
-  const globalSearch = useAppSelector((state) => state.ui.globalSearch)
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated })
   const { data: notifications = [] } = useGetNotificationsQuery()
   const unreadCount = notifications.filter((n) => !n.read).length
@@ -84,10 +81,6 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[rgba(15,17,23,0.85)] backdrop-blur-xl">
       <div className="flex h-16 items-center justify-end gap-4 px-4 lg:px-6">
-       
-
- 
-
         <div className="flex items-center gap-2">
           <Dropdown popupRender={() => notificationContent} trigger={['click']} placement="bottomRight">
             <button type="button" className="relative rounded-xl p-2.5 hover:bg-white/5">
