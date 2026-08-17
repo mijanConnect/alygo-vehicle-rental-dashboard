@@ -7,13 +7,6 @@ interface ApiResponse<T> {
   data: T
 }
 
-interface PaginationBlock {
-  page: number
-  limit: number
-  total: number
-  totalPage: number
-}
-
 export interface AdminNotificationItem {
   id: string
   title: string
@@ -30,6 +23,7 @@ export interface AdminNotificationPayload {
   id?: string
   title?: string
   message?: string
+  text?: string
   body?: string
   content?: string
   description?: string
@@ -56,6 +50,7 @@ export interface NotificationsListResult {
     limit: number
     totalItems: number
     totalPages: number
+    unreadCount: number
   }
 }
 
@@ -95,10 +90,12 @@ export function mapAdminNotification(
     'Notification',
   )
   const message = pickString(
+    source.text,
     source.message,
     source.body,
     source.content,
     source.description,
+    record.text,
     record.message,
     record.body,
     record.content,
@@ -158,23 +155,23 @@ function unwrapNotificationList(response: unknown): AdminNotificationPayload[] {
 
 function mapListResponse(response: unknown): NotificationsListResult {
   const root = asRecord(response)
-  const pagination =
-    (root?.pagination as PaginationBlock | undefined) ??
-    (root?.meta as PaginationBlock | undefined) ??
-    (asRecord(root?.data)?.pagination as PaginationBlock | undefined) ??
-    (asRecord(root?.data)?.meta as PaginationBlock | undefined)
-
+  const pagination = asRecord(root?.pagination) ?? asRecord(root?.meta)
   const rows = unwrapNotificationList(response)
     .map((item) => mapAdminNotification(item))
     .filter((item): item is AdminNotificationItem => Boolean(item))
 
+  const unreadFromMeta =
+    typeof pagination?.unreadCount === 'number' ? pagination.unreadCount : undefined
+
   return {
     data: rows,
     meta: {
-      page: pagination?.page ?? 1,
-      limit: pagination?.limit ?? 10,
-      totalItems: pagination?.total ?? rows.length,
-      totalPages: pagination?.totalPage ?? 1,
+      page: typeof pagination?.page === 'number' ? pagination.page : 1,
+      limit: typeof pagination?.limit === 'number' ? pagination.limit : 10,
+      totalItems: typeof pagination?.total === 'number' ? pagination.total : rows.length,
+      totalPages: typeof pagination?.totalPage === 'number' ? pagination.totalPage : 1,
+      unreadCount:
+        unreadFromMeta ?? rows.filter((item) => !item.read).length,
     },
   }
 }

@@ -1,5 +1,6 @@
 import { Avatar, Badge, Button, Dropdown, Empty, Tag } from 'antd'
 import { Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGetProfileQuery } from '@/redux/api/authApi'
 import { useGetNotificationsListQuery } from '@/redux/api/notificationApi'
@@ -19,6 +20,7 @@ function resolveAssetUrl(path?: string | null) {
 export function Header() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const authUser = useAppSelector((state) => state.auth.user)
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated })
@@ -29,7 +31,7 @@ export function Header() {
     { skip: !isAuthenticated },
   )
   const notifications = (notificationsData?.data ?? []).slice(0, HEADER_NOTIFICATION_LIMIT)
-  const unreadCount = (notificationsData?.data ?? []).filter((n) => !n.read).length
+  const unreadCount = notificationsData?.meta?.unreadCount ?? 0
 
   const displayName = profile?.name || authUser?.name || 'Admin'
   const displayRole = (profile?.role || authUser?.role || 'admin').replace(/_/g, ' ')
@@ -59,6 +61,7 @@ export function Header() {
   }
 
   const goToNotifications = () => {
+    setNotificationsOpen(false)
     navigate('/notifications')
   }
 
@@ -67,6 +70,8 @@ export function Header() {
       <div className="flex h-16 items-center justify-end gap-4 px-4 lg:px-6">
         <div className="flex items-center gap-2">
           <Dropdown
+            open={notificationsOpen}
+            onOpenChange={setNotificationsOpen}
             trigger={['click']}
             placement="bottomRight"
             popupRender={() => (
