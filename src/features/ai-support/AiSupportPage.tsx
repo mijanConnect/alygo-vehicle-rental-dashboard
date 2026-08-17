@@ -7,12 +7,9 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
-import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import {
-  AI_SUPPORT_STATUS_OPTIONS,
-  AI_SUPPORT_VISIBILITY_OPTIONS,
   getAiSupportActionItems,
   getAiSupportCategoryLabel,
   getAiSupportStatusColor,
@@ -39,8 +36,6 @@ export default function AiSupportPage() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
-  const [status, setStatus] = useState('')
-  const [visibility, setVisibility] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<AiSupportItem | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<AiSupportItem | null>(null)
@@ -49,8 +44,6 @@ export default function AiSupportPage() {
     page,
     limit,
     searchTerm,
-    status: status || undefined,
-    visibility: visibility || undefined,
   })
 
   const rows = data?.data ?? []
@@ -123,33 +116,6 @@ export default function AiSupportPage() {
             setPage(1)
           }}
           placeholder="Search articles..."
-        />
-        <Filtering
-          variant="inline"
-          fields={[
-            {
-              key: 'status',
-              placeholder: 'Filter by status',
-              options: AI_SUPPORT_STATUS_OPTIONS,
-              value: status,
-              minWidth: 160,
-              onChange: (value) => {
-                setStatus(value)
-                setPage(1)
-              },
-            },
-            {
-              key: 'visibility',
-              placeholder: 'Filter by visibility',
-              options: AI_SUPPORT_VISIBILITY_OPTIONS,
-              value: visibility,
-              minWidth: 170,
-              onChange: (value) => {
-                setVisibility(value)
-                setPage(1)
-              },
-            },
-          ]}
         />
       </div>
 
