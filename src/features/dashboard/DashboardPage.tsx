@@ -84,24 +84,24 @@ export default function DashboardPage() {
     <PageShell
       title="Executive Dashboard"
       description="Real-time overview of platform performance, operations, and compliance health."
-      actions={
-        <>
-          <Button
-            icon={<RefreshCw className="h-4 w-4" />}
-            onClick={refetchAll}
-            loading={isFetching}
-          >
-            Refresh
-          </Button>
-          <Button
-            type="primary"
-            icon={<Download className="h-4 w-4" />}
-            onClick={() => adminActions.notify('Report exported')}
-          >
-            Export Report
-          </Button>
-        </>
-      }
+      // actions={
+      //   <>
+      //     <Button
+      //       icon={<RefreshCw className="h-4 w-4" />}
+      //       onClick={refetchAll}
+      //       loading={isFetching}
+      //     >
+      //       Refresh
+      //     </Button>
+      //     <Button
+      //       type="primary"
+      //       icon={<Download className="h-4 w-4" />}
+      //       onClick={() => adminActions.notify('Report exported')}
+      //     >
+      //       Export Report
+      //     </Button>
+      //   </>
+      // }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {kpis.slice(0, 8).map((metric) => (
