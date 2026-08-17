@@ -18,6 +18,7 @@ import {
   PartyPopper,
   Clock,
   LifeBuoy,
+  Bot,
   Plane,
   Settings,
   Shield,
@@ -100,6 +101,13 @@ export const NAVIGATION: NavItem[] = [
     label: 'Help & Supports',
     path: '/help-supports',
     icon: LifeBuoy,
+    permission: 'operations.view',
+  },
+  {
+    key: 'ai-support',
+    label: 'AI Support',
+    path: '/ai-support',
+    icon: Bot,
     permission: 'operations.view',
   },
   {

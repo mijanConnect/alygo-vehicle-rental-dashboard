@@ -36,6 +36,8 @@ const MODULE_LABELS: Record<string, string> = {
   communication: 'Broadcasts',
   broadcasts: 'Broadcasts',
   broadcast: 'Broadcasts',
+  aisupport: 'AI Support',
+  aiSupport: 'AI Support',
   events: 'Events Management',
   holidays: 'Holiday Management',
   peakhours: 'Peak Hours Management',
