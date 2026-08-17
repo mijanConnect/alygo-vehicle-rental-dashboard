@@ -22,7 +22,7 @@ interface PaginatedApiResponse<T> {
   meta?: PaginationBlock
 }
 
-export type AiSupportVisibility = 'driver' | 'passenger' | 'all' | string
+export type AiSupportVisibility = 'driver' | 'internal' | 'admin_only'
 export type AiSupportStatus = 'published' | 'draft' | 'archived' | string
 export type AiSupportRole = 'driver' | 'passenger' | string
 

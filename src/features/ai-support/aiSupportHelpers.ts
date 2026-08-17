@@ -30,8 +30,8 @@ export const AI_SUPPORT_TAG_OPTIONS = Object.values(AI_KNOWLEDGE_TAG).map((value
 
 export const AI_SUPPORT_VISIBILITY_OPTIONS = [
   { label: 'Driver', value: 'driver' },
-  { label: 'Passenger', value: 'passenger' },
-  { label: 'All', value: 'all' },
+  { label: 'Internal', value: 'internal' },
+  { label: 'Admin Only', value: 'admin_only' },
 ]
 
 export const AI_SUPPORT_ROLE_OPTIONS = [
