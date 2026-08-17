@@ -19,6 +19,7 @@ import {
   getAiSupportStatusLabel,
 } from '@/features/ai-support/aiSupportHelpers'
 import { AiSupportFormModal } from '@/features/ai-support/components/AiSupportFormModal'
+import { AiSupportOverviewCards } from '@/features/ai-support/components/AiSupportOverviewCards'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
@@ -112,6 +113,8 @@ export default function AiSupportPage() {
         </Button>
       }
     >
+      <AiSupportOverviewCards />
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchingInput
           value={searchTerm}

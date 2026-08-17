@@ -155,12 +155,36 @@ export interface AiSupportListResult {
   }
 }
 
+export interface AiSupportCategoryStat {
+  category: string
+  count: number
+}
+
+export interface AiSupportQuestionStat {
+  question: string
+  count: number
+}
+
+export interface AiSupportDocumentStat {
+  id: string
+  title: string
+  count: number
+}
+
 export interface AiSupportOverviewStats {
-  totalArticles?: number
-  publishedArticles?: number
-  aiEnabledArticles?: number
-  draftArticles?: number
-  [key: string]: number | undefined
+  totalQuestions: number
+  questionsToday: number
+  avgResponseTime: number
+  helpfulPct: number
+  notHelpfulPct: number
+  totalTokens: number
+  avgTokens: number
+  estimatedCost: number
+  topCategories: AiSupportCategoryStat[]
+  topAskedQuestions: AiSupportQuestionStat[]
+  topMissingQuestions: AiSupportQuestionStat[]
+  mostUsedDocuments: AiSupportDocumentStat[]
+  lowConfidenceResponses: unknown[]
 }
 
 export interface UpdateAiSupportArgs {
