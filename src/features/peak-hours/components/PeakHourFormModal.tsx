@@ -2,7 +2,7 @@ import { Checkbox, Form, Input, Modal, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect } from 'react'
 import { TimezoneSelect } from '@/components/shared/TimezoneSelect'
-import { PEAK_HOUR_DAY_OPTIONS } from '@/features/pick-hours/peakHourHelpers'
+import { PEAK_HOUR_DAY_OPTIONS } from '@/features/peak-hours/peakHourHelpers'
 import type {
   PeakHourDay,
   PeakHourItem,

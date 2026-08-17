@@ -206,6 +206,47 @@ const authSlice = createSlice({
           'Unable to update password.',
         )
       })
+      .addMatcher(authApi.endpoints.getProfile.matchFulfilled, (state, action) => {
+        const profile = action.payload
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+        const origin = baseUrl.replace(/\/api\/v1\/?$/, '')
+        const avatar = profile.profileImage
+          ? profile.profileImage.startsWith('http')
+            ? profile.profileImage
+            : `${origin}${profile.profileImage}`
+          : state.user?.avatar
+
+        state.user = {
+          id: profile._id || state.user?.id || '',
+          email: profile.email || state.user?.email || '',
+          name: profile.name || state.user?.name || '',
+          role: (profile.role as AuthUser['role']) || state.user?.role || 'superAdmin',
+          permissions: state.user?.permissions ?? [],
+          avatar,
+        }
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(state.user))
+      })
+      .addMatcher(authApi.endpoints.updateProfile.matchFulfilled, (state, action) => {
+        const profile = action.payload.data
+        if (!profile) return
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+        const origin = baseUrl.replace(/\/api\/v1\/?$/, '')
+        const avatar = profile.profileImage
+          ? profile.profileImage.startsWith('http')
+            ? profile.profileImage
+            : `${origin}${profile.profileImage}`
+          : state.user?.avatar
+
+        state.user = {
+          id: profile._id || state.user?.id || '',
+          email: profile.email || state.user?.email || '',
+          name: profile.name || state.user?.name || '',
+          role: (profile.role as AuthUser['role']) || state.user?.role || 'superAdmin',
+          permissions: state.user?.permissions ?? [],
+          avatar,
+        }
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(state.user))
+      })
   },
 })
 

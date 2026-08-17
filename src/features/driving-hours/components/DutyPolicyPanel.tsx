@@ -8,6 +8,7 @@ import {
 import type { ActionMenuItem } from '@/components/admin/types'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/shared/Pagination'
+import { Filtering } from '@/components/shared/Filtering'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import {
   buildDutyPolicyWritePayload,
@@ -205,16 +206,21 @@ export function DutyPolicyPanel({ scopeType }: DutyPolicyPanelProps) {
             }}
             placeholder={`Search ${scopeType} policies...`}
           />
-          <Select
-            allowClear
-            placeholder="Filter by status"
-            className="!min-w-[160px]"
-            value={status || undefined}
-            options={STATUS_OPTIONS}
-            onChange={(value) => {
-              setStatus(value ?? '')
-              setPage(1)
-            }}
+          <Filtering
+            variant="inline"
+            fields={[
+              {
+                key: 'status',
+                placeholder: 'Filter by status',
+                options: STATUS_OPTIONS,
+                value: status,
+                minWidth: 160,
+                onChange: (value) => {
+                  setStatus(value)
+                  setPage(1)
+                },
+              },
+            ]}
           />
         </div>
         <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={openCreate}>

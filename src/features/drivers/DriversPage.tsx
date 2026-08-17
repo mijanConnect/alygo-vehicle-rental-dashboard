@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Select, Table, Tag, Tabs, type TableProps } from 'antd'
+import { Table, Tag, Tabs, type TableProps } from 'antd'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AdminActionHost, createTableRowProps } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
@@ -280,7 +281,7 @@ export default function DriversPage() {
 
   const segmentTable = (
     <>
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchingInput
           value={searchTerm}
           onChange={handleSearchChange}
@@ -288,38 +289,41 @@ export default function DriversPage() {
           className="flex-1"
         />
         {validTab === 'overview' && (
-          <>
-            <Select
-              allowClear
-              placeholder="Status"
-              className="w-full lg:w-40"
-              value={status || undefined}
-              onChange={(value) => {
-                setStatus(value ?? '')
-                setPage(1)
-              }}
-              options={[
-                { label: 'Active', value: 'approved' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Suspended', value: 'suspended' },
-              ]}
-            />
-            <Select
-              allowClear
-              placeholder="Filter by tier"
-              className="w-full lg:w-44"
-              value={tierFilter || undefined}
-              onChange={(value) => {
-                setTierFilter(value ?? '')
-                setPage(1)
-              }}
-              options={[
-                { label: 'Platinum', value: 'Platinum' },
-                { label: 'Diamond', value: 'Diamond' },
-                { label: 'Elite', value: 'Elite' },
-              ]}
-            />
-          </>
+          <Filtering
+            variant="inline"
+            fields={[
+              {
+                key: 'status',
+                placeholder: 'Status',
+                options: [
+                  { label: 'Active', value: 'approved' },
+                  { label: 'Pending', value: 'pending' },
+                  { label: 'Suspended', value: 'suspended' },
+                ],
+                value: status,
+                minWidth: 160,
+                onChange: (value) => {
+                  setStatus(value)
+                  setPage(1)
+                },
+              },
+              {
+                key: 'tier',
+                placeholder: 'Filter by tier',
+                options: [
+                  { label: 'Platinum', value: 'Platinum' },
+                  { label: 'Diamond', value: 'Diamond' },
+                  { label: 'Elite', value: 'Elite' },
+                ],
+                value: tierFilter,
+                minWidth: 176,
+                onChange: (value) => {
+                  setTierFilter(value)
+                  setPage(1)
+                },
+              },
+            ]}
+          />
         )}
       </div>
 

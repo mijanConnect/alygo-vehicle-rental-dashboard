@@ -103,9 +103,13 @@ export default function DashboardPage() {
         </>
       }
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        {kpis.map((metric) => (
-          <KpiCard key={metric.key} metric={metric} liveValue={liveKpis[metric.key]} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {kpis.slice(0, 8).map((metric) => (
+          <KpiCard
+            key={metric.key}
+            metric={metric}
+            liveValue={liveKpis[metric.key]}
+          />
         ))}
       </div>
 

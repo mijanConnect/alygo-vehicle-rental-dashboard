@@ -14,8 +14,8 @@ export const LEGACY_ROUTE_REDIRECTS: Record<string, string> = {
   '/driver-capacity': '/drivers',
   '/drivers/rewards/tier-management': '/drivers/tiers',
   '/driver-rewards/tier-management': '/drivers/tiers',
-  '/operations/safety-incidents/settings': '/settings/safety',
-  '/operations/safety-incidents/categories': '/settings/safety',
+  '/operations/safety-incidents/settings': '/operations/safety-incidents',
+  '/operations/safety-incidents/categories': '/operations/safety-incidents',
   '/operations/safety-incidents/cases': '/operations/safety-incidents',
   '/operations/safety-incidents/analytics': '/operations/safety-incidents',
   '/operations/policy-center/driving-hours': '/operations/driving-hours',
@@ -107,9 +107,6 @@ export function resolveLegacyRouteRedirect(pathname: string): string | null {
         return '/drivers'
       }
       if (prefix.includes('safety-incidents')) {
-        if (normalized.includes('settings') || normalized.includes('categories')) {
-          return '/settings/safety'
-        }
         return '/operations/safety-incidents'
       }
       if (prefix.startsWith('/communication/')) {

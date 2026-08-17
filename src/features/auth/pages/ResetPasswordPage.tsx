@@ -21,7 +21,6 @@ export default function ResetPasswordPage() {
   useDocumentTitle('Create New Password')
   const [form] = Form.useForm<ResetPasswordForm>()
   const navigate = useNavigate()
-  const email = useAppSelector((state) => state.auth.flow.otpVerification.email)
   const resetToken = useAppSelector((state) => state.auth.flow.otpVerification.resetToken)
   const { error, status } = useAppSelector((state) => state.auth.flow.resetPassword)
   const [showPassword, setShowPassword] = useState(false)
@@ -31,10 +30,10 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const storedResetToken = localStorage.getItem(RESET_PASSWORD_TOKEN_KEY)
-    if (!email || (!resetToken && !storedResetToken)) {
+    if (!storedResetToken && !resetToken) {
       navigate('/auth/forgot-password')
     }
-  }, [email, resetToken, navigate])
+  }, [resetToken, navigate])
 
   const onFinish = async (values: ResetPasswordForm) => {
     try {

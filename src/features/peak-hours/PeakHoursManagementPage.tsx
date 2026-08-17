@@ -7,16 +7,17 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
-import { PeakHourFormModal } from '@/features/pick-hours/components/PeakHourFormModal'
+import { SearchingInput } from '@/components/shared/SearchingInput'
+import { PeakHourFormModal } from '@/features/peak-hours/components/PeakHourFormModal'
 import {
   PEAK_HOUR_STATUS_OPTIONS,
   formatApplicableDays,
   getPeakHourActionItems,
   getPeakHourStatusColor,
   getPeakHourStatusLabel,
-} from '@/features/pick-hours/peakHourHelpers'
+} from '@/features/peak-hours/peakHourHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
@@ -123,20 +124,32 @@ export default function PeakHoursManagementPage() {
         </Button>
       }
     >
-      <TableFilters
-        search={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value)
-          setPage(1)
-        }}
-        searchPlaceholder="Search peak hours..."
-        statusOptions={PEAK_HOUR_STATUS_OPTIONS}
-        status={status}
-        onStatusChange={(value) => {
-          setStatus(value ?? '')
-          setPage(1)
-        }}
-      />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value)
+            setPage(1)
+          }}
+          placeholder="Search peak hours..."
+        />
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: PEAK_HOUR_STATUS_OPTIONS,
+              value: status,
+              minWidth: 160,
+              onChange: (value) => {
+                setStatus(value)
+                setPage(1)
+              },
+            },
+          ]}
+        />
+      </div>
 
       <div className="glass-card p-4">
         <Table

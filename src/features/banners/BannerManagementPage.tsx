@@ -7,8 +7,9 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
-import { TableFilters } from '@/components/common/TableFilters'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
+import { SearchingInput } from '@/components/shared/SearchingInput'
 import {
   BANNER_STATUS_OPTIONS,
   getBannerActionItems,
@@ -137,20 +138,32 @@ export default function BannerManagementPage() {
         </Button>
       }
     >
-      <TableFilters
-        search={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value)
-          setPage(1)
-        }}
-        searchPlaceholder="Search banners..."
-        statusOptions={BANNER_STATUS_OPTIONS}
-        status={status}
-        onStatusChange={(value) => {
-          setStatus(value ?? '')
-          setPage(1)
-        }}
-      />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchingInput
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value)
+            setPage(1)
+          }}
+          placeholder="Search banners..."
+        />
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: BANNER_STATUS_OPTIONS,
+              value: status,
+              minWidth: 160,
+              onChange: (value) => {
+                setStatus(value)
+                setPage(1)
+              },
+            },
+          ]}
+        />
+      </div>
 
       <div className="glass-card p-4">
         <Table

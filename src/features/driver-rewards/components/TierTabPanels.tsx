@@ -8,6 +8,7 @@ import {
   createActionsColumn,
 } from '@/components/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { TierCreateWizard } from '@/features/driver-rewards/components/TierCreateWizard'
@@ -38,10 +39,16 @@ export function TierConfigurationTab() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
+  const [status, setStatus] = useState('')
   const [wizardOpen, setWizardOpen] = useState(false)
   const [deleteRecord, setDeleteRecord] = useState<TierItem | null>(null)
 
-  const { data, isLoading, isFetching } = useGetTiersListQuery({ page, limit, searchTerm })
+  const { data, isLoading, isFetching } = useGetTiersListQuery({
+    page,
+    limit,
+    searchTerm,
+    status: status || undefined,
+  })
   const [createTier, { isLoading: creating }] = useCreateTierMutation()
   const [deleteTier, { isLoading: deleting }] = useDeleteTierMutation()
   const [updateTierStatus, { isLoading: updatingStatus }] = useUpdateTierStatusMutation()
@@ -92,14 +99,35 @@ export function TierConfigurationTab() {
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <SearchingInput
-          value={searchTerm}
-          onChange={(value) => {
-            setSearchTerm(value)
-            setPage(1)
-          }}
-          placeholder="Search tiers..."
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchingInput
+            value={searchTerm}
+            onChange={(value) => {
+              setSearchTerm(value)
+              setPage(1)
+            }}
+            placeholder="Search tiers..."
+          />
+          <Filtering
+            variant="inline"
+            fields={[
+              {
+                key: 'status',
+                placeholder: 'Filter by status',
+                options: [
+                  { label: 'Active', value: 'active' },
+                  { label: 'Inactive', value: 'inactive' },
+                ],
+                value: status,
+                minWidth: 160,
+                onChange: (value) => {
+                  setStatus(value)
+                  setPage(1)
+                },
+              },
+            ]}
+          />
+        </div>
         <Button
           type="primary"
           icon={<Plus className="h-4 w-4" />}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Select, Table, Tag } from 'antd'
+import { Table, Tag } from 'antd'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { Filtering } from '@/components/shared/Filtering'
 import { Pagination } from '@/components/shared/Pagination'
 import { SearchingInput } from '@/components/shared/SearchingInput'
 import { useGetDriverDutyHourMonitoringQuery } from '@/redux/api/drivingHoursApi'
@@ -50,16 +51,21 @@ export function DriverHoursMonitoringTable() {
           }}
           placeholder="Search drivers..."
         />
-        <Select
-          allowClear
-          placeholder="Filter by status"
-          className="!min-w-[160px]"
-          value={status || undefined}
-          options={STATUS_OPTIONS}
-          onChange={(value) => {
-            setStatus(value ?? '')
-            setPage(1)
-          }}
+        <Filtering
+          variant="inline"
+          fields={[
+            {
+              key: 'status',
+              placeholder: 'Filter by status',
+              options: STATUS_OPTIONS,
+              value: status,
+              minWidth: 160,
+              onChange: (value) => {
+                setStatus(value)
+                setPage(1)
+              },
+            },
+          ]}
         />
       </div>
 

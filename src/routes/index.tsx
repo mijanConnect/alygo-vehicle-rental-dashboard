@@ -45,8 +45,10 @@ const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCat
 const BannerManagementPage = lazy(() => import('@/features/banners/BannerManagementPage'))
 const EventsManagementPage = lazy(() => import('@/features/events/EventsManagementPage'))
 const HolidayManagementPage = lazy(() => import('@/features/holidays/HolidayManagementPage'))
-const PeakHoursManagementPage = lazy(() => import('@/features/pick-hours/PeakHoursManagementPage'))
+const PeakHoursManagementPage = lazy(() => import('@/features/peak-hours/PeakHoursManagementPage'))
 const HelpSupportsPage = lazy(() => import('@/features/help-supports/HelpSupportsPage'))
+const AiSupportPage = lazy(() => import('@/features/ai-support/AiSupportPage'))
+const NotificationsPage = lazy(() => import('@/features/notifications/NotificationsPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
 const DriverBonusesPage = lazy(() => import('@/features/driver-bonuses/DriverBonusesPage'))
@@ -55,9 +57,6 @@ const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashbo
 const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
 const ProfileSettingsPage = lazy(() => import('@/features/settings/ProfileSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
-const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
-const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
-const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
 const LegalSettingsPage = lazy(() => import('@/features/settings/LegalSettingsPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
 const SystemConfigurationPage = lazy(() => import('@/features/settings/SystemConfigurationPage'))
@@ -108,8 +107,8 @@ export const router = createBrowserRouter([
       { path: 'operations/driver-capacity-management', element: <Navigate to="/drivers" replace /> },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
-      { path: 'operations/safety-incidents/settings', element: <Navigate to="/settings/safety" replace /> },
-      { path: 'operations/safety-incidents/categories', element: <Navigate to="/settings/safety" replace /> },
+      { path: 'operations/safety-incidents/settings', element: <Navigate to="/operations/safety-incidents" replace /> },
+      { path: 'operations/safety-incidents/categories', element: <Navigate to="/operations/safety-incidents" replace /> },
       { path: 'communication', element: withSuspense(<CommunicationCenterPage />) },
       { path: 'communication/conversations', element: withSuspense(<LegacyCommunicationRedirect />) },
       { path: 'communication/active-trip-chats', element: withSuspense(<LegacyCommunicationRedirect />) },
@@ -149,6 +148,8 @@ export const router = createBrowserRouter([
       { path: 'holidays', element: withSuspense(<HolidayManagementPage />) },
       { path: 'peak-hours', element: withSuspense(<PeakHoursManagementPage />) },
       { path: 'help-supports', element: withSuspense(<HelpSupportsPage />) },
+      { path: 'ai-support', element: withSuspense(<AiSupportPage />) },
+      { path: 'notifications', element: withSuspense(<NotificationsPage />) },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
       { path: 'demand', element: <Navigate to="/demand-intelligence" replace /> },
       { path: 'demand/:section', element: <Navigate to="/demand-intelligence" replace /> },
@@ -210,11 +211,8 @@ export const router = createBrowserRouter([
         path: 'settings/fare-configurations',
         element: withSuspense(<FareConfigurationsPage />),
       },
-      { path: 'settings/safety', element: withSuspense(<SafetyConfigurationPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
-      { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
       { path: 'settings/legal', element: withSuspense(<LegalSettingsPage />) },
-      { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },
       { path: 'settings/admin-roles', element: withSuspense(<AdminRolesPage />) },
       { path: '*', element: withSuspense(<LegacyRouteFallback />) },
     ],
