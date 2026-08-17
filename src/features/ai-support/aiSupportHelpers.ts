@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 import type { ActionMenuItem } from '@/components/admin/types'
 import {
   AI_KNOWLEDGE_CATEGORY,
@@ -47,6 +47,7 @@ export const AI_SUPPORT_STATUS_OPTIONS = [
 
 export function getAiSupportActionItems(_record: AiSupportItem): ActionMenuItem[] {
   return [
+    { key: 'details', label: 'Details', icon: Eye, group: 0 },
     { key: 'edit', label: 'Edit', icon: Pencil, group: 0 },
     { key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 1 },
   ]

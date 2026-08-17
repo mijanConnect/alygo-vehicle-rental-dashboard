@@ -15,6 +15,7 @@ import {
   getAiSupportStatusColor,
   getAiSupportStatusLabel,
 } from '@/features/ai-support/aiSupportHelpers'
+import { AiSupportDetailsDrawer } from '@/features/ai-support/components/AiSupportDetailsDrawer'
 import { AiSupportFormModal } from '@/features/ai-support/components/AiSupportFormModal'
 import { AiSupportOverviewCards } from '@/features/ai-support/components/AiSupportOverviewCards'
 import { useAdminActions } from '@/hooks/useAdminActions'
@@ -27,7 +28,6 @@ import {
   type AiSupportItem,
   type AiSupportWritePayload,
 } from '@/redux/api/aiSupportApi'
-import { formatDateTime } from '@/utils/format'
 
 export default function AiSupportPage() {
   useDocumentTitle('AI Support')
@@ -37,6 +37,7 @@ export default function AiSupportPage() {
   const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
   const [formOpen, setFormOpen] = useState(false)
+  const [selected, setSelected] = useState<AiSupportItem | null>(null)
   const [editRecord, setEditRecord] = useState<AiSupportItem | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<AiSupportItem | null>(null)
 
@@ -55,6 +56,9 @@ export default function AiSupportPage() {
 
   const handleAction = (key: string, record: AiSupportItem) => {
     switch (key) {
+      case 'details':
+        setSelected(record)
+        break
       case 'edit':
         setEditRecord(record)
         break
@@ -169,12 +173,6 @@ export default function AiSupportPage() {
                 <Tag color={getAiSupportStatusColor(s)}>{getAiSupportStatusLabel(s)}</Tag>
               ),
             },
-            {
-              title: 'Updated',
-              dataIndex: 'updatedAt',
-              width: 170,
-              render: (d?: string) => (d ? formatDateTime(d) : '—'),
-            },
             createActionsColumn<AiSupportItem>(
               (record) => getAiSupportActionItems(record),
               (key, record) => handleAction(key, record),
@@ -193,6 +191,12 @@ export default function AiSupportPage() {
           setLimit(size)
           setPage(1)
         }}
+      />
+
+      <AiSupportDetailsDrawer
+        open={Boolean(selected)}
+        record={selected}
+        onClose={() => setSelected(null)}
       />
 
       <AiSupportFormModal
