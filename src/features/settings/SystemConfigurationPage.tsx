@@ -82,7 +82,7 @@ export default function SystemConfigurationPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="primary"
-            href="http://10.10.7.10:5005/api/v1/system-configurations/docs"
+            href="http://195.35.6.13:5005/api/v1/system-configurations/docs"
             target="_blank"
             rel="noopener noreferrer"
             icon={<ExternalLink className="h-4 w-4" />}
